@@ -39,7 +39,7 @@
   - Minimum sizes on the dashboard: body 18 px (dense labels 16–17 px), card title 24 px, KPI 64 px, scene title 56 px.
 - Footer label, exact text: `Illustrative demo data · fictional students`. Simulation tag, exact text: `Simulated projection · illustrative`.
 - The UI language is English. The Zalo, WhatsApp and email snippets are Vietnamese, each paired with English extracted evidence.
-- The git repo root is the parent `Projects/` folder. Run every git command from `aitutor_demo/` and stage only with `git add -A .` (this subtree). Every commit message ends with the trailer line `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+- `aitutor_demo/` is its own git repository (branch `main`). Run git commands from `aitutor_demo/` and stage with `git add -A .`. Every commit message ends with the trailer line `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 - The stock footage files (`*.mp4`) in `aitutor_demo/` are never committed.
 
 ## File Structure
@@ -178,11 +178,12 @@ export default defineConfig({
 });
 ```
 
-`.gitignore`:
+`.gitignore` (already exists; leave it as is):
 ```
 node_modules/
 dist/
 contact-sheet/
+.superpowers/
 *.mp4
 *.mov
 ```
@@ -5304,6 +5305,8 @@ Any window can render without the controller:
 | F4 | Sc8 start | `teacher_morning.mp4` | The calm counterpart to F2 |
 | F5 | Sc9 2:15 | `greenscreen_phone.mp4` | Key the green screen and corner-pin the student capture (`student.html?scene=9&autoplay`) |
 | F6 | Sc11 (optional) | `lecture hall.mp4` | Background for the pull-back to the full classroom |
+
+`lecture hall.mp4` has a small blurred patch in the centre. Cover it with a centred opening title (Manrope bold, white with a soft navy shadow), sized so the text block covers the patch, e.g. *"55 students. One lecturer. Data everywhere."* The title must be on screen from the first frame through 0:04 and dissolve out on the cut to F2. Add a slow 105% push-in on the footage: the title stays fixed while the footage moves, which keeps the patch under the text.
 
 The footage files are git-ignored. Confirm each licence allows commercial and promotional use, keep the licence records with the project, and grade the footage cool navy/blue to sit with the UI.
 
