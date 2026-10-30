@@ -1,0 +1,6 @@
+node_modules/
+dist/
+contact-sheet/
+.superpowers/
+*.mp4
+*.mov
