@@ -21,6 +21,7 @@ describe('read tools', () => {
     expect((o.evidence as { id: string }[]).map((e) => e.id)).toContain('class-quiz2-q4');
   });
   it('finds students by status, concept threshold and accent-insensitive name', () => {
+    expect(find({ status: 'onTrack' })).toHaveLength(43);
     expect(find({ status: 'escalated' }).map((s) => s.id)).toEqual(['s29', 's42', 's51']);
     const weak = find({ concept: 'implication', below: 0.35 });
     expect(weak.length).toBeGreaterThan(0);
