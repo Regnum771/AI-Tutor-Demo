@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { BoothPanel } from './BoothPanel';
 import {
   applyCommand, countdown, formatTime, initialState, isDone, localTime, togglePlay,
   type Command, type PlaybackState, type Toggles,
@@ -161,6 +162,8 @@ export function ControllerApp() {
             <button key={s.path} className={btn} onClick={() => void navigator.clipboard.writeText(window.location.origin + s.path)}>{s.label}</button>
           ))}
         </div>
+
+        <BoothPanel />
 
         <div className="text-[14px] text-dim">Keys: Space play/pause · ← → scene · R restart with pre-roll. Keep all windows in this browser profile.</div>
       </div>

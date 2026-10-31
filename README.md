@@ -38,6 +38,31 @@ Controls: `Space` play/pause (frame 0 gets a 3-second pre-roll) · `←`/`→` c
 Toggles: **Titles**, **Footer label**, **Cursor**, **Chapter label**, **Timecode**, **Sage theme**. The chapter label (top-right of the teacher window) is on by default; turn it off if you add the chapters in Resolve.
 **Sage theme** keeps the eggshell paper but swaps the orange accents for VNU sage and the asterisk mark for the leaf-book mark (two leaves opening like a book, with a bud); both windows switch together.
 
+## Live booth demo
+
+A live version of the demo for visitors to use: two real Claude agents answer the teacher from the fictional class data, plans go to a real phone, and the phone's answers update the class live. Everything is still illustrative data about fictional students.
+
+1. Copy `.env.local.example` to `.env.local` and set `ANTHROPIC_API_KEY` (the file is git-ignored). Without usable credentials, or with `BEYOND_OFFLINE=1`, the booth runs on canned answers and every answer carries an "Offline answer" tag.
+2. `npm run booth` starts Vite on the LAN and the booth server (port 8787). It prints the phone URL.
+3. Open the Director (`http://localhost:5173/controller.html`): **Open live teacher**, and let visitors scan the QR code with a phone on the same Wi-Fi (or open `student.html?live` in a narrow window).
+4. Press **Reset demo** (Director or teacher header) between visitors.
+
+Settings: `BEYOND_MODEL` (default `claude-sonnet-5-5`), `BEYOND_EFFORT` (`low` · `medium` · `high`, default `medium`), `BEYOND_PORT`, `BEYOND_HOST` (the laptop address for the phone, if the printed one is wrong).
+
+Check the API path end to end with `npm run test:live` (needs the key; costs one real question).
+
+### Booth checklist
+
+- [ ] `npm run booth` prints `agents online` and a phone URL.
+- [ ] Phone joins from the QR code and shows the lock screen with the story clock.
+- [ ] Ask "Why did Minh Anh's quiz score drop?": thinking lines name both agents, the answer cites evidence (chips open the evidence), the panel shows a plan.
+- [ ] Edit a session time, **Approve & send**: the notification lands on the phone.
+- [ ] Phone: a wrong answer shows its hint; the teacher's meters move as answers arrive; **Skip to tonight**, finish the mastery check; the teacher gets the 20:40 update and the phone shows tomorrow's plan.
+- [ ] Ask about the class and about who needs you personally: approve the class activity and the check-ins (nothing reaches the phone).
+- [ ] **Export** shows "Not part of this demo".
+- [ ] Stop the server, set `BEYOND_OFFLINE=1`, restart: the Minh Anh story still works with "Offline answer" tags.
+- [ ] **Reset demo** returns both screens to the start.
+
 ## Standalone frames
 
 Any window can render without the Director:
