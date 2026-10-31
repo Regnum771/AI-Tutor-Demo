@@ -6,7 +6,7 @@ import { fakeClient } from './fakeClient';
 import { runAgent } from './loop';
 import { adaptInput, pathwaySessions, planInput, reportInput } from './samples';
 import { SAS_SYSTEM, sasMessages, sasSpec, type Report } from './sas';
-import { TAS_SYSTEM, tasMessages, tasSpec } from './tas';
+import { TAS_SYSTEM, tasMessages, tasSpec, toPlan } from './tas';
 
 const quiet = { onStep: () => {} };
 const ask = [{ role: 'user' as const, content: 'x' }];
@@ -82,6 +82,23 @@ describe('Teaching Assistance Agent', () => {
     expect(text).toContain('student s17 (Nguyễn Minh Anh)');
     expect(text).toContain('equivLaws');
     expect(text).toContain('"id":"p1"');
+  });
+  it('names the students on the escalation list', () => {
+    const report: Report = { title: 't', blocks: [{ kind: 'p', text: 'x', cites: [] }], focus: { kind: 'class' }, gaps: [], needsPlan: true, revisePlan: false, followUps: [] };
+    const list = state.students.filter((s) => s.escalated).map((s) => s.id);
+    expect(list.length).toBeGreaterThan(0);
+    expect(String(tasMessages(state, 'q', report, null)[0].content)).toContain(`Students on the escalation list: ${list.join(', ')}.`);
+  });
+  it('normalises the day so the policy checks see "Today" and "Tomorrow"', () => {
+    const day = (d: unknown) => toPlan({ day: d }, { id: 'p1', conversationId: 'c1', status: 'proposed' }).day;
+    expect(day(' today ')).toBe('Today');
+    expect(day('TOMORROW')).toBe('Tomorrow');
+    expect(day('Thursday')).toBe('Thursday');
+    expect(day(undefined)).toBe('Today');
+  });
+  it('steers the prompts away from duplicate plans and missed targets', () => {
+    expect(SAS_SYSTEM).toContain('leave needs_plan false unless the lecturer asks for a new one');
+    expect(TAS_SYSTEM).toContain('Include at least one practice session on the target concept before the mastery check');
   });
 });
 

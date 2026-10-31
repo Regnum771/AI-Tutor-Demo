@@ -86,6 +86,7 @@ export class DemoSession {
   ask(text: string, conversationId: string | null): AskResult {
     const question = text.trim();
     if (!question) return { ok: false, status: 400, error: 'Empty question.' };
+    if (question.length > 500) return { ok: false, status: 400, error: 'Please keep questions under 500 characters.' };
     if (this.state.busy) return { ok: false, status: 409, error: 'The agents are still working.' };
     const s = structuredClone(this.state);
     let conv = s.conversations.find((c) => c.id === conversationId);
@@ -110,8 +111,8 @@ export class DemoSession {
       }
       if (out.plan) {
         const i = st.plans.findIndex((p) => p.id === out.plan!.id);
-        if (i >= 0) st.plans[i] = out.plan;
-        else st.plans.push(out.plan);
+        if (i < 0) st.plans.push(out.plan);
+        else if (st.plans[i].status === 'proposed') st.plans[i] = out.plan;
       }
     });
     return { ok: true, conversationId: id, done };

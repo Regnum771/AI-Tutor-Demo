@@ -19,7 +19,9 @@ describe('DemoSession failures', () => {
     expect(c.pending).toBeNull();
     expect(c.msgs.at(-1)).toMatchObject({ role: 'assistant', source: 'system' });
     expect(warn).toHaveBeenCalledOnce();
-    expect(session.ask('And now?', c.id).ok).toBe(true);
+    const again = session.ask('And now?', c.id);
+    expect(again.ok).toBe(true);
+    if (again.ok) await again.done; // this run fails too: wait for it while console.warn is still spied
     warn.mockRestore();
   });
 });

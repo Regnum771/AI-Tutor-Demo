@@ -9,7 +9,7 @@ export interface MessagesClient {
 }
 
 /** Read at call time so `.env.local` (loaded by server/env.ts) applies. */
-export const model = (): string => process.env.BEYOND_MODEL ?? 'claude-sonnet-5-5';
+export const model = (): string => process.env.BEYOND_MODEL || 'claude-sonnet-5-5';
 const effort = (): 'low' | 'medium' | 'high' => {
   const e = process.env.BEYOND_EFFORT;
   return e === 'low' || e === 'high' ? e : 'medium';

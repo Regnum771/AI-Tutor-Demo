@@ -16,10 +16,10 @@ export interface Deps {
   signal?: AbortSignal;
 }
 
-const ASKS_FOR_PLAN = /\b(plan|intervention|what should i do|schedule|follow-?up)\b/i;
+const ASKS_FOR_PLAN = /\b(make|draft|create|propose|suggest|build|write|give me|need)\b.*\b(plan|intervention)\b|\bwhat should i do\b/i;
 const NO_PLAN = 'I couldn’t draft a plan within your policy.';
 
-const warn = (what: string, e: unknown) => console.warn(`[beyond] ${what} failed, answering offline:`, e instanceof Error ? e.message : e);
+const warn = (what: string, e: unknown) => console.warn(`[beyond] ${what}: ${e instanceof Error ? e.message : e}`);
 
 const textOf = (m: ChatMsg): string => {
   if (m.role === 'teacher') return m.text;
@@ -35,11 +35,17 @@ export const openPlanOf = (state: DemoState, conversationId: string): Plan | nul
 
 function panelFor(focus: Focus, plan: Plan | null): LivePanel | null {
   if (plan?.kind === 'checkIns') return { kind: 'checkIns', planId: plan.id };
-  if (focus.kind === 'student') return { kind: 'student', studentId: focus.studentId, planId: plan?.kind === 'pathway' ? plan.id : null, highlight: null };
-  if (focus.kind === 'class' || plan?.kind === 'classActivity') return { kind: 'class', planId: plan?.kind === 'classActivity' ? plan.id : null };
+  if (plan?.kind === 'classActivity') return { kind: 'class', planId: plan.id };
   if (plan?.kind === 'pathway') return { kind: 'student', studentId: plan.studentIds[0], planId: plan.id, highlight: null };
+  if (focus.kind === 'student') return { kind: 'student', studentId: focus.studentId, planId: null, highlight: null };
+  if (focus.kind === 'class') return { kind: 'class', planId: null };
   return null;
 }
+
+/** Whether an open plan is about what this question is about. */
+const sameSubject = (plan: Plan, focus: Focus): boolean =>
+  focus.kind === 'none' ||
+  (focus.kind === 'student' ? plan.kind === 'pathway' && plan.studentIds[0] === focus.studentId : plan.kind !== 'pathway');
 
 /** One teacher question: SAS, then TAS when a plan is wanted; canned answers when the agents are unavailable. */
 export async function answer(state: DemoState, history: ChatMsg[], conversationId: string, text: string, deps: Deps): Promise<Outcome> {
@@ -50,25 +56,27 @@ export async function answer(state: DemoState, history: ChatMsg[], conversationI
     const report = await runAgent(deps.client, sasSpec(state), sasMessages(historyOf(history), text, state, openPlan), deps);
     let plan: Plan | null = null;
     const extra: LiveBlock[] = [];
+    const onSubject = openPlan !== null && sameSubject(openPlan, report.focus);
     if (report.needsPlan || report.revisePlan || ASKS_FOR_PLAN.test(text)) {
-      const revising = report.revisePlan && openPlan !== null;
+      const revising = openPlan !== null && (report.revisePlan || onSubject);
       deps.onStep(revising ? 'Teaching Assistance Agent · revising the plan' : 'Teaching Assistance Agent · drafting a plan');
       try {
         plan = await runAgent(deps.client, tasSpec(state, conversationId, revising ? openPlan.id : deps.newPlanId()), tasMessages(state, text, report, revising ? openPlan : null), deps);
       } catch (e) {
         if (deps.signal?.aborted) throw e;
+        warn('plan drafting failed', e);
         extra.push({ kind: 'p', text: NO_PLAN, cites: [] });
       }
     }
     return {
-      msg: { role: 'assistant', source: 'agents', blocks: [...report.blocks, ...extra], canned: null, followUps: report.followUps, panel: panelFor(report.focus, plan), stamp: null },
+      msg: { role: 'assistant', source: 'agents', blocks: [...report.blocks, ...extra], canned: null, followUps: report.followUps, panel: panelFor(report.focus, plan ?? (onSubject ? openPlan : null)), stamp: null },
       title: report.title,
       sansTitle: report.focus.kind === 'student',
       plan,
     };
   } catch (e) {
     if (deps.signal?.aborted) throw e;
-    warn('agents', e);
+    warn('agents failed, answering offline', e);
     return offline();
   }
 }
@@ -86,7 +94,7 @@ export async function adaptAfterCheck(state: DemoState, planId: string, deps: De
       result = await runAgent(deps.client, adaptSpec(state, plan, followUpId), adaptMessages(state, plan, before), deps);
     } catch (e) {
       if (deps.signal?.aborted) throw e;
-      warn('adapt', e);
+      warn('adapt failed, answering offline', e);
     }
   }
   if (!result) {

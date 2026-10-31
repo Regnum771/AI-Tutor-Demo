@@ -33,7 +33,7 @@ const PLAN_TOOL = tool('propose_plan', 'Propose the plan. Call this once, last.'
 export const TAS_SYSTEM = `You are the Teaching Assistance Agent in Beyond. The Student Analysis Agent has diagnosed a question from the lecturer, Lam (Discrete Mathematics, DM-2026, Week 6: logical equivalence). Turn the diagnosis into one plan the lecturer can approve. All data is fictional demo data. Refer to students by name; do not assume anyone's pronouns.
 
 Pick the kind:
-- pathway: short adaptive practice on one student's phone. 2–4 sessions, at most 45 minutes in total, each on one concept, building prerequisites first. The last session is the mastery check on the target concept (is_mastery_check true). Sessions run 5–12 minutes.
+- pathway: short adaptive practice on one student's phone. 2–4 sessions, at most 45 minutes in total, each on one concept, building prerequisites first. The last session is the mastery check on the target concept (is_mastery_check true). Sessions run 5–12 minutes. Use logical equivalence as the target unless the question is about something else. Include at least one practice session on the target concept before the mastery check, and do not repeat any other concept.
 - classActivity: an in-class activity for a group with a shared gap (for example a 15-minute recap in Thursday's tutorial), listing the affected student ids. 1–2 sessions.
 - checkIns: 15-minute conversations with up to 5 students who need the lecturer personally (for example those on the escalation list). One session per student, with student_id set.
 
@@ -44,6 +44,11 @@ If an open plan is given, revise it to do what the lecturer asked and keep every
 You may look things up with the read tools. Then call propose_plan. Always finish with propose_plan.`;
 
 type Meta = { id: string; conversationId: string; status: PlanStatus };
+
+const dayOf = (raw: unknown): string => {
+  const d = String(raw ?? 'Today').trim();
+  return /^today$/i.test(d) ? 'Today' : /^tomorrow$/i.test(d) ? 'Tomorrow' : d;
+};
 
 /** propose_plan input → Plan (not yet checked against the policy). */
 export function toPlan(input: unknown, meta: Meta): Plan {
@@ -63,7 +68,7 @@ export function toPlan(input: unknown, meta: Meta): Plan {
   let studentIds = Array.isArray(r.student_ids) ? r.student_ids.map(String) : [];
   if (kind === 'checkIns' && studentIds.length === 0) studentIds = sessions.flatMap((s) => (s.studentId ? [s.studentId] : []));
   return {
-    id: meta.id, kind, title: String(r.title ?? 'Plan'), studentIds, day: String(r.day ?? 'Today'), sessions,
+    id: meta.id, kind, title: String(r.title ?? 'Plan'), studentIds, day: dayOf(r.day), sessions,
     rationale: String(r.rationale ?? ''), outcome: String(r.outcome ?? ''), status: meta.status, conversationId: meta.conversationId,
   };
 }
@@ -97,6 +102,7 @@ export function tasMessages(state: DemoState, question: string, report: Report, 
     `Lecturer's question: ${question}`,
     `Diagnosis from the Student Analysis Agent:\n${report.blocks.map((b) => (b.kind === 'li' ? '- ' : '') + b.text).join('\n')}`,
     `Focus: ${focus}. Gap concepts: ${report.gaps.join(', ') || 'none named'}.`,
+    `Students on the escalation list: ${state.students.filter((s) => s.escalated).map((s) => s.id).join(', ') || 'none'}.`,
     `Concepts with practice items (pathway sessions may use only these): ${BANK_CONCEPTS.join(', ')}.`,
     `Story time now: ${fmt(state.clock)} (day "Today").`,
     `Open plan to revise: ${openPlan ? JSON.stringify(planBrief(openPlan)) : 'none'}.`,

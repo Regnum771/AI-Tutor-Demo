@@ -6,7 +6,7 @@ import { createApp } from './app';
 import { pickLanIp } from './lan';
 import { DemoSession } from './session';
 
-const PORT = Number(process.env.BEYOND_PORT ?? 8787);
+const PORT = 8787;
 const VITE_PORT = 5173;
 
 /** The laptop's Wi-Fi/LAN address, for the phone QR code. */

@@ -1,6 +1,6 @@
 import { fmt, parseTime } from '../../src/live/clock';
 import { studentById } from '../../src/live/reducer';
-import type { AssistantMsg, DemoState, LivePanel, Mastery, Plan, PlanSession } from '../../src/live/types';
+import type { AssistantMsg, DemoState, LivePanel, Mastery, Plan, PlanKind, PlanSession } from '../../src/live/types';
 import { COMPLEX } from '../../src/scenario/classroom';
 import { conceptById, type ConceptId } from '../../src/scenario/knowledgeGraph';
 import { MINH_ANH } from '../../src/scenario/minhAnh';
@@ -10,7 +10,7 @@ import type { AdaptResult } from './adapt';
 
 export interface Outcome { msg: AssistantMsg; title: string; sansTitle: boolean; plan: Plan | null }
 
-const PATHWAY_CONCEPTS: ConceptId[] = ['negation', 'implication', 'implication', 'equivalence'];
+const PATHWAY_CONCEPTS: ConceptId[] = ['negation', 'implication', 'equivalence', 'equivalence'];
 const FOLLOW_UP_CONCEPTS: ConceptId[] = ['equivLaws', 'applications', 'equivLaws'];
 
 const session = (time: string, title: string, minutes: number, concept: ConceptId | null, isMasteryCheck = false, studentId: string | null = null): PlanSession =>
@@ -55,27 +55,30 @@ export function cannedAnswer(state: DemoState, text: string, ids: { planId: stri
   const offline = (canned: AssistantMsg['canned'], followUps: string[], panel: LivePanel | null): AssistantMsg =>
     ({ role: 'assistant', source: 'offline', blocks: [], canned, followUps, panel, stamp: null });
   if (!topic) return { msg: offline('fallback', [], null), title: text.length > 40 ? `${text.slice(0, 39)}…` : text, sansTitle: false, plan: null };
-  const plan = cannedPlan(state, topic, ids.planId, ids.conversationId);
+  const kind: PlanKind = topic === 'student' ? 'pathway' : topic === 'class' ? 'classActivity' : 'checkIns';
+  const existing = state.plans.find((p) => p.conversationId === ids.conversationId && p.kind === kind && p.status !== 'dismissed');
+  const plan = existing ?? cannedPlan(state, topic, ids.planId, ids.conversationId);
   const panel: LivePanel = topic === 'student'
     ? { kind: 'student', studentId: MINH_ANH.id, planId: plan.id, highlight: null }
     : topic === 'class' ? { kind: 'class', planId: plan.id } : { kind: 'checkIns', planId: plan.id };
-  return { msg: offline(topic, CANNED_TOPICS[topic].followUps, panel), title: CANNED_TOPICS[topic].title, sansTitle: false, plan };
+  return { msg: offline(topic, CANNED_TOPICS[topic].followUps, panel), title: CANNED_TOPICS[topic].title, sansTitle: false, plan: existing ? null : plan };
 }
 
-/** Offline adapt: the result in one line and the video's follow-up, auto-approved. */
+/** Offline adapt: the result in one line and, after a plan for today, the video's follow-up, auto-approved. */
 export function cannedAdapt(state: DemoState, plan: Plan, before: Mastery, followUpId: string): AdaptResult {
   const s = studentById(state, plan.studentIds[0])!;
   const target = plan.sessions.find((x) => x.isMasteryCheck)?.concept ?? 'equivalence';
   const reached = s.mastery[target] >= 0.75;
-  const followUp: Plan = {
+  const today = plan.day === 'Today';
+  const followUp: Plan | null = !today ? null : {
     id: followUpId, kind: 'pathway', title: 'Next: equivalence laws in practice', studentIds: [s.id], day: 'Tomorrow',
     rationale: 'Builds on tonight’s mastery check.', outcome: 'Equivalence laws mastery ≥ 0.60', status: 'autoApproved', conversationId: plan.conversationId,
     sessions: PATHWAY_UPDATED.map((p, i) => session(p.when.replace('Tomorrow ', ''), p.title, p.mins, FOLLOW_UP_CONCEPTS[i], i === PATHWAY_UPDATED.length - 1)),
   };
   return {
     blocks: [
-      { kind: 'p', cites: [], text: `${s.short} finished tonight’s mastery check: ${conceptById(target).label.toLowerCase()} **${before[target].toFixed(2)} → ${s.mastery[target].toFixed(2)}**. ${reached ? `${s.short} has reached the target.` : 'Still short of the 0.75 target.'}` },
-      { kind: 'p', cites: [], text: 'Next up: **equivalence laws in practice**. Within your policy, I’ve sent a 3-session follow-up for tomorrow.' },
+      { kind: 'p', cites: [], text: `${s.short} finished ${today ? 'tonight’s mastery check' : 'the mastery check'}: ${conceptById(target).label.toLowerCase()} **${before[target].toFixed(2)} → ${s.mastery[target].toFixed(2)}**. ${reached ? `${s.short} has reached the target.` : 'Still short of the 0.75 target.'}` },
+      ...(followUp ? [{ kind: 'p' as const, cites: [], text: 'Next up: **equivalence laws in practice**. Within your policy, I’ve sent a 3-session follow-up for tomorrow.' }] : []),
     ],
     followUp,
   };

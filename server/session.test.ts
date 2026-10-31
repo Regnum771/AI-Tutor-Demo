@@ -3,7 +3,7 @@ import { TONIGHT } from '../src/live/clock';
 import { sessionItems } from '../src/scenario/practiceBank';
 import type { MessagesClient } from './agents/client';
 import { fakeClient } from './agents/fakeClient';
-import { reportInput } from './agents/samples';
+import { planInput, reportInput } from './agents/samples';
 import { DemoSession } from './session';
 
 const MA = 'Why did Minh Anh’s quiz score drop?';
@@ -13,6 +13,27 @@ const asked = async (session: DemoSession, text = MA, id: string | null = null) 
   await r.done;
   return r.conversationId;
 };
+
+/** The offline Minh Anh story, answering every item correctly first try. */
+async function perfectRun(skip: boolean) {
+  const session = new DemoSession(null);
+  await asked(session);
+  session.approve('p1');
+  session.phonePlan();
+  if (skip) session.phoneSkip();
+  const plan = session.state.plans[0];
+  for (const [i, s] of plan.sessions.entries()) {
+    if (session.state.phone.done.includes(i)) continue;
+    expect(session.phoneOpen(i)).toEqual({ ok: true });
+    for (const item of sessionItems(s.concept!, s.isMasteryCheck)) {
+      expect(session.phoneAnswer(item.correct)).toEqual({ ok: true });
+      const next = session.phoneNext();
+      if (!next.ok) throw new Error(next.error);
+      await next.done;
+    }
+  }
+  return session.state;
+}
 
 describe('DemoSession', () => {
   it('runs an ask in the background and records answer, title and plan', async () => {
@@ -31,6 +52,14 @@ describe('DemoSession', () => {
     expect(session.state.plans.map((p) => p.id)).toEqual(['p1']);
     expect(session.state.busy).toBe(false);
     expect(published).toBeGreaterThanOrEqual(2);
+  });
+  it('caps the question length', async () => {
+    const session = new DemoSession(null);
+    expect(session.ask('x'.repeat(501), null)).toEqual({ ok: false, status: 400, error: 'Please keep questions under 500 characters.' });
+    expect(session.state.conversations).toEqual([]);
+    const r = session.ask('x'.repeat(500), null);
+    expect(r.ok).toBe(true);
+    if (r.ok) await r.done;
   });
   it('rejects empty questions and a second ask while busy', async () => {
     const session = new DemoSession(null);
@@ -60,10 +89,13 @@ describe('DemoSession', () => {
     let release!: () => void;
     const gate = new Promise<void>((r) => (release = r));
     const { client: inner } = fakeClient([[{ tool: 'report', input: reportInput({ needs_plan: false }) }]]);
-    const client: MessagesClient = { create: async (p, o) => { await gate; return inner.create(p, o); } };
+    const signals: (AbortSignal | undefined)[] = [];
+    const client: MessagesClient = { create: async (p, o) => { signals.push(o?.signal); await gate; return inner.create(p, o); } };
     const session = new DemoSession(client);
     const r = session.ask(MA, null);
     session.reset();
+    expect(signals).toHaveLength(1);
+    expect(signals[0]?.aborted).toBe(true);
     release();
     if (r.ok) await r.done;
     expect(session.state).toMatchObject({ epoch: 1, conversations: [], plans: [], busy: false });
@@ -88,6 +120,54 @@ describe('DemoSession', () => {
     expect(s.plans.find((p) => p.id === 'p2')?.status).toBe('autoApproved');
     expect(s.conversations[0].msgs.at(-1)).toMatchObject({ role: 'assistant', stamp: '20:40' });
     expect(s.busy).toBe(false);
+  });
+  it('a perfect offline run reaches the target, with or without Skip', async () => {
+    for (const skip of [false, true]) {
+      const s = await perfectRun(skip);
+      expect(s.students.find((x) => x.id === 's17')!.mastery.equivalence).toBeGreaterThanOrEqual(0.75);
+      const last = s.conversations[0].msgs.at(-1);
+      if (last?.role !== 'assistant') throw new Error('no adapt message');
+      expect(last.blocks[0].text).toContain('has reached the target');
+    }
+  });
+  it('a second offline question in a conversation does not add a plan', async () => {
+    const session = new DemoSession(null);
+    const id = await asked(session);
+    await asked(session, 'Show me her full history', id);
+    expect(session.state.plans.map((p) => p.id)).toEqual(['p1']);
+    expect(session.state.conversations[0].msgs.at(-1)).toMatchObject({ panel: { planId: 'p1' } });
+  });
+  describe('a revision that lands late', () => {
+    const revising = () => {
+      let release!: () => void;
+      const gate = new Promise<void>((r) => (release = r));
+      const { client: inner } = fakeClient([
+        [{ tool: 'report', input: reportInput() }], [{ tool: 'propose_plan', input: planInput() }],
+        [{ tool: 'report', input: reportInput({ needs_plan: false, revise_plan: true }) }], [{ tool: 'propose_plan', input: planInput({ title: 'Revised' }) }],
+      ]);
+      let n = 0;
+      const client: MessagesClient = { create: async (p, o) => { if (++n === 3) await gate; return inner.create(p, o); } };
+      return { session: new DemoSession(client), release };
+    };
+    it('replaces a plan that is still proposed', async () => {
+      const { session, release } = revising();
+      const id = await asked(session);
+      const r = session.ask('Make it shorter', id);
+      release();
+      if (r.ok) await r.done;
+      expect(session.state.plans).toHaveLength(1);
+      expect(session.state.plans[0]).toMatchObject({ title: 'Revised', status: 'proposed' });
+    });
+    it('does not overwrite a plan approved in the meantime', async () => {
+      const { session, release } = revising();
+      const id = await asked(session);
+      const r = session.ask('Make it shorter', id);
+      expect(session.approve('p1')).toEqual({ ok: true });
+      release();
+      if (r.ok) await r.done;
+      expect(session.state.plans).toHaveLength(1);
+      expect(session.state.plans[0]).toMatchObject({ title: 'Rebuild implication, then equivalence', status: 'sent' });
+    });
   });
   it('reports reducer errors', () => {
     const session = new DemoSession(null);
