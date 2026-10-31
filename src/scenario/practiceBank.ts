@@ -27,14 +27,14 @@ export const BANK: BankItem[] = [
   item('propositions', 'p: “It is raining”, q: “I take an umbrella”. Which sentence is p ∧ q?', ['It is raining or I take an umbrella.', 'It is raining and I take an umbrella.', 'If it is raining, I take an umbrella.', 'It is not raining.'], 1, [
     '“or” is ∨, not ∧.', '', '“If … then” is implication (→).', 'That is ¬p.']),
   item('propositions', 'How many rows does the truth table for p, q, r have?', ['3', '6', '8', '9'], 2, [
-    'Each variable doubles the rows: 2 × 2 × 2.', 'Each variable doubles the rows; it does not add 2.', '', 'Rows are 2ⁿ, not 3ⁿ: each variable is T or F.']),
+    'Each variable doubles the rows: 2 × 2 × 2.', 'Each variable doubles the rows; it does not add 2.', '', 'Each variable is T or F, so the rows are 2 × 2 × 2, not 3 × 3.']),
 
   item('negation', 'What is the negation of “All students passed”?', ['No student passed.', 'Some student did not pass.', 'All students failed.', 'Some students passed.'], 1, [
     '“None passed” is stronger than the negation: one failure is enough.', '', 'Negating “all” does not flip every case: one counterexample is enough.', 'That can be true together with the original, so it is not its negation.']),
   item('negation', 'If p is true, what is ¬¬p?', ['True', 'False', 'Undefined', 'Depends on q'], 0, [
     '', 'Two negations cancel: ¬¬p has the same value as p.', 'Every compound of p has a value once p is known.', 'q does not appear in ¬¬p.']),
   item('negation', 'Which is equivalent to ¬(p ∧ q)?', ['¬p ∧ ¬q', '¬p ∨ ¬q', 'p ∨ q', '¬p → q'], 1, [
-    'Negating ∧ turns it into ∨ (De Morgan): check p = T, q = F.', '', 'Each part must be negated too.', 'Check p = F, q = F: ¬(p ∧ q) is T but ¬p → q is F.'],
+    'Negating ∧ turns it into ∨ (De Morgan): check p = T, q = F.', '', 'Check p = T, q = T: ¬(p ∧ q) is F but p ∨ q is T.', 'Check p = F, q = F: ¬(p ∧ q) is T but ¬p → q is F.'],
     { start: '¬(p ∧ q)', steps: [{ expr: '¬p ∨ ¬q', why: "De Morgan's law: negate each part, swap ∧ for ∨" }] }),
 
   item('conjunction', 'p ∧ q is true exactly when…', ['p is true', 'at least one of p, q is true', 'both p and q are true', 'p and q have the same value'], 2, [
@@ -116,10 +116,10 @@ export const BANK: BankItem[] = [
     ] }),
 
   item('applications', 'A door opens if you have a badge or a code, and the alarm is off. Which formula?', ['(b ∨ c) ∧ ¬a', 'b ∨ (c ∧ ¬a)', '(b ∧ c) ∨ ¬a', 'b ∨ c ∨ ¬a'], 0, [
-    '', 'The alarm must be off for the badge too.', 'You need a badge or a code, not both.', 'The alarm condition must always hold.']),
-  item('applications', 'Rule: “if a student misses 3 tutorials, the teacher is alerted”. The teacher was not alerted. What follows?', ['The student missed 3 tutorials.', 'The student did not miss 3 tutorials.', 'Nothing follows.', 'The rule was broken.'], 1, [
+    '', 'The alarm must be off for the badge too.', 'This opens the door with no badge or code whenever the alarm is off, and demands both otherwise.', 'The alarm condition must always hold.']),
+  item('applications', 'Rule: “if a student misses 3 tutorials, the teacher is alerted”. The teacher was not alerted. What follows?', ['The student missed 3 tutorials.', 'The student missed fewer than 3 tutorials.', 'Nothing follows.', 'The rule was broken.'], 1, [
     'That would make the rule fail.', '', 'The contrapositive applies: ¬q → ¬p.', 'The rule still holds; reason from it.']),
-  item('applications', 'Which query finds students who are in neither G1 nor G2?', ['¬(G1 ∨ G2)', '¬G1 ∨ ¬G2', '¬(G1 ∧ G2)', 'G1 ∨ G2'], 0, [
+  item('applications', 'Each student is in at most one tutorial group. Which query finds students who are in neither G1 nor G2?', ['¬(G1 ∨ G2)', '¬G1 ∨ ¬G2', '¬(G1 ∧ G2)', 'G1 ∨ G2'], 0, [
     '', 'That includes every student in G1 (they are not in G2).', 'Nobody is in both groups, so that matches everyone.', 'That finds the students in G1 or G2.']),
 ];
 counts = {};

@@ -5,7 +5,7 @@ import { BANK, BANK_CONCEPTS, itemsFor, sessionItems } from './practiceBank';
 
 describe('practice bank', () => {
   it('covers all 12 concepts with at least 3 items each', () => {
-    expect(BANK_CONCEPTS.sort()).toEqual(CONCEPTS.map((c) => c.id).sort());
+    expect([...BANK_CONCEPTS].sort()).toEqual(CONCEPTS.map((c) => c.id).sort());
     for (const c of CONCEPTS) expect(itemsFor(c.id).length, c.id).toBeGreaterThanOrEqual(3);
   });
   it('has unique ids and one hint per wrong option', () => {
