@@ -51,13 +51,46 @@ describe('answer', () => {
     const cls = fakeClient([[{ tool: 'report', input: reportInput() }], [{ tool: 'propose_plan', input: CLASS_PLAN }]]);
     expect((await answer(seedState(), [], 'c1', MA, deps({ client: cls.client }))).msg.panel).toEqual({ kind: 'class', planId: 'p1' });
   });
-  it('revises the open plan when a plan is wanted on the same subject', async () => {
+  it('keeps the open plan when a plan is wanted on the same subject', async () => {
     const state = stateWithPlan();
-    const { client } = fakeClient([[{ tool: 'report', input: reportInput() }], [{ tool: 'propose_plan', input: planInput() }]]);
+    const { client, calls } = fakeClient([[{ tool: 'report', input: reportInput({ needs_plan: true, revise_plan: false }) }]]);
     const newPlanId = vi.fn(() => 'p7');
     const out = await answer(state, state.conversations[0].msgs, 'c1', MA, deps({ client, newPlanId }));
-    expect(out.plan?.id).toBe('p1');
+    expect(calls).toHaveLength(1);
+    expect(out.plan).toBeNull();
     expect(newPlanId).not.toHaveBeenCalled();
+    expect(out.msg.panel).toEqual({ kind: 'student', studentId: 's17', planId: 'p1', highlight: null });
+  });
+  it('drafts a check-ins plan beside an open class activity', async () => {
+    const state = stateWithPlan('classActivity');
+    const checkIns = planInput({ kind: 'checkIns', student_ids: ['s8'], day: 'Thursday', sessions: [{ time: '10:00', title: 'Check in', minutes: 10, concept: 'none', is_mastery_check: false, student_id: 's8' }] });
+    const { client, calls } = fakeClient([[{ tool: 'report', input: reportInput({ focus_kind: 'class', focus_student_id: '', needs_plan: true }) }], [{ tool: 'propose_plan', input: checkIns }]]);
+    const out = await answer(state, state.conversations[0].msgs, 'c1', 'Who needs me personally?', deps({ client, newPlanId: () => 'p7' }));
+    expect(out.plan?.id).toBe('p7');
+    expect(JSON.stringify(calls[1])).toContain('Open plan to revise: none');
+  });
+  it('drafts a class activity beside open check-ins', async () => {
+    const state = stateWithPlan('checkIns');
+    const { client } = fakeClient([[{ tool: 'report', input: reportInput({ focus_kind: 'class', focus_student_id: '', needs_plan: true }) }], [{ tool: 'propose_plan', input: CLASS_PLAN }]]);
+    const out = await answer(state, state.conversations[0].msgs, 'c1', 'What gap is the class facing?', deps({ client, newPlanId: () => 'p7' }));
+    expect(out.plan?.id).toBe('p7');
+  });
+  it('shows no panel when nothing is in focus', async () => {
+    const state = stateWithPlan();
+    const { client } = fakeClient([[{ tool: 'report', input: reportInput({ focus_kind: 'none', focus_student_id: '', needs_plan: false }) }]]);
+    const out = await answer(state, state.conversations[0].msgs, 'c1', 'Thanks', deps({ client }));
+    expect(out.plan).toBeNull();
+    expect(out.msg.panel).toBeNull();
+  });
+  it.each([
+    ['Make a plan for Minh Anh', true], ['Can you draft an intervention?', true], ['What should I do?', true],
+    ['I need to know how the plan went', false], ['Give me an update on the plan', false],
+    ['Did you make the plan I approved?', false], ['How did the plan go?', false],
+  ])('plan request wording: %s', async (text, drafts) => {
+    const script = [[{ tool: 'report', input: reportInput({ needs_plan: false }) }], ...(drafts ? [[{ tool: 'propose_plan', input: planInput() }]] : [])];
+    const { client, calls } = fakeClient(script);
+    await answer(seedState(), [], 'c1', text, deps({ client }));
+    expect(calls).toHaveLength(drafts ? 2 : 1);
   });
   it('drafts a new plan for another student and leaves the open one alone', async () => {
     const state = stateWithPlan();

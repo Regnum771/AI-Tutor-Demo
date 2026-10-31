@@ -105,7 +105,7 @@ function EvidenceList({ entries, highlight }: { entries: Evidence[]; highlight: 
 }
 
 function StudentLive({ s, plan, highlight, bars, state }: { s: StudentProfile; plan: Plan | null; highlight: string | null; bars: number; state: DemoState }) {
-  const level = s.escalated ? 'personal' : s.status === 'onTrack' ? null : s.status;
+  const level = s.status === 'onTrack' ? null : s.escalated ? 'personal' : s.status;
   const classPractice = (Math.round(mean(state.students.map((x) => x.practicePerWeek)) * 10) / 10).toFixed(1);
   return (
     <>

@@ -23,6 +23,15 @@ describe('live panels', () => {
     expect(out).toContain('Not now');
     expect(out).toMatch(/style="background:[^"]*" data-evidence="s17-quiz2"/);
   });
+  it('a recovered escalated student shows On track, not Needs you', () => {
+    const state = stateWithPlan();
+    const st = state.students.find((x) => x.id === 's17')!;
+    st.status = 'onTrack';
+    st.escalated = true;
+    const out = render(state, student());
+    expect(out).toContain('On track');
+    expect(out).not.toContain('Needs you');
+  });
   it('shows the plan status once it has been acted on', () => {
     const sent = render(stateWithPlan('pathway', { status: 'sent' }), student());
     expect(sent).toContain('Sent to Minh Anh’s phone');

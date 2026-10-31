@@ -152,7 +152,7 @@ Runs first on every question.
 
 ### 3.2 Teaching Assistance Agent (TAS)
 
-Runs when SAS sets `needs_plan`, when the teacher explicitly asks for a plan, or (as a revision) when SAS sets `revise_plan`, or a plan is wanted and the open `proposed` plan is on the same subject.
+Runs when SAS sets `needs_plan`, when the teacher explicitly asks for a plan, or (as a revision) when SAS sets `revise_plan`. If a plan is wanted but an open `proposed` plan already covers the same subject (the same student's pathway, the class activity, or the check-ins), the open plan is kept as it is and no second plan is drafted.
 
 - **Input**: the SAS diagnosis, the practice-bank catalogue (concepts that have canned items), the policy and the story clock.
 - **Finishes with `propose_plan`**, choosing a kind (§2.2) and giving a rationale:

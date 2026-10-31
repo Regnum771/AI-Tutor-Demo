@@ -1,7 +1,7 @@
 import { fmt } from '../../src/live/clock';
 import { planById, studentById } from '../../src/live/reducer';
 import type { AssistantMsg, ChatMsg, DemoState, LiveBlock, LivePanel, Plan } from '../../src/live/types';
-import { CANNED_TOPICS } from '../../src/teacher/route';
+import { CANNED_TOPICS, routePrompt } from '../../src/teacher/route';
 import { adaptMessages, adaptSpec, type AdaptResult } from './adapt';
 import { cannedAdapt, cannedAnswer, type Outcome } from './canned';
 import type { MessagesClient } from './client';
@@ -16,7 +16,7 @@ export interface Deps {
   signal?: AbortSignal;
 }
 
-const ASKS_FOR_PLAN = /\b(make|draft|create|propose|suggest|build|write|give me|need)\b.*\b(plan|intervention)\b|\bwhat should i do\b/i;
+const ASKS_FOR_PLAN = /\b(make|draft|create|propose|suggest|build|write)\b[^.?!]*\b(a|an|new|another)\b[^.?!]*\b(plan|intervention)\b|\bwhat should i do\b/i;
 const NO_PLAN = 'I couldn’t draft a plan within your policy.';
 
 const warn = (what: string, e: unknown) => console.warn(`[beyond] ${what}: ${e instanceof Error ? e.message : e}`);
@@ -42,10 +42,12 @@ function panelFor(focus: Focus, plan: Plan | null): LivePanel | null {
   return null;
 }
 
-/** Whether an open plan is about what this question is about. */
-const sameSubject = (plan: Plan, focus: Focus): boolean =>
-  focus.kind === 'none' ||
-  (focus.kind === 'student' ? plan.kind === 'pathway' && plan.studentIds[0] === focus.studentId : plan.kind !== 'pathway');
+/** Whether an open plan already covers what this question is about (each kind is its own subject). */
+const sameSubject = (plan: Plan, focus: Focus, text: string): boolean => {
+  if (focus.kind === 'student') return plan.kind === 'pathway' && plan.studentIds[0] === focus.studentId;
+  if (focus.kind === 'class') return plan.kind === (routePrompt(text) === 'attention' ? 'checkIns' : 'classActivity');
+  return false;
+};
 
 /** One teacher question: SAS, then TAS when a plan is wanted; canned answers when the agents are unavailable. */
 export async function answer(state: DemoState, history: ChatMsg[], conversationId: string, text: string, deps: Deps): Promise<Outcome> {
@@ -56,9 +58,10 @@ export async function answer(state: DemoState, history: ChatMsg[], conversationI
     const report = await runAgent(deps.client, sasSpec(state), sasMessages(historyOf(history), text, state, openPlan), deps);
     let plan: Plan | null = null;
     const extra: LiveBlock[] = [];
-    const onSubject = openPlan !== null && sameSubject(openPlan, report.focus);
-    if (report.needsPlan || report.revisePlan || ASKS_FOR_PLAN.test(text)) {
-      const revising = openPlan !== null && (report.revisePlan || onSubject);
+    const onSubject = openPlan !== null && sameSubject(openPlan, report.focus, text);
+    // Only an explicit request changes an open plan; a plan already covering this subject is kept as it is.
+    const revising = openPlan !== null && report.revisePlan;
+    if (revising || ((report.needsPlan || ASKS_FOR_PLAN.test(text)) && !onSubject)) {
       deps.onStep(revising ? 'Teaching Assistance Agent · revising the plan' : 'Teaching Assistance Agent · drafting a plan');
       try {
         plan = await runAgent(deps.client, tasSpec(state, conversationId, revising ? openPlan.id : deps.newPlanId()), tasMessages(state, text, report, revising ? openPlan : null), deps);
