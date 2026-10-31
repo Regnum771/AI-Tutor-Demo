@@ -50,4 +50,11 @@ describe('live panels', () => {
     expect(out).toContain('Student context');
     expect(out).toContain('Approve &amp; send');
   });
+
+  it('uses the sans face for plan titles that can name a student', () => {
+    const pathway = render(stateWithPlan(), student());
+    expect(pathway).not.toMatch(/font-serif[^>]*>Rebuild implication/);
+    const cls = render(stateWithPlan('classActivity'), { kind: 'class', planId: 'p1' });
+    expect(cls).toMatch(/font-serif[^>]*>Group recap</);
+  });
 });

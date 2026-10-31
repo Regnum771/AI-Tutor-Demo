@@ -37,13 +37,14 @@ export function LivePlanCard({ plan }: { plan: Plan }) {
         <Mark size={14} />
         <Eyebrow>{EYEBROW[plan.kind]}</Eyebrow>
       </div>
-      <h3 className="mt-2 font-serif text-[28px] leading-[1.05] text-egg-ink">{plan.title}</h3>
+      {/* Agent-written titles can name a student; Instrument Serif has no Vietnamese glyphs. */}
+      <h3 className={`mt-2 text-egg-ink ${plan.kind === 'classActivity' ? 'font-serif text-[28px] leading-[1.05]' : 'text-[22px] font-semibold leading-tight'}`}>{plan.title}</h3>
       <div className="mt-1 text-[12.5px] text-egg-mute">
         {`${plan.status === 'autoApproved' ? 'Auto-approved · within your policy' : 'Agreed by Student Analysis + Teaching Assistance agents'} · ${plan.day}`}
       </div>
       <ol className="mt-4 divide-y divide-egg-line border-y border-egg-line">
         {plan.sessions.map((s, i) => (
-          <li key={i} className="grid grid-cols-[22px_1fr_auto] items-center gap-2 py-2.5">
+          <li key={`${plan.id}:${i}:${s.title}:${s.time}`} className="grid grid-cols-[22px_1fr_auto] items-center gap-2 py-2.5">
             <span className="font-mono text-[11px] text-egg-mute">{String(i + 1).padStart(2, '0')}</span>
             <span className="text-[13.5px] text-egg-ink">{`${s.title} · ${s.minutes} min`}</span>
             {editing && proposed ? (
