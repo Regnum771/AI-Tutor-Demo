@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const ROOT = join(process.cwd(), 'src/student');
 /** Screens not restyled yet. Each restyle task removes its file; the last one deletes this set. */
-const PENDING = new Set(['screens/PlanScreen.tsx', 'screens/PracticeScreen.tsx', 'screens/ProgressScreen.tsx']);
+const PENDING = new Set(['screens/PracticeScreen.tsx', 'screens/ProgressScreen.tsx']);
 /** Inline hex is allowed only for egg tokens (keep in sync with tailwind.config.js). */
 const EGG_HEX = new Set([
   '#F2EDE4', '#F8F4EC', '#FFFDF8', '#DCD3C5', '#1A1714', '#6B6359', '#9C9285', '#FF5B1F', '#FFE5D6',

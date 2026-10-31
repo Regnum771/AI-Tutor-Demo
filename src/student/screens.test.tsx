@@ -7,6 +7,12 @@ import { ProgressScreen } from './screens/ProgressScreen';
 import { SC9 } from '../scenario/practice';
 
 describe('student screens', () => {
+  it('plan screen: serif course title, sans name, one Up next', () => {
+    const plan = html(<PlanScreen local={5000} variant="initial" />);
+    expect(plan).toMatch(/font-serif[^>]*>Discrete Mathematics</);
+    expect(plan).not.toMatch(/font-serif[^>]*>Minh Anh</);
+    expect(plan.split('Up next').length - 1).toBe(1);
+  });
   it('lock screen shows the notification only when present', () => {
     expect(html(<LockScreen t={0} notification={1} clock="14:58" />)).toContain('Your personalized plan is ready');
     expect(html(<LockScreen t={0} notification={0} clock="14:58" />)).not.toContain('Your personalized plan is ready');
