@@ -1,8 +1,9 @@
 import { clamp, easeInOut, lerp, prog, typed } from '../engine/anim';
 import { TOPICS, type ContextId } from './conversations';
+import type { AssistantMsg, LivePanel } from '../live/types';
 
 export type View = 'chat' | 'classroom';
-export type AssistantKind = 'answer' | 'approved' | 'fallback' | 'brief' | 'adapt';
+export type AssistantKind = 'answer' | 'approved' | 'fallback' | 'brief' | 'adapt' | 'live';
 
 /** Far enough before any scene that every animation keyed to it has finished. */
 export const PAST = -600_000;
@@ -22,9 +23,9 @@ export type TeacherEvent =
   | { at: number; type: 'type'; text: string; cps: number }
   | { at: number; type: 'send'; text: string }
   | { at: number; type: 'think'; lines: string[]; stepMs: number; title: string; sansTitle?: boolean }
-  | { at: number; type: 'assistant'; kind: AssistantKind; topic?: ContextId; index?: number; blockMs: number; stamp?: string }
+  | { at: number; type: 'assistant'; kind: AssistantKind; topic?: ContextId; index?: number; blockMs: number; stamp?: string; live?: AssistantMsg }
   | { at: number; type: 'load'; topic: ContextId }
-  | { at: number; type: 'panel'; id: ContextId | null; barsDelay?: number; barsMs?: number }
+  | { at: number; type: 'panel'; id: ContextId | null; barsDelay?: number; barsMs?: number; live?: LivePanel }
   | { at: number; type: 'panelScroll'; y: number; dur: number }
   | { at: number; type: 'edit' }
   | { at: number; type: 'approve'; id: ContextId }
@@ -32,7 +33,8 @@ export type TeacherEvent =
   | { at: number; type: 'select'; index: number | null }
   | { at: number; type: 'classroomReveal' }
   | { at: number; type: 'pulse' }
-  | { at: number; type: 'adaptClass' };
+  | { at: number; type: 'adaptClass' }
+  | { at: number; type: 'title'; title: string; sansTitle: boolean };
 
 export interface FrameMsg {
   role: 'teacher' | 'assistant';
@@ -45,6 +47,8 @@ export interface FrameMsg {
   appear: number;
   /** Number of blocks revealed (teacher messages: 1). */
   shown: number;
+  /** Live mode: the server's message (blocks, follow-ups, panel). */
+  live?: AssistantMsg;
 }
 
 export interface FramePanel {
@@ -59,6 +63,8 @@ export interface FramePanel {
   /** 0→1 blend from MASTERY_INITIAL to MASTERY_POST. */
   twin: number;
   followUp: boolean;
+  /** Live mode: which live panel to show (null in scripted mode). */
+  live: LivePanel | null;
 }
 
 export interface FrameClassroom {
@@ -89,8 +95,8 @@ export interface TeacherFrame {
   classroom: FrameClassroom;
 }
 
-const openPanel = (id: ContextId, at: number, t: number, barsDelay = 1000, barsMs = 2000): FramePanel => ({
-  id, appear: prog(t, at, 500), bars: prog(t, at + barsDelay, barsMs), scroll: 0, edited: false, editFlash: 0, twin: 0, followUp: false,
+const openPanel = (id: ContextId, at: number, t: number, barsDelay = 1000, barsMs = 2000, live: LivePanel | null = null): FramePanel => ({
+  id, appear: prog(t, at, 500), bars: prog(t, at + barsDelay, barsMs), scroll: 0, edited: false, editFlash: 0, twin: 0, followUp: false, live,
 });
 
 /** Folds every event with `at <= t` (in array order) into the frame shown at time t. Pure. */
@@ -113,6 +119,10 @@ export function teacherFrame(events: TeacherEvent[], t: number): TeacherFrame {
         break;
       case 'view':
         f.view = e.view;
+        break;
+      case 'title':
+        f.title = e.title;
+        f.sansTitle = e.sansTitle;
         break;
       case 'greeting':
         f.greeting = {
@@ -141,7 +151,7 @@ export function teacherFrame(events: TeacherEvent[], t: number): TeacherFrame {
       case 'assistant':
         f.thinking = null;
         f.messages = [...f.messages, {
-          role: 'assistant', text: '', kind: e.kind, topic: e.topic, index: e.index, stamp: e.stamp,
+          role: 'assistant', text: '', kind: e.kind, topic: e.topic, index: e.index, stamp: e.stamp, live: e.live,
           appear: prog(t, e.at, 400), shown: e.blockMs > 0 ? Math.floor(dt / e.blockMs) + 1 : Infinity,
         }];
         break;
@@ -156,7 +166,7 @@ export function teacherFrame(events: TeacherEvent[], t: number): TeacherFrame {
         f.panel = openPanel(e.topic, e.at, t);
         break;
       case 'panel':
-        f.panel = e.id === null ? null : openPanel(e.id, e.at, t, e.barsDelay, e.barsMs);
+        f.panel = e.id === null ? null : openPanel(e.id, e.at, t, e.barsDelay, e.barsMs, e.live ?? null);
         break;
       case 'panelScroll':
         if (f.panel) f.panel = { ...f.panel, scroll: lerp(f.panel.scroll, e.y, prog(t, e.at, e.dur, easeInOut)) };
