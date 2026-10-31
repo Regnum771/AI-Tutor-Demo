@@ -14,7 +14,7 @@ const EDIT_T = 4300;
 const DRAWER_T = 8600;
 const CURSOR: CursorKey[] = [
   { t: 3000, x: 1200, y: 980 },
-  { t: EDIT_T, x: 1760, y: 806, click: true },
+  { t: EDIT_T, x: 1760, y: 831, click: true },
   { t: 7000, x: 1500, y: 700 },
   { t: 8200, x: 586, y: 488, click: true },
   { t: 9500, x: 900, y: 650 },

@@ -4,6 +4,7 @@ import { DELTAS, MASTERY_MID, MASTERY_POST, MINH_ANH, REMAINING_GAP, lerpMastery
 import { PATHWAY_UPDATED, STATUSES } from '../../scenario/orchestration';
 import { CUES } from '../../scenario/scenes';
 import { MessageCard } from '../../ui/MessageCard';
+import { PhoneGlyph } from '../../ui/PhoneGlyph';
 import { PipelineStatus } from '../../ui/PipelineStatus';
 import { TwinPanel } from '../../ui/TwinPanel';
 import { C } from '../../ui/tokens';
@@ -34,7 +35,7 @@ export function Sc10Adapt({ t }: SceneProps) {
       {a > 0 && (
         <div className="absolute inset-0" style={{ opacity: a }}>
           <div className="absolute" style={{ left: 40, top: 110 }}>
-            <TwinPanel mastery={mastery} stateLabel="Updated · mastery assessment" glow={pulse(t, [1000], 1500)} highlight={t < 4500 ? ['mastery'] : ['gaps']} assessment={`Mastery check · ${MINH_ANH.scoreAfter}% (was ${MINH_ANH.scoreNow}%)`} />
+            <TwinPanel mastery={mastery} stateLabel="Updated · mastery assessment" glow={pulse(t, [1000], 1500)} highlight={['mastery']} assessment={`Mastery check · ${MINH_ANH.scoreAfter}% (was ${MINH_ANH.scoreNow}%)`} />
           </div>
           <div className="absolute rounded-2xl border-2 p-5" style={{ left: 960, top: 110, width: 920, height: 440, borderColor: C.twin, background: C.panel }}>
             <div className="flex items-center justify-between">
@@ -80,7 +81,7 @@ export function Sc10Adapt({ t }: SceneProps) {
               <div className="mt-3"><PipelineStatus statuses={STATUSES} reached={stepIndex(t, PIPE_T) + 1} /></div>
               {t >= CUES.sc10Update && (
                 <div className="mt-3 flex flex-wrap items-center gap-3" style={{ opacity: fade(t, CUES.sc10Update) }}>
-                  <span className="font-display text-[20px] font-bold" style={{ color: C.engine }}>📱 Updated pathway delivered</span>
+                  <span className="font-display text-[20px] font-bold" style={{ color: C.engine }}><PhoneGlyph />Updated pathway delivered</span>
                   {PATHWAY_UPDATED.map((p) => <span key={p.title} className="rounded-lg px-3 py-1 text-[17px] text-ink" style={{ background: C.surface }}>{p.when} · {p.title}</span>)}
                 </div>
               )}

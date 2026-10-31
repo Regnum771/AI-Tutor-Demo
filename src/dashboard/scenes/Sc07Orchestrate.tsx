@@ -8,6 +8,7 @@ import { CUES } from '../../scenario/scenes';
 import { AgentPair } from '../../ui/AgentPair';
 import { Conduit } from '../../ui/Conduit';
 import { FullSvg } from '../../ui/FullSvg';
+import { PhoneGlyph } from '../../ui/PhoneGlyph';
 import { ParticleStream } from '../../ui/ParticleStream';
 import { PipelineStatus } from '../../ui/PipelineStatus';
 import { C } from '../../ui/tokens';
@@ -44,7 +45,7 @@ function Visual({ t, op }: { t: number; op: number }) {
         <>
           {list(PATHWAY_INITIAL.map((p) => `${p.when} · ${p.title}`), OP_T[4] + 200, (s) => s)}
           {t >= CUES.sc7Delivered && (
-            <div className="mt-4 font-display text-[20px] font-bold" style={{ color: C.engine, opacity: fade(t, CUES.sc7Delivered) }}>📱 Delivered to Minh Anh's student app</div>
+            <div className="mt-4 font-display text-[20px] font-bold" style={{ color: C.engine, opacity: fade(t, CUES.sc7Delivered) }}><PhoneGlyph />Delivered to Minh Anh's student app</div>
           )}
         </>
       );
@@ -55,7 +56,7 @@ function Visual({ t, op }: { t: number; op: number }) {
           <div className="text-[19px] text-ink">{EXPECTED_OUTCOME}</div>
           <div className="mt-4 text-[18px] text-dim">Monitoring criteria</div>
           {list(MONITORING_CRITERIA, OP_T[5] + 200, (s) => s)}
-          <div className="mt-4 font-display text-[18px] font-bold" style={{ color: C.engine }}>📱 Delivered to Minh Anh's student app</div>
+          <div className="mt-4 font-display text-[18px] font-bold" style={{ color: C.engine }}><PhoneGlyph />Delivered to Minh Anh's student app</div>
         </>
       );
   }

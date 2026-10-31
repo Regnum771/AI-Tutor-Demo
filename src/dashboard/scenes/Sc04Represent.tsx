@@ -61,7 +61,7 @@ export function Sc04Represent({ t }: SceneProps) {
         <ParticleStream t={t} from={{ x: 760, y: 640 }} to={{ x: 1000, y: 520 }} start={9600} count={8} gap={150} travel={800} />
         <Conduit d={`M${node.x + 30} ${node.y} C 600 ${node.y}, 760 560, 1000 560`} color={C.royal} t={t} width={4} opacity={fade(t, BRIDGE_T)} />
       </FullSvg>
-      <div className="absolute font-display text-[20px] font-bold" style={{ left: 560, top: 520, color: C.royal, opacity: fade(t, BRIDGE_T + 300) }}>Grounded representation</div>
+      <div className="absolute font-display text-[18px] font-bold leading-tight" style={{ left: 856, top: 574, width: 140, color: C.royal, opacity: fade(t, BRIDGE_T + 300) }}>Grounded representation</div>
 
       <div className="absolute" style={{ left: twinX, top: 110 }}>
         <TwinPanel

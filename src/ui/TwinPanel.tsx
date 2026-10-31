@@ -43,6 +43,7 @@ export interface TwinPanelProps {
 
 export function TwinPanel({ mastery, stateLabel, highlight = [], glow = 0, width = 880, assessment = 'Quiz 2 · 42% (prev. 75%) · implication errors ×6' }: TwinPanelProps) {
   const on = (k: TwinKey) => highlight.includes(k);
+  const open = gaps(mastery);
   return (
     <div className="rounded-2xl p-5" style={{ width, background: C.panel, border: `2px solid ${C.twin}`, boxShadow: `0 0 ${12 + glow * 48}px rgba(167,139,250,${0.25 + glow * 0.5})` }}>
       <div className="flex items-center justify-between">
@@ -59,7 +60,7 @@ export function TwinPanel({ mastery, stateLabel, highlight = [], glow = 0, width
           </Block>
           <Block title="Identified gaps" active={on('gaps')}>
             <div className="flex flex-wrap gap-2">
-              {gaps(mastery).map((id) => (
+              {open.length === 0 ? <span className="text-[16px] text-dim">None below 0.50</span> : open.map((id) => (
                 <span key={id} className="rounded-md px-2 py-0.5 text-[16px]" style={{ background: 'rgba(248,113,113,0.15)', color: C.gap }}>
                   {conceptById(id).symbol} {conceptById(id).label}
                 </span>

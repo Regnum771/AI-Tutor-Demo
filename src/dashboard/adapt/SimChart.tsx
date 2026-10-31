@@ -3,7 +3,7 @@ import { PATHWAY_A, PATHWAY_B, SIM_LABEL, TARGET, sessionsToTarget } from '../..
 import { C } from '../../ui/tokens';
 
 const W = 860;
-const H = 330;
+const H = 290;
 const PAD = { l: 60, r: 20, t: 20, b: 44 };
 const MAX_SESSIONS = 6;
 const x = (i: number) => PAD.l + (i / MAX_SESSIONS) * (W - PAD.l - PAD.r);

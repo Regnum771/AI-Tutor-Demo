@@ -5,7 +5,7 @@ import type { Mastery } from '../../scenario/minhAnh';
 import { AgentNode, agentColor } from '../../ui/AgentNode';
 import { Conduit } from '../../ui/Conduit';
 import { FullSvg } from '../../ui/FullSvg';
-import { GraphView } from '../../ui/GraphView';
+import { GRAPH_H, GRAPH_W, GraphView } from '../../ui/GraphView';
 import { TwinMini, type TwinKey } from '../../ui/TwinPanel';
 import { C } from '../../ui/tokens';
 import { TOKEN_MS } from './highlights';
@@ -15,8 +15,8 @@ export const TAS_POS = { x: 1590, y: 270 };
 const UPPER: [Point, Point, Point, Point] = [{ x: 405, y: 250 }, { x: 700, y: 120 }, { x: 1220, y: 120 }, { x: 1515, y: 250 }];
 const LOWER: [Point, Point, Point, Point] = [{ x: 1515, y: 300 }, { x: 1220, y: 430 }, { x: 700, y: 430 }, { x: 405, y: 300 }];
 const pathD = ([a, b, c, d]: [Point, Point, Point, Point]) => `M${a.x} ${a.y} C${b.x} ${b.y}, ${c.x} ${c.y}, ${d.x} ${d.y}`;
-const HUB_TWIN = { x: 750, y: 285 };
-const HUB_GRAPH = { x: 740, y: 545, width: 440 };
+const HUB_TWIN = { x: 750, y: 250 };
+const HUB_GRAPH = { x: 760, y: 555, width: 400 };
 
 export interface Token { at: number; from: AgentId; label: string }
 
@@ -44,14 +44,14 @@ export function AgentStage({ t, sasStatus, tasStatus, sasPulse = 0, tasPulse = 0
         <Conduit d={pathD(UPPER)} color={C.sas} t={t} width={4} />
         <Conduit d={pathD(LOWER)} color={C.tas} t={t} width={4} />
         <Conduit d="M405 300 C 560 330, 620 400, 750 400" color={C.sas} t={t} direction={-1} opacity={retrieval.sas} />
-        <Conduit d="M405 330 C 540 500, 620 640, 740 650" color={C.sas} t={t} direction={-1} opacity={retrieval.sas} />
+        <Conduit d="M405 330 C 540 500, 620 650, 750 660" color={C.sas} t={t} direction={-1} opacity={retrieval.sas} />
         <Conduit d="M1515 300 C 1360 330, 1300 400, 1170 400" color={C.tas} t={t} direction={-1} opacity={retrieval.tas} />
-        <Conduit d="M1515 330 C 1380 500, 1300 640, 1180 650" color={C.tas} t={t} direction={-1} opacity={retrieval.tas} />
+        <Conduit d="M1515 330 C 1380 500, 1300 650, 1170 660" color={C.tas} t={t} direction={-1} opacity={retrieval.tas} />
       </FullSvg>
       <div className="absolute" style={{ left: HUB_TWIN.x, top: HUB_TWIN.y }}>
         <TwinMini mastery={twinMastery} highlight={twinHighlight} />
       </div>
-      <div className="absolute rounded-2xl border-2" style={{ left: HUB_GRAPH.x - 10, top: HUB_GRAPH.y - 10, width: HUB_GRAPH.width + 20, height: 244, borderColor: C.royal, background: C.panel }}>
+      <div className="absolute rounded-2xl border-2" style={{ left: HUB_GRAPH.x - 10, top: HUB_GRAPH.y - 10, width: HUB_GRAPH.width + 20, height: (HUB_GRAPH.width / GRAPH_W) * GRAPH_H + 20, borderColor: C.royal, background: C.panel }}>
         <div className="absolute" style={{ left: 10, top: 10 }}>
           <GraphView t={t} width={HUB_GRAPH.width} mastery={kgMastery} highlightNodes={kgHighlight} highlightEdges={kgEdges} showLabels={false} />
         </div>
