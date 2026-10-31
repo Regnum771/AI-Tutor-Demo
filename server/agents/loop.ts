@@ -45,7 +45,12 @@ export async function runAgent<T>(client: MessagesClient, spec: AgentSpec<T>, me
     for (const use of uses) {
       const input = (use.input ?? {}) as Record<string, unknown>;
       if (use.name === spec.finish) {
-        const checked = spec.check(input);
+        let checked: ReturnType<Check<T>>;
+        try {
+          checked = spec.check(input);
+        } catch (e) {
+          checked = { ok: false, error: `Malformed ${spec.finish} input (${e instanceof Error ? e.message : String(e)}). Call ${spec.finish} again with every field filled in.` };
+        }
         if (checked.ok) return checked.value;
         if (finishRetries-- <= 0) throw new AgentError(checked.error);
         results.push({ type: 'tool_result', tool_use_id: use.id, content: checked.error, is_error: true });

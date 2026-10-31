@@ -38,7 +38,7 @@ export const checkAdapt = (state: DemoState, plan: Plan, followUpId: string): Ch
   const blocks = checkBlocks(state, r.blocks);
   if (!blocks.ok) return blocks;
   if (r.follow_up_needed !== true) return { ok: true, value: { blocks: blocks.value, followUp: null } };
-  const draft = toPlan({ ...(r.follow_up as object), kind: 'pathway', student_ids: plan.studentIds }, { id: followUpId, conversationId: plan.conversationId, status: 'proposed' });
+  const draft = toPlan({ ...(r.follow_up as object), kind: 'pathway', day: 'Tomorrow', student_ids: plan.studentIds }, { id: followUpId, conversationId: plan.conversationId, status: 'proposed' });
   const problems = planProblems(draft, state);
   if (problems.length) return { ok: false, error: `The follow-up breaks the policy: ${problems.join(' ')} Fix it and call adapt_report again.` };
   return { ok: true, value: { blocks: blocks.value, followUp: withinFollowUpPolicy(draft, state) ? { ...draft, status: 'autoApproved' } : draft } };

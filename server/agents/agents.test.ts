@@ -6,7 +6,7 @@ import { fakeClient } from './fakeClient';
 import { runAgent } from './loop';
 import { adaptInput, pathwaySessions, planInput, reportInput } from './samples';
 import { SAS_SYSTEM, sasMessages, sasSpec, type Report } from './sas';
-import { tasMessages, tasSpec } from './tas';
+import { TAS_SYSTEM, tasMessages, tasSpec } from './tas';
 
 const quiet = { onStep: () => {} };
 const ask = [{ role: 'user' as const, content: 'x' }];
@@ -47,6 +47,9 @@ describe('Student Analysis Agent', () => {
 describe('Teaching Assistance Agent', () => {
   const state = stateWithPlan();
 
+  it('tells the agent not to assume pronouns, like the other agents', () => {
+    expect(TAS_SYSTEM).toContain("do not assume anyone's pronouns");
+  });
   it('turns propose_plan into a proposed Plan', async () => {
     const { client } = fakeClient([[{ tool: 'propose_plan', input: planInput() }]]);
     const plan = await runAgent(client, tasSpec(state, 'c1', 'p9'), ask, quiet);

@@ -30,7 +30,7 @@ const PLAN_TOOL = tool('propose_plan', 'Propose the plan. Call this once, last.'
   outcome: { type: 'string', description: 'What success looks like, e.g. "Logical equivalence mastery ≥ 0.75 within 3 sessions".' },
 });
 
-export const TAS_SYSTEM = `You are the Teaching Assistance Agent in Beyond. The Student Analysis Agent has diagnosed a question from the lecturer, Lam (Discrete Mathematics, DM-2026, Week 6: logical equivalence). Turn the diagnosis into one plan the lecturer can approve. All data is fictional demo data.
+export const TAS_SYSTEM = `You are the Teaching Assistance Agent in Beyond. The Student Analysis Agent has diagnosed a question from the lecturer, Lam (Discrete Mathematics, DM-2026, Week 6: logical equivalence). Turn the diagnosis into one plan the lecturer can approve. All data is fictional demo data. Refer to students by name; do not assume anyone's pronouns.
 
 Pick the kind:
 - pathway: short adaptive practice on one student's phone. 2–4 sessions, at most 45 minutes in total, each on one concept, building prerequisites first. The last session is the mastery check on the target concept (is_mastery_check true). Sessions run 5–12 minutes.

@@ -54,6 +54,16 @@ describe('runAgent', () => {
     const { client } = fakeClient([[{ tool: 'done', input: { answer: 'bad' } }], [{ tool: 'done', input: { answer: 'bad' } }]]);
     await expect(runAgent(client, spec(), user, quiet)).rejects.toThrow(AgentError);
   });
+  it('treats a check that throws on malformed input like an invalid input', async () => {
+    const { client, calls } = fakeClient([[{ tool: 'done', input: { answer: 'x' } }], [{ tool: 'done', input: { answer: 'ok' } }]]);
+    let first = true;
+    const throwing = spec({ check: (input) => {
+      if (first) { first = false; throw new TypeError('blocks is not iterable'); }
+      return { ok: true, value: (input as { answer: string }).answer };
+    } });
+    await expect(runAgent(client, throwing, user, quiet)).resolves.toBe('ok');
+    expect(JSON.stringify(calls[1].messages.at(-1))).toContain('Malformed done input (blocks is not iterable)');
+  });
   it('nudges once when a turn ends without the finish tool', async () => {
     const { client, calls } = fakeClient([[{ text: 'Here you go.' }], [{ tool: 'done', input: { answer: 'ok' } }]]);
     await expect(runAgent(client, spec(), user, quiet)).resolves.toBe('ok');

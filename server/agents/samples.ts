@@ -3,7 +3,7 @@ export const reportInput = (over: Record<string, unknown> = {}): Record<string, 
   title: 'Minh Anh · implication gap',
   blocks: [
     { kind: 'p', text: 'Quiz 2 fell from **75% to 42%**.', cites: ['s17-quiz2'] },
-    { kind: 'li', text: 'She picked the converse on 6 implication items.', cites: ['s17-quiz2-q4'] },
+    { kind: 'li', text: 'Minh Anh picked the converse on 6 implication items.', cites: ['s17-quiz2-q4'] },
   ],
   focus_kind: 'student',
   focus_student_id: 's17',
