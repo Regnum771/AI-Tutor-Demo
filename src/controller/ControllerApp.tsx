@@ -53,14 +53,22 @@ export function ControllerApp() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
       if (e.target instanceof HTMLInputElement) return;
       const s = stateRef.current;
       if (e.code === 'Space') {
         e.preventDefault();
         send(togglePlay(s));
-      } else if (e.key === 'ArrowRight') send({ type: 'select', scene: Math.min(SCENES.length, s.scene + 1) });
-      else if (e.key === 'ArrowLeft') send({ type: 'select', scene: Math.max(1, s.scene - 1) });
-      else if (e.key.toLowerCase() === 'r') send({ type: 'start', scene: s.scene });
+      } else if (e.key === 'ArrowRight') {
+        setPlayAll(false);
+        send({ type: 'select', scene: Math.min(SCENES.length, s.scene + 1) });
+      } else if (e.key === 'ArrowLeft') {
+        setPlayAll(false);
+        send({ type: 'select', scene: Math.max(1, s.scene - 1) });
+      } else if (e.key.toLowerCase() === 'r') {
+        setPlayAll(false);
+        send({ type: 'start', scene: s.scene });
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -79,7 +87,7 @@ export function ControllerApp() {
           return (
             <button
               key={s.id}
-              onClick={() => send({ type: 'select', scene: s.id })}
+              onClick={() => { setPlayAll(false); send({ type: 'select', scene: s.id }); }}
               className="relative block w-full overflow-hidden rounded-lg border px-3 py-2 text-left"
               style={{ borderColor: active ? '#F5B942' : '#22355E', background: active ? '#13244A' : 'transparent' }}
             >
@@ -104,10 +112,10 @@ export function ControllerApp() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <button className={btn} onClick={() => send({ type: 'select', scene: Math.max(1, state.scene - 1) })}>⏮ Back</button>
+          <button className={btn} onClick={() => { setPlayAll(false); send({ type: 'select', scene: Math.max(1, state.scene - 1) }); }}>⏮ Back</button>
           <button className={btn} onClick={() => send(togglePlay(state))}>{state.playing ? '⏸ Pause' : '▶ Play'}</button>
-          <button className={btn} onClick={() => send({ type: 'start', scene: state.scene })}>⟲ Restart</button>
-          <button className={btn} onClick={() => send({ type: 'select', scene: Math.min(SCENES.length, state.scene + 1) })}>⏭ Next</button>
+          <button className={btn} onClick={() => { setPlayAll(false); send({ type: 'start', scene: state.scene }); }}>⟲ Restart</button>
+          <button className={btn} onClick={() => { setPlayAll(false); send({ type: 'select', scene: Math.min(SCENES.length, state.scene + 1) }); }}>⏭ Next</button>
           <button
             className={btn}
             onClick={() => {
@@ -126,7 +134,7 @@ export function ControllerApp() {
           max={scene.durationMs}
           step={100}
           value={t}
-          onChange={(e) => send({ type: 'seek', t: Number(e.target.value) })}
+          onChange={(e) => { setPlayAll(false); send({ type: 'seek', t: Number(e.target.value) }); }}
         />
 
         <div className="flex flex-wrap gap-6">

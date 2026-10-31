@@ -8,13 +8,13 @@ Spec: `docs/superpowers/specs/2026-10-31-beyond-ai-tutoring-demo-design.md`
 
 ```bash
 npm install
-npm run dev            # opens the Director (controller) window
+npm run dev            # starts Vite on http://localhost:5173
 ```
 
-In the Director, click **Open dashboard window** and **Open student window**. Both status dots should turn ●.
+Open the Director in Chrome (see Recording for the exact command), then click **Open dashboard window** and **Open student window**. Both status dots should turn ●.
 All three windows must stay in the **same browser profile**, because they sync over `BroadcastChannel`.
 
-Controls: `Space` play/pause (frame 0 → 3-second pre-roll) · `←`/`→` change scene · `R` restart · **Play all** runs scenes 1→12 continuously.
+Controls: `Space` play/pause (frame 0 → 3-second pre-roll) · `←`/`→` change scene · `R` restart · **Play all** runs scenes 1→12 continuously (any manual navigation disarms it).
 
 ## Standalone frames
 
@@ -26,13 +26,17 @@ Any window can render without the controller:
 
 ## Recording
 
-1. Launch Chrome at 2× so a 1920×1080 window captures as 3840×2160:
-   `chrome.exe --force-device-scale-factor=2 http://localhost:5173/controller.html`
-2. Size the dashboard window to 1920×1080 and the student window to 390×844 (CSS px).
-3. In OBS, add two **Window Capture** sources (dashboard 3840×2160, student 780×1688 or larger) and record both at **60 fps**.
-4. Press **Play all** (or play single scenes). Every take is identical, so a re-recorded scene cuts in cleanly.
-5. Each scene starts with a 2-frame white **sync slate** in the top-left corner. Align the two recordings on it in DaVinci Resolve.
-6. Each scene holds its first and last frame for 1 s; use these as edit handles.
+1. Start `npm run dev`.
+2. Launch a dedicated Chrome instance at 2× so a 1920×1080 window captures as 3840×2160:
+   `chrome.exe --user-data-dir=%TEMP%eyond-rec --force-device-scale-factor=2 --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling --disable-features=CalculateNativeWinOcclusion http://localhost:5173/controller.html`
+   The separate profile (`--user-data-dir`) is needed so the flags apply even if Chrome is already running. The background flags stop Chrome from pausing covered windows, which would freeze a capture or stall Play all.
+3. In the Director, click **Open dashboard window** and **Open student window**.
+4. Make the dashboard fullscreen (F11) on a 4K display, or accept letterboxing. Capture the phone window cropped to its canvas (390×844 CSS px, 780×1688 at 2×).
+5. Record both windows at **60 fps** (OBS Window Capture or similar) with **titles off** (Director toggle). Add the lower thirds in DaVinci Resolve: the in-app titles cover live content in Sc5–Sc7.
+6. Do one warm-up **Play all** before the real take, then a short dry-run recording of Sc7 to check sync and frame rate.
+7. Press **Play all** (or play single scenes). Every take is identical, so a re-recorded scene cuts in cleanly.
+8. Each scene starts with a 100 ms white **sync slate** (about 6 frames at 60 fps) in the top-left corner. Align the two recordings on it in Resolve.
+9. Each scene holds its first and last frame for 1 s; use these as edit handles.
 
 ## Stock footage map
 

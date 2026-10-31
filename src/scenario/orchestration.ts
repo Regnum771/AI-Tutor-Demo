@@ -36,5 +36,5 @@ export const PATHWAY_UPDATED = [
 export const PLAN_OBJECTIVES = ['Implication', 'Logical equivalence'];
 export const PLAN_OBJECTIVES_UPDATED = ['Equivalence laws', 'Application'];
 
-export const EXPECTED_OUTCOME = 'Logical equivalence mastery ≥ 0.70 within 4 sessions';
+export const EXPECTED_OUTCOME = 'Logical equivalence mastery ≥ 0.75 within 3 sessions';
 export const MONITORING_CRITERIA = ['Mastery check score', 'Hint usage per item', 'Activity completion', 'Response time on implication items'];

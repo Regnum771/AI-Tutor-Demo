@@ -94,7 +94,7 @@ export function ArchitectureView({ t, mode }: { t: number; mode: 'reveal' | 'clo
       ))}
 
       {logo > 0 && (
-        <div className="absolute left-0 right-0 text-center" style={{ top: 48, opacity: logo }}>
+        <div className="absolute left-0 right-0 text-center" style={{ top: 24, opacity: logo }}>
           <div className="font-display font-extrabold tracking-[0.18em] text-ink" style={{ fontSize: 64 }}>BEYOND AI TUTORING</div>
           <div className="mt-2 font-display font-semibold text-dim" style={{ fontSize: 24 }}>{tagline}</div>
         </div>

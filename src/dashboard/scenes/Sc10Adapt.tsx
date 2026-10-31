@@ -29,13 +29,13 @@ export function Sc10Adapt({ t }: SceneProps) {
   const hi = activeHighlights(REASSESSMENT, RE_T, t);
   const toTas = latestReceived(REASSESSMENT, RE_T, 'TAS', t);
   const toSas = latestReceived(REASSESSMENT, RE_T, 'SAS', t);
-  const pipe = t >= 24000;
+  const pipe = t >= PIPE_T[0];
   return (
     <div className="absolute inset-0 bg-deep">
       {a > 0 && (
         <div className="absolute inset-0" style={{ opacity: a }}>
           <div className="absolute" style={{ left: 40, top: 110 }}>
-            <TwinPanel mastery={mastery} stateLabel="Updated · mastery assessment" glow={pulse(t, [1000], 1500)} highlight={['mastery']} assessment={`Mastery check · ${MINH_ANH.scoreAfter}% (was ${MINH_ANH.scoreNow}%)`} />
+            <TwinPanel mastery={mastery} stateLabel="Updated · mastery assessment" glow={pulse(t, [1000], 1500)} highlight={t < 4500 ? ['mastery'] : ['gaps']} gapIds={['equivLaws', 'applications']} assessment={`Mastery check · ${MINH_ANH.scoreAfter}% (was ${MINH_ANH.scoreNow}%)`} />
           </div>
           <div className="absolute rounded-2xl border-2 p-5" style={{ left: 960, top: 110, width: 920, height: 440, borderColor: C.twin, background: C.panel }}>
             <div className="flex items-center justify-between">
@@ -74,9 +74,9 @@ export function Sc10Adapt({ t }: SceneProps) {
           />
           {toTas && t < JOINT_T && <MessageCard card={toTas.card} style={{ position: 'absolute', left: 1380, top: 470, opacity: fade(t, toTas.arrived) }} />}
           {toSas && t < JOINT_T && <MessageCard card={toSas.card} style={{ position: 'absolute', left: 60, top: 470, opacity: fade(t, toSas.arrived) }} />}
-          {!pipe && <JointDecision t={t} steps={JOINT_DECISION_2} at={JOINT_T} signAt={SIGN_T} />}
+          <JointDecision t={t} steps={JOINT_DECISION_2} at={JOINT_T} signAt={SIGN_T} exitAt={23000} />
           {pipe && (
-            <div className="absolute rounded-2xl border-2 p-5" style={{ left: 300, top: 790, width: 1320, borderColor: C.engine, background: C.panel, opacity: fade(t, 24000) }}>
+            <div className="absolute rounded-2xl border-2 p-5" style={{ left: 300, top: 790, width: 1320, borderColor: C.engine, background: C.panel, opacity: fade(t, PIPE_T[0]) }}>
               <div className="font-display text-[20px] font-bold text-ink">Orchestration engine · re-run · {JOINT_DECISION_2.join(' → ')}</div>
               <div className="mt-3"><PipelineStatus statuses={STATUSES} reached={stepIndex(t, PIPE_T) + 1} /></div>
               {t >= CUES.sc10Update && (

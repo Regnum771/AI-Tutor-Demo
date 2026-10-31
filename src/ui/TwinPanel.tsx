@@ -39,11 +39,13 @@ export interface TwinPanelProps {
   glow?: number;
   width?: number;
   assessment?: string;
+  /** Overrides the computed gap list. */
+  gapIds?: ConceptId[];
 }
 
-export function TwinPanel({ mastery, stateLabel, highlight = [], glow = 0, width = 880, assessment = 'Quiz 2 · 42% (prev. 75%) · implication errors ×6' }: TwinPanelProps) {
+export function TwinPanel({ mastery, stateLabel, highlight = [], glow = 0, width = 880, assessment = 'Quiz 2 · 42% (prev. 75%) · implication errors ×6', gapIds }: TwinPanelProps) {
   const on = (k: TwinKey) => highlight.includes(k);
-  const open = gaps(mastery);
+  const open = gapIds ?? gaps(mastery);
   return (
     <div className="rounded-2xl p-5" style={{ width, background: C.panel, border: `2px solid ${C.twin}`, boxShadow: `0 0 ${12 + glow * 48}px rgba(167,139,250,${0.25 + glow * 0.5})` }}>
       <div className="flex items-center justify-between">

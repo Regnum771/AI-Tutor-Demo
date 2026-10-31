@@ -72,7 +72,7 @@ describe('Sc8 Govern', () => {
     const s = render(8, 13500);
     expect(s).toContain('Intervention summary');
     expect(s).toContain('MONITORING');
-    expect(s).toContain('Logical equivalence mastery ≥ 0.70');
+    expect(s).toContain('Logical equivalence mastery ≥ 0.75');
   });
 });
 

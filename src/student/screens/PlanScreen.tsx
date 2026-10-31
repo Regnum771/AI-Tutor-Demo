@@ -27,14 +27,15 @@ export function PlanScreen({ local, variant }: { local: number; variant: 'initia
       </div>
       {items.map((it, i) => {
         const o = fade(local, 300 + i * 250);
+        const done = variant === 'initial' && i < 2;
         return (
           <div key={it.title} className="mt-3 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm" style={{ opacity: o, transform: `translateY(${(1 - o) * 12}px)` }}>
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[14px] font-bold text-white" style={{ background: C.royal }}>{i + 1}</span>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[14px] font-bold text-white" style={done ? { background: '#DCFCE7', color: '#15803D' } : { background: C.royal }}>{done ? '✓' : i + 1}</span>
             <div>
               <div className="text-[16px] font-semibold text-slate-900">{it.title}</div>
               <div className="text-[13px] text-slate-500">{it.when} · {it.mins} min</div>
             </div>
-            {i === 0 && <span className="ml-auto rounded-full px-2 py-0.5 text-[12px] font-semibold" style={{ background: '#EEF2FF', color: C.royal }}>Up next</span>}
+            {i === (variant === 'initial' ? 2 : 0) && <span className="ml-auto rounded-full px-2 py-0.5 text-[12px] font-semibold" style={{ background: '#EEF2FF', color: C.royal }}>Up next</span>}
           </div>
         );
       })}

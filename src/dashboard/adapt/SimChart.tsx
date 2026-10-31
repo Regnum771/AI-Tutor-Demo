@@ -31,6 +31,7 @@ export function SimChart({ t, start, selectAt }: { t: number; start: number; sel
         <span className="font-display text-[22px] font-extrabold" style={{ color: C.twin }}>Digital twin simulation · pathway comparison</span>
         <span className="rounded-md border-2 px-2 py-0.5 font-mono text-[15px] font-bold" style={{ borderColor: C.gold, color: C.gold }}>{SIM_LABEL}</span>
       </div>
+      <div className="mt-1 text-[16px] text-dim">Projected at decision time (Week 6) · start 0.35</div>
       <svg width={W} height={H} className="mt-2">
         {[0.3, 0.5, 0.7].map((v) => (
           <g key={v}>

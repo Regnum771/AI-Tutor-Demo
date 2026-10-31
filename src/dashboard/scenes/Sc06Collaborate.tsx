@@ -1,4 +1,4 @@
-import { fade, pulse } from '../../engine/anim';
+import { fade, prog, pulse } from '../../engine/anim';
 import { EXCHANGES, JOINT_DECISION, PLAN_ADDED, PLAN_DRAFT, SAS_CHECKS } from '../../scenario/agents';
 import { MASTERY_INITIAL } from '../../scenario/minhAnh';
 import { MessageCard } from '../../ui/MessageCard';
@@ -19,7 +19,7 @@ const EXIT_T = 23200;
 function Received({ t, to, left }: { t: number; to: 'SAS' | 'TAS'; left: number }) {
   const r = latestReceived(EXCHANGES, EX_T, to, t);
   if (!r || t >= JOINT_T) return null;
-  return <MessageCard card={r.card} style={{ position: 'absolute', left, top: 470, opacity: fade(t, r.arrived, Infinity, 300) }} />;
+  return <MessageCard card={r.card} style={{ position: 'absolute', left, top: 470, opacity: fade(t, r.arrived, Infinity, 300) * (1 - prog(t, JOINT_T - 400, 400)) }} />;
 }
 
 export function Sc06Collaborate({ t }: SceneProps) {
@@ -50,7 +50,7 @@ export function Sc06Collaborate({ t }: SceneProps) {
 
       {t < JOINT_T && (
         <>
-          <div className="absolute rounded-2xl border-2 p-5" style={{ left: 60, top: 760, width: 480, height: 280, borderColor: C.sas, background: C.panel }}>
+          <div className="absolute rounded-2xl border-2 p-5" style={{ left: 60, top: 760, width: 480, height: 280, borderColor: C.sas, background: C.panel, opacity: 1 - prog(t, JOINT_T - 400, 400) }}>
             <div className="font-display text-[17px] font-bold uppercase tracking-[0.14em]" style={{ color: C.sas }}>SAS · evaluation</div>
             {t < arrivals[1] && <div className="mt-3 text-[18px] text-dim">Diagnosis sent · awaiting proposal</div>}
             {SAS_CHECKS.map((c, i) => {
@@ -66,7 +66,7 @@ export function Sc06Collaborate({ t }: SceneProps) {
             <div className="mt-3 text-[18px] font-semibold" style={{ color: C.sas, opacity: fade(t, arrivals[3]) }}>Refinement accepted ✓</div>
           </div>
 
-          <div className="absolute rounded-2xl border-2 p-5" style={{ left: 1380, top: 760, width: 480, height: 280, borderColor: C.tas, background: C.panel }}>
+          <div className="absolute rounded-2xl border-2 p-5" style={{ left: 1380, top: 760, width: 480, height: 280, borderColor: C.tas, background: C.panel, opacity: 1 - prog(t, JOINT_T - 400, 400) }}>
             <div className="font-display text-[17px] font-bold uppercase tracking-[0.14em]" style={{ color: C.tas }}>TAS · intervention plan</div>
             {PLAN_DRAFT.map((p, i) => {
               const dropped = p.drop && t >= DROP_T;
