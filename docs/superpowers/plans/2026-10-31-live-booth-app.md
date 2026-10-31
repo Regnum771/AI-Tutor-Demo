@@ -882,7 +882,7 @@ describe('planProblems', () => {
   });
   it('enforces the pathway policy', () => {
     const long = planFor('pathway');
-    long.sessions = [0, 1, 2, 3, 4].map((i) => ({ ...long.sessions[0], time: `1${6 + i}:00`, minutes: 10, isMasteryCheck: i === 4 }));
+    long.sessions = [0, 1, 2, 3, 4].map((i) => ({ ...long.sessions[0], time: `${16 + i}:00`, minutes: 10, isMasteryCheck: i === 4 }));
     expect(planProblems(long, state)).toEqual(['At most 4 sessions.', 'Total 50 minutes is over the 45-minute limit.']);
     const noCheck = planFor('pathway');
     noCheck.sessions[1].isMasteryCheck = false;
