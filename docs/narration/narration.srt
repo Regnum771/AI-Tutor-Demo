@@ -1,0 +1,119 @@
+1
+00:00:00,500 --> 00:00:06,000
+As a lecturer, Lam has to navigate fragmented information across the university every week.
+
+2
+00:00:06,500 --> 00:00:11,500
+Student results and private messages. Teaching assistants' notes. Attendance records and learning activity.
+
+3
+00:00:12,000 --> 00:00:16,000
+Each source holds a piece of the story. None tells the whole story.
+
+4
+00:00:16,500 --> 00:00:22,500
+And the students who need help most can be the hardest to see: the quiet ones, gradually disengaging, at risk of dropping out.
+
+5
+00:00:24,500 --> 00:00:27,500
+Beyond brings every source into one intelligent system.
+
+6
+00:00:28,000 --> 00:00:33,000
+When Lam logs in, the classroom is already summarised: who's falling behind, and who needs individual support.
+
+7
+00:00:35,000 --> 00:00:39,000
+The Classroom maintains a dynamic learning twin for every student.
+
+8
+00:00:39,500 --> 00:00:43,500
+Fifty-five students, each represented through an evolving model of their knowledge and progress.
+
+9
+00:00:44,000 --> 00:00:47,500
+One of them stands out: Minh Anh.
+
+10
+00:00:50,000 --> 00:00:53,500
+Lam asks why her quiz score dropped.
+
+11
+00:00:54,000 --> 00:00:59,000
+Two specialized agents get to work: one understands the learner; the other determines how teaching should respond.
+
+12
+00:00:59,500 --> 00:01:08,500
+The diagnosis is grounded in her own work. The decline traces back to one concept: logical implication. Every finding links to its supporting evidence.
+
+13
+00:01:09,000 --> 00:01:13,000
+Her digital twin reveals where the learning gaps remain.
+
+14
+00:01:14,500 --> 00:01:19,000
+Then Lam looks beyond one student. Is this an individual problem, or a pattern across the class?
+
+15
+00:01:19,500 --> 00:01:23,000
+The system reveals a shared gap in prerequisite knowledge.
+
+16
+00:01:24,500 --> 00:01:27,000
+The agents collaboratively propose a four-session intervention.
+
+17
+00:01:27,500 --> 00:01:30,500
+Lam stays in control: review, adjust and approve.
+
+18
+00:01:31,000 --> 00:01:34,500
+Moments later, the plan is on Minh Anh's phone.
+
+19
+00:01:35,000 --> 00:01:38,000
+The AI coordinates. The teacher governs.
+
+20
+00:01:39,500 --> 00:01:43,000
+At five o'clock, Minh Anh opens her plan.
+
+21
+00:01:45,500 --> 00:01:51,000
+She confuses the converse with the original implication. A targeted hint shows her why.
+
+22
+00:01:51,500 --> 00:01:55,000
+Then guided practice, with support that gradually fades.
+
+23
+00:01:55,500 --> 00:01:58,500
+Her estimated mastery rises from thirty-one to fifty-two percent.
+
+24
+00:02:00,000 --> 00:02:03,500
+That evening, she completes her mastery check.
+
+25
+00:02:04,000 --> 00:02:07,500
+Within Lam's policy, a follow-up is already scheduled for tomorrow.
+
+26
+00:02:08,000 --> 00:02:12,500
+Her progress updates the classroom picture, revealing who still needs support.
+
+27
+00:02:14,500 --> 00:02:18,000
+Behind it all is one integrated intelligence architecture.
+
+28
+00:02:19,000 --> 00:02:25,500
+Multimodal models interpret diverse data. Knowledge graphs ground the reasoning. Digital twins track each learner's evolving state.
+
+29
+00:02:26,500 --> 00:02:32,000
+Specialized agents reason, coordinate and adapt interventions based on what happens next.
+
+30
+00:02:34,500 --> 00:02:38,000
+Beyond AI tutoring. Intelligent intervention, with teachers in control.
