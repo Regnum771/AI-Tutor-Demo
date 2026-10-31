@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { TONIGHT } from '../src/live/clock';
 import { sessionItems } from '../src/scenario/practiceBank';
 import type { MessagesClient } from './agents/client';
@@ -93,5 +93,17 @@ describe('DemoSession', () => {
     const session = new DemoSession(null);
     expect(session.approve('nope')).toEqual({ ok: false, error: 'Only a proposed plan can be approved.' });
     expect(session.phoneNext()).toEqual({ ok: false, error: 'Answer the item first.' });
+  });
+  it('drops a failing subscriber without failing the command or the others', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const session = new DemoSession(null);
+    const seen: number[] = [];
+    session.subscribe(() => { throw new Error('gone'); });
+    session.subscribe((s) => seen.push(s.epoch));
+    session.reset();
+    session.reset();
+    expect(seen).toEqual([1, 2]);
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
   });
 });

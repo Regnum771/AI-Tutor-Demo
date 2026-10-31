@@ -18,9 +18,10 @@ export function createApp(session: DemoSession, info: () => BoothInfo) {
 
   // The full state on connect and after every change; EventSource reconnects on its own.
   app.get('/api/events', (c) => streamSSE(c, (stream) => new Promise<void>((resolve) => {
-    const send = (s: DemoState) => void stream.writeSSE({ event: 'state', data: JSON.stringify(s) });
+    const write = (event: string, data: string) => { stream.writeSSE({ event, data }).catch(() => undefined); };
+    const send = (s: DemoState) => write('state', JSON.stringify(s));
     const off = session.subscribe(send);
-    const ping = setInterval(() => void stream.writeSSE({ event: 'ping', data: '' }), 15_000);
+    const ping = setInterval(() => write('ping', ''), 15_000);
     ping.unref();
     stream.onAbort(() => {
       clearInterval(ping);
@@ -46,10 +47,7 @@ export function createApp(session: DemoSession, info: () => BoothInfo) {
   app.post('/api/phone/plan', (c) => reply(c, session.phonePlan()));
   app.post('/api/phone/open', async (c) => reply(c, session.phoneOpen(Number((await body(c)).sessionIndex))));
   app.post('/api/phone/answer', async (c) => reply(c, session.phoneAnswer(Number((await body(c)).option))));
-  app.post('/api/phone/next', (c) => {
-    const r = session.phoneNext();
-    return reply(c, r.ok ? { ok: true } : r);
-  });
+  app.post('/api/phone/next', (c) => reply(c, session.phoneNext()));
   app.post('/api/phone/skip', (c) => reply(c, session.phoneSkip()));
   app.post('/api/reset', (c) => {
     session.reset();

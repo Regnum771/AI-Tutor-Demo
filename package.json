@@ -10,7 +10,7 @@
     "test": "vitest run",
     "contact-sheet": "tsx scripts/contact-sheet.ts",
     "server": "tsx server/index.ts",
-    "booth": "concurrently -k -n vite,api -c yellow,cyan \"vite --host\" \"tsx server/index.ts\"",
+    "booth": "concurrently -k -n vite,api -c yellow,cyan \"vite --host --strictPort\" \"tsx server/index.ts\"",
     "test:live": "tsx server/live.smoke.ts"
   },
   "dependencies": {

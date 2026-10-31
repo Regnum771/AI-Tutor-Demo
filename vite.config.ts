@@ -6,7 +6,7 @@ const page = (name: string) => fileURLToPath(new URL(`./${name}.html`, import.me
 
 export default defineConfig({
   plugins: [react()],
-  server: { proxy: { '/api': 'http://localhost:8787' } },
+  server: { proxy: { '/api': 'http://127.0.0.1:8787' } },
   build: {
     rollupOptions: {
       input: { student: page('student'), controller: page('controller'), teacher: page('teacher') },

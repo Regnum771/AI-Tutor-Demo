@@ -59,4 +59,16 @@ describe('booth HTTP API', () => {
     expect(text).toContain('"epoch":0');
     await reader.cancel();
   });
+  it('pushes every change, and forgets a client that leaves', async () => {
+    const { app, session, post } = setup();
+    const res = await app.request('/api/events');
+    const reader = res.body!.getReader();
+    await reader.read();
+    await post('reset');
+    const { value } = await reader.read();
+    expect(new TextDecoder().decode(value)).toContain('"epoch":1');
+    await reader.cancel();
+    const listeners = (session as unknown as { listeners: Set<unknown> }).listeners;
+    await vi.waitFor(() => expect(listeners.size).toBe(0));
+  });
 });

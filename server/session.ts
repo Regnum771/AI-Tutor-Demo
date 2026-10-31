@@ -24,7 +24,14 @@ export class DemoSession {
 
   private set(next: DemoState) {
     this.state = next;
-    for (const fn of this.listeners) fn(next);
+    for (const fn of this.listeners) {
+      try {
+        fn(next);
+      } catch (e) {
+        console.warn('[beyond] dropping a failed subscriber:', e instanceof Error ? e.message : e);
+        this.listeners.delete(fn);
+      }
+    }
   }
 
   private newId(prefix: 'c' | 'p') {

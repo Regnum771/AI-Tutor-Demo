@@ -29,13 +29,10 @@ export function request(system: string, tools: Anthropic.Beta.BetaTool[], messag
   };
 }
 
-/** The real client, or null when the booth runs offline (BEYOND_OFFLINE=1 or no usable credentials). */
+/** The real client, or null when the booth runs offline: BEYOND_OFFLINE=1, or no key in the environment or `.env.local`. */
 export function anthropicClient(): MessagesClient | null {
   if (process.env.BEYOND_OFFLINE === '1') return null;
-  try {
-    const sdk = new Anthropic({ timeout: 25_000, maxRetries: 1 });
-    return { create: (params, options) => sdk.beta.messages.create(params, options) };
-  } catch {
-    return null;
-  }
+  if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) return null;
+  const sdk = new Anthropic({ timeout: 25_000, maxRetries: 1 });
+  return { create: (params, options) => sdk.beta.messages.create(params, options) };
 }
