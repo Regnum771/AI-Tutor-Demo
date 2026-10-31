@@ -1864,7 +1864,7 @@ function find(state: DemoState, input: Record<string, unknown>) {
   const concept = CONCEPT_IDS.find((c) => c === input.concept);
   const below = Number(input.below ?? -1);
   if (concept && below >= 0) list = list.filter((s) => s.mastery[concept] < below);
-  return list.slice(0, 25).map((s) => ({
+  return list.map((s) => ({
     id: s.id, name: s.name, group: s.group, status: s.status, escalated: s.escalated, topicMastery: topicMastery(s.mastery),
     ...(concept ? { [concept]: s.mastery[concept] } : {}),
   }));
