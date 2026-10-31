@@ -63,20 +63,20 @@ Shared by server and client (types plus pure reducers).
 
 ### 2.4 Sync and API
 
-The server pushes over **SSE** (`GET /api/events`):
-- On connect it sends a full `DemoState` snapshot.
-- After that it sends deltas: `agentStep`, `answerBlock`, `answerDone`, `panel`, `plan`, `classUpdate`, `phone`, `clock`, `reset`.
+The server pushes over **SSE** (`GET /api/events`): on connect, and after every change, it sends the full `DemoState` snapshot (`event: state`). The state is small enough to resend whole on a LAN. Clients work out what is new by remembering which messages, steps and plans they have already seen (and when), so a refresh simply starts from the snapshot.
 
-Commands are plain POSTs:
+Commands are plain POSTs (plus `GET /api/info`, which returns the phone's LAN URL for the QR code):
 
 | Endpoint | Body | Effect |
 |---|---|---|
-| `POST /api/ask` | `{ text }` | Runs SAS, then TAS if needed (or TAS revision when a plan is open) |
+| `POST /api/ask` | `{ text, conversationId? }` | Returns `{ conversationId }` at once, then runs SAS, then TAS if needed (or a TAS revision when a plan is open), in the background |
 | `POST /api/plan/edit` | `{ planId, sessionIndex, time? , remove? }` | Inline edit of a proposed plan |
 | `POST /api/plan/approve` | `{ planId }` | Approves the plan; a `pathway` is also sent to the phone |
 | `POST /api/plan/dismiss` | `{ planId }` | **Not now**: marks the plan `dismissed` |
+| `POST /api/phone/plan` | `{}` | Tapping the notification (or **Back to plan**) shows the plan screen |
 | `POST /api/phone/open` | `{ sessionIndex }` | Starts a session on the phone (advances the story clock to its time) |
-| `POST /api/phone/answer` | `{ itemId, optionId }` | Grades a canned item and updates mastery and evidence |
+| `POST /api/phone/answer` | `{ option }` | Grades the current canned item and updates mastery and evidence |
+| `POST /api/phone/next` | `{}` | After a correct answer, moves to the next item, or finishes the session |
 | `POST /api/phone/skip` | `{}` | "Skip to tonight": marks earlier sessions done with seeded results |
 | `POST /api/reset` | `{}` | Returns everything to the seed |
 
@@ -84,7 +84,7 @@ Commands are plain POSTs:
 
 ### 2.5 Client changes
 
-- **`LiveTeacher`** stops generating canned events. It turns the SSE stream into the same `TeacherEvent` timeline, so `teacherFrame`, `TeacherScreen`, `ContextPanel` and `Classroom` render everything. New event kinds are added where needed: streamed agent steps, streamed answer blocks, a plan from data, and a class update.
+- **`LiveTeacher`** stops generating canned events. It turns each state snapshot into the same `TeacherEvent` timeline (stamped with when each item was first seen), so `teacherFrame` and `TeacherScreen` render everything. New event fields carry a live assistant message, a live panel and a conversation title. Components that need live data (`Classroom`, the live panels, the plan card) read it from a React context that is empty in scripted mode.
 - **`Blocks`** gains evidence chips: a citation id rendered as a small chip; clicking it shows that evidence entry in the panel.
 - **`Classroom`** tiles and KPIs read live `ClassState`; scripted mode keeps passing the constants.
 - **The plan card** in `ContextPanel` renders any `Plan`: an editable time per session, a remove control while `proposed`, the approve button (**Approve & send** for a pathway, **Approve plan** for a class activity, **Book all** for check-ins), **Not now**, and the `autoApproved · within your policy` label.
@@ -127,7 +127,7 @@ Any control added later must fall into one of these three groups; the click-audi
 
 ## 3. Agents (`server/agents/`)
 
-The Anthropic TypeScript SDK runs a manual tool-use loop for each agent, capped at 8 tool turns with a fixed `max_tokens`. The system prompts and the class overview use prompt caching.
+The Anthropic TypeScript SDK runs a manual tool-use loop for each agent, capped at 8 tool turns with a fixed `max_tokens`. The static system prompts and tool definitions use prompt caching (live class data only ever arrives in tool results, so the cached prefix never changes). Requests are non-streaming, with a 25 s timeout and one SDK retry, and opt into the server-side refusal fallback (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`). `tool_choice` stays `auto` (forced tool choice is rejected on this model); each agent's prompt tells it which tool finishes its turn, and the loop nudges once if a turn ends without it.
 
 ### 3.1 Student Analysis Agent (SAS)
 
@@ -145,6 +145,8 @@ Runs first on every question.
   - `gaps`: concept ids
   - `needs_plan`: a yes/no flag
   - `followUps`: 2–3 short follow-up questions the teacher might ask next
+  - `revise_plan`: true when the teacher is asking to change the plan that is open in this conversation
+  - `title`: a 3–6 word conversation title
 - The server rejects a `report` that cites ids not in `ClassState`, returns the error as the tool result, and allows one retry.
 
 ### 3.2 Teaching Assistance Agent (TAS)
@@ -223,7 +225,7 @@ Status is recomputed from mastery with the same thresholds the roster uses, and 
 
 | Failure | Behaviour |
 |---|---|
-| No API key, network down, API error, or no first token within 20 s | Canned mode for that question: today's `routePrompt` answers and topic panels, otherwise the generic answer. The message carries a small "offline answer" tag. The whole Minh Anh story works offline |
+| No credentials, network down, API error, refusal, a request over 25 s (after one retry), or `BEYOND_OFFLINE=1` | Canned mode for that question: today's `routePrompt` answers and topic panels, otherwise the generic answer. The message carries a small "offline answer" tag. The whole Minh Anh story works offline |
 | Malformed or invalid `report` | One retry, then canned fallback |
 | `propose_plan` fails its checks twice | "I couldn't draft a plan within your policy." |
 | Phone or teacher refresh, or SSE drop | Auto-reconnect; the server resends the full snapshot, so both land where they were |
@@ -237,7 +239,7 @@ Status is recomputed from mastery with the same thresholds the roster uses, and 
   - the plan checks (concepts, times, minutes, count)
   - the mastery update rule and status/KPI recomputation
   - the `DemoState` reducers for approve, edit, answer, skip, adapt and reset
-  - SSE delta → `TeacherEvent` translation
+  - state snapshot → `TeacherEvent` translation (including first-seen timing)
   - evidence-id validation of `report`
 - **Agent tests with a fake Anthropic client**: scripted tool-call sequences check the following without the network:
   - the SAS → TAS hand-off
