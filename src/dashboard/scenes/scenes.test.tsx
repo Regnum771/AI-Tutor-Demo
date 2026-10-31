@@ -85,3 +85,24 @@ describe('Sc11 Scale', () => {
     expect(s).toContain('Guided conceptual practice');
   });
 });
+
+describe('Sc4 Represent', () => {
+  it('shows the knowledge graph, then the twin with updated evidence', () => {
+    const early = render(4, 5500);
+    expect(early).toContain('Knowledge Graph');
+    expect(early).toContain('Prerequisite gap → Implication');
+    const late = render(4, 13500);
+    expect(late).toContain('Learning Digital Twin');
+    expect(late).toContain('Updated · new evidence');
+    expect(late).toContain('Grounded representation');
+  });
+});
+
+describe('Sc9 Experience (dashboard companion)', () => {
+  it('streams evidence from the student device into the twin', () => {
+    const s = render(9, 17000);
+    expect(s).toContain('Live evidence · Minh Anh&#x27;s device');
+    expect(s).toContain('Answer ¬p ∨ q · correct');
+    expect(s).toContain('0.52');
+  });
+});
