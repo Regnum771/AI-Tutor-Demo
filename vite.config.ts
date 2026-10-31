@@ -11,5 +11,5 @@ export default defineConfig({
       input: { student: page('student'), controller: page('controller'), teacher: page('teacher') },
     },
   },
-  test: { environment: 'node', include: ['src/**/*.test.ts', 'src/**/*.test.tsx'] },
+  test: { environment: 'node', include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'server/**/*.test.ts'] },
 });
