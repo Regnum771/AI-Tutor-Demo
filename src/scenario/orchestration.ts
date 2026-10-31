@@ -20,12 +20,16 @@ export const ACTIVITIES = [
   'Visual explanation of logical operators', 'Worked examples', 'Guided exercises', 'Application problems', 'Mastery assessment',
 ];
 
-export const PATHWAY_INITIAL = [
-  { title: 'Review logical operators', mins: 5, when: 'Today 09:00' },
-  { title: 'Explore visual explanations', mins: 8, when: 'Today 12:30' },
-  { title: 'Practice guided examples', mins: 10, when: 'Today 15:00' },
+/** Proposed in Sc4–Sc6, before the teacher's edit. Every session falls after the 15:00 approval. */
+export const PATHWAY_PROPOSED = [
+  { title: 'Review logical operators', mins: 5, when: 'Today 15:30' },
+  { title: 'Explore visual explanations', mins: 8, when: 'Today 16:00' },
+  { title: 'Practice guided examples', mins: 10, when: 'Today 17:00' },
   { title: 'Complete a mastery assessment', mins: 10, when: 'Today 19:00' },
 ];
+
+/** Approved in Sc6: the teacher moved the mastery assessment to 20:00. The phone shows this. */
+export const PATHWAY_INITIAL = PATHWAY_PROPOSED.map((p, i) => (i === 3 ? { ...p, when: 'Today 20:00' } : p));
 
 export const PATHWAY_UPDATED = [
   { title: 'Targeted application practice', mins: 10, when: 'Tomorrow 09:00' },

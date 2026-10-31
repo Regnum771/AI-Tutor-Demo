@@ -1,30 +1,38 @@
 import type { ReactNode } from 'react';
+import { lerp } from '../engine/anim';
 import { COMPLEX, EFFECTIVENESS, GROUPS, HEATMAP, STUDENTS, TOPICS as CLASS_TOPICS } from '../scenario/classroom';
 import { conceptById } from '../scenario/knowledgeGraph';
-import { MASTERY_INITIAL, MINH_ANH, TWIN_FOCUS } from '../scenario/minhAnh';
-import { EXPECTED_OUTCOME, PATHWAY_INITIAL } from '../scenario/orchestration';
+import { MASTERY_INITIAL, MASTERY_POST, MINH_ANH, TWIN_FOCUS } from '../scenario/minhAnh';
+import { EXPECTED_OUTCOME, PATHWAY_INITIAL, PATHWAY_PROPOSED, PATHWAY_UPDATED } from '../scenario/orchestration';
 import { EVIDENCE_ITEMS } from '../scenario/sources';
 import type { ContextId } from './conversations';
+import type { FramePanel } from './frame';
 import { Asterisk, Avatar, Button, Eyebrow, LevelChip, Meter } from './parts';
+import type { TeacherActions } from './TeacherScreen';
 
 interface PanelProps {
-  id: ContextId;
+  panel: FramePanel;
   approved: boolean;
-  onApprove: () => void;
-  onClose: () => void;
+  actions?: TeacherActions;
 }
 
-export function ContextPanel({ id, approved, onApprove, onClose }: PanelProps) {
+export function ContextPanel({ panel, approved, actions }: PanelProps) {
+  const id = panel.id;
   return (
-    <aside key={id} className="chat-slide flex h-full w-[460px] shrink-0 flex-col border-l border-egg-line bg-egg-paper">
+    <aside
+      className="flex h-full w-[460px] shrink-0 flex-col border-l border-egg-line bg-egg-paper"
+      style={{ opacity: panel.appear, transform: `translateX(${(1 - panel.appear) * 24}px)` }}
+    >
       <div className="flex items-center justify-between border-b border-egg-line px-6 py-4">
         <Eyebrow>{{ student: 'Student context', class: 'Class context', attention: 'Escalations' }[id]}</Eyebrow>
-        <button type="button" onClick={onClose} className="text-[13px] text-egg-mute hover:text-egg-ink">Close</button>
+        <button type="button" onClick={() => actions?.showPanel(null)} className="text-[13px] text-egg-mute hover:text-egg-ink">Close</button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-5">
-        {id === 'student' && <StudentContext approved={approved} onApprove={onApprove} />}
-        {id === 'class' && <ClassContext approved={approved} onApprove={onApprove} />}
-        {id === 'attention' && <AttentionContext approved={approved} onApprove={onApprove} />}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="px-6 pb-8 pt-5" style={{ transform: `translateY(${-panel.scroll}px)` }}>
+          {id === 'student' && <StudentContext panel={panel} approved={approved} actions={actions} />}
+          {id === 'class' && <ClassContext panel={panel} approved={approved} actions={actions} />}
+          {id === 'attention' && <AttentionContext panel={panel} approved={approved} actions={actions} />}
+        </div>
       </div>
     </aside>
   );
@@ -43,9 +51,10 @@ function Section({ title, children, aside }: { title: string; children: ReactNod
 }
 
 /** The proposal card: what the agents want to do, and the teacher's controls over it. */
-function Proposal({ title, by, steps, outcome, approved, onApprove, approveLabel, doneLabel }: {
-  title: string; by: string; steps: { when: string; what: string }[]; outcome: string;
-  approved: boolean; onApprove: () => void; approveLabel: string; doneLabel: string;
+function Proposal({ id, title, by, steps, outcome, approved, actions, approveLabel, doneLabel, followUp = false, flashRow, flash = 0 }: {
+  id: ContextId; title: string; by: string; steps: { when: string; what: string }[]; outcome: string;
+  approved: boolean; actions?: TeacherActions; approveLabel: string; doneLabel: string;
+  followUp?: boolean; flashRow?: number; flash?: number;
 }) {
   return (
     <section className="mt-7 rounded-2xl border-2 border-egg-ink bg-egg-card p-5">
@@ -57,7 +66,7 @@ function Proposal({ title, by, steps, outcome, approved, onApprove, approveLabel
       <div className="mt-1 text-[12.5px] text-egg-mute">{by}</div>
       <ol className="mt-4 divide-y divide-egg-line border-y border-egg-line">
         {steps.map((s, i) => (
-          <li key={s.what} className="grid grid-cols-[22px_1fr_auto] items-baseline gap-2 py-2.5">
+          <li key={s.what} className="grid grid-cols-[22px_1fr_auto] items-baseline gap-2 py-2.5" style={i === flashRow ? { background: `rgba(255,91,31,${0.25 * flash})` } : undefined}>
             <span className="font-mono text-[11px] text-egg-mute">{String(i + 1).padStart(2, '0')}</span>
             <span className="text-[13.5px] text-egg-ink">{s.what}</span>
             <span className="font-serif text-[19px] leading-none text-egg-orange">{s.when}</span>
@@ -68,14 +77,18 @@ function Proposal({ title, by, steps, outcome, approved, onApprove, approveLabel
         Success looks like: <span className="text-egg-ink">{outcome}</span>
       </div>
       <div className="mt-5 flex flex-wrap gap-2">
-        {approved ? (
+        {followUp ? (
+          <span className="inline-flex items-center gap-2 rounded-full bg-egg-ink px-4 py-2 text-[13.5px] font-semibold text-egg-card">
+            <span className="h-2 w-2 rounded-full bg-egg-orange" /> Auto-approved · tomorrow 09:00
+          </span>
+        ) : approved ? (
           <span className="inline-flex items-center gap-2 rounded-full bg-egg-ink px-4 py-2 text-[13.5px] font-semibold text-egg-card">
             <span className="h-2 w-2 rounded-full bg-egg-orange" /> {doneLabel}
           </span>
         ) : (
           <>
-            <Button kind="primary" onClick={onApprove}>{approveLabel}</Button>
-            <Button>Edit</Button>
+            <Button kind="primary" onClick={() => actions?.approve(id)}>{approveLabel}</Button>
+            <Button onClick={() => actions?.edit()}>Edit</Button>
             <Button>Not now</Button>
           </>
         )}
@@ -84,8 +97,11 @@ function Proposal({ title, by, steps, outcome, approved, onApprove, approveLabel
   );
 }
 
-function StudentContext({ approved, onApprove }: { approved: boolean; onApprove: () => void }) {
+type CtxProps = { panel: FramePanel; approved: boolean; actions?: TeacherActions };
+
+function StudentContext({ panel, approved, actions }: CtxProps) {
   const evidence = EVIDENCE_ITEMS.slice(0, 4);
+  const steps = panel.followUp ? PATHWAY_UPDATED : panel.edited ? PATHWAY_INITIAL : PATHWAY_PROPOSED;
   return (
     <>
       <div className="flex items-center gap-4">
@@ -113,15 +129,19 @@ function StudentContext({ approved, onApprove }: { approved: boolean; onApprove:
         </div>
       </div>
       <Section title="Concept mastery" aside="gap below 0.50">
-        {TWIN_FOCUS.map((c) => <Meter key={c} label={conceptById(c).label} value={MASTERY_INITIAL[c]} />)}
+        {TWIN_FOCUS.map((c) => <Meter key={c} label={conceptById(c).label} value={lerp(MASTERY_INITIAL[c], MASTERY_POST[c], panel.twin)} grow={panel.bars} />)}
       </Section>
       <Proposal
-        title="Rebuild implication, then equivalence"
-        by="Agreed by Student Analysis + Teaching Assistance agents · within your policy"
-        steps={PATHWAY_INITIAL.map((p) => ({ when: p.when.replace('Today ', ''), what: `${p.title} · ${p.mins} min` }))}
+        id="student"
+        title={panel.followUp ? 'Next: equivalence laws in practice' : 'Rebuild implication, then equivalence'}
+        by={panel.followUp ? 'Auto-approved · within your policy' : 'Agreed by Student Analysis + Teaching Assistance agents · within your policy'}
+        steps={steps.map((p) => ({ when: p.when.replace(/^(Today|Tomorrow) /, ''), what: `${p.title} · ${p.mins} min` }))}
+        followUp={panel.followUp}
+        flashRow={3}
+        flash={panel.editFlash}
         outcome={EXPECTED_OUTCOME}
         approved={approved}
-        onApprove={onApprove}
+        actions={actions}
         approveLabel="Approve & send"
         doneLabel="Sent to Minh Anh’s app · 15:00"
       />
@@ -139,7 +159,7 @@ function StudentContext({ approved, onApprove }: { approved: boolean; onApprove:
   );
 }
 
-function ClassContext({ approved, onApprove }: { approved: boolean; onApprove: () => void }) {
+function ClassContext({ panel, approved, actions }: CtxProps) {
   const affected = STUDENTS.filter((s) => s.status !== 'onTrack').sort((a, b) => a.mastery - b.mastery);
   const row = HEATMAP[CLASS_TOPICS.indexOf('Logical equivalence')];
   return (
@@ -157,9 +177,10 @@ function ClassContext({ approved, onApprove }: { approved: boolean; onApprove: (
         </div>
       </div>
       <Section title="By group" aside="avg. mastery, gap below 0.50">
-        {GROUPS.map((g, i) => <Meter key={g} label={`Group ${g}`} value={row[i]} />)}
+        {GROUPS.map((g, i) => <Meter key={g} label={`Group ${g}`} value={row[i]} grow={panel.bars} />)}
       </Section>
       <Proposal
+        id="class"
         title="Group recap + adaptive practice"
         by={`Guided conceptual practice worked in ${EFFECTIVENESS[0].value}% of similar cases`}
         steps={[
@@ -170,7 +191,7 @@ function ClassContext({ approved, onApprove }: { approved: boolean; onApprove: (
         ]}
         outcome="Class mastery on equivalence ≥ 0.60 by Quiz 3"
         approved={approved}
-        onApprove={onApprove}
+        actions={actions}
         approveLabel="Approve plan"
         doneLabel="Scheduled · Thursday tutorial"
       />
@@ -196,7 +217,7 @@ const ESCALATION_REASON: Record<number, { why: string; tried: string }> = {
   50: { why: 'Mastery falling across 3 topics', tried: 'Spaced retrieval, guided set' },
 };
 
-function AttentionContext({ approved, onApprove }: { approved: boolean; onApprove: () => void }) {
+function AttentionContext({ approved, actions }: CtxProps) {
   const people = COMPLEX.map((i) => STUDENTS[i]);
   return (
     <>
@@ -221,12 +242,13 @@ function AttentionContext({ approved, onApprove }: { approved: boolean; onApprov
         ))}
       </div>
       <Proposal
+        id="attention"
         title="15-minute check-ins"
         by="Automated plans paused until you’ve met"
         steps={people.map((s, i) => ({ when: ['14:00', '14:20', '14:40'][i], what: `Fri · ${s.name}` }))}
         outcome="A plan you’ve agreed with each student"
         approved={approved}
-        onApprove={onApprove}
+        actions={actions}
         approveLabel="Book all three"
         doneLabel="Invitations sent · Friday"
       />

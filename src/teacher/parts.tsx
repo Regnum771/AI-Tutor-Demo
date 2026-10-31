@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 import { initials } from '../scenario/classroom';
 
 /** Six-armed asterisk from the reference list markers; the assistant's mark. */
-export function Asterisk({ size = 18, className = 'text-egg-orange' }: { size?: number; className?: string }) {
+export function Asterisk({ size = 18, className = 'text-egg-orange', rotate }: { size?: number; className?: string; rotate?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" className={className} style={rotate === undefined ? undefined : { transform: `rotate(${rotate}deg)` }} aria-hidden>
       {[0, 60, 120].map((a) => (
         <rect key={a} x="10.6" y="1" width="2.8" height="22" rx="1.4" fill="currentColor" transform={`rotate(${a} 12 12)`} />
       ))}
@@ -64,13 +64,13 @@ export function Avatar({ name, size = 32, accent = false }: { name: string; size
 }
 
 /** Single-series mastery meter with the 0.50 gap threshold marked. Below threshold reads "gap" in text, not colour alone. */
-export function Meter({ label, value, threshold = 0.5 }: { label: string; value: number; threshold?: number }) {
+export function Meter({ label, value, threshold = 0.5, grow = 1 }: { label: string; value: number; threshold?: number; grow?: number }) {
   const gap = value < threshold;
   return (
     <div className="group grid grid-cols-[132px_1fr_64px] items-center gap-3 py-[5px]" title={`${label}: ${value.toFixed(2)} mastery`}>
       <div className="truncate text-[13px] text-egg-ink">{label}</div>
       <div className="relative h-2 rounded-full bg-egg-line/60">
-        <div className={`absolute inset-y-0 left-0 rounded-full ${gap ? 'bg-egg-orange' : 'bg-egg-ink'}`} style={{ width: `${value * 100}%` }} />
+        <div className={`absolute inset-y-0 left-0 rounded-full ${gap ? 'bg-egg-orange' : 'bg-egg-ink'}`} style={{ width: `${value * grow * 100}%` }} />
         <div className="absolute -top-1 h-4 w-px bg-egg-ink/50" style={{ left: `${threshold * 100}%` }} />
       </div>
       <div className="text-right font-mono text-[12px] tabular-nums text-egg-ink">
@@ -88,7 +88,7 @@ export function Button({ children, kind = 'ghost', onClick }: { children: ReactN
     ghost: 'border border-egg-ink/25 text-egg-ink hover:border-egg-ink',
   }[kind];
   return (
-    <button type="button" onClick={onClick} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13.5px] font-semibold transition-colors ${cls}`}>
+    <button type="button" onClick={onClick} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13.5px] font-semibold ${cls}`}>
       {children}
     </button>
   );
