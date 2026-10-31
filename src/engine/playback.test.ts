@@ -61,11 +61,11 @@ describe('playback', () => {
     expect(togglePlay(started())).toEqual({ type: 'pause' });
   });
   it('stateFromSearch holds a frame with toggles', () => {
-    const s = stateFromSearch('?scene=9&t=6000&titles=0&tc=1', 0, 3);
+    const s = stateFromSearch('?scene=9&t=6000&titles=0&chapter=0&tc=1', 0, 3);
     expect(s.scene).toBe(9);
     expect(s.playing).toBe(false);
     expect(localTime(s, 0, 20000)).toBe(6000);
-    expect(s.toggles).toEqual({ titles: false, footer: true, cursor: true, tc: true });
+    expect(s.toggles).toEqual({ titles: false, footer: true, cursor: true, chapter: false, tc: true });
   });
   it('stateFromSearch autoplay starts immediately without pre-roll', () => {
     const s = stateFromSearch('?scene=9&autoplay', 1000, 3);

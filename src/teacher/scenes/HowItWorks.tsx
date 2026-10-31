@@ -53,7 +53,7 @@ function ArchBox({ box, opacity, children }: { box: Box; opacity: number; childr
   );
 }
 
-export function ArchitectureView({ t, mode }: { t: number; mode: 'reveal' | 'closing' }) {
+export function HowItWorks({ t, mode }: { t: number; mode: 'reveal' | 'closing' }) {
   const appear = mode === 'reveal' ? REVEAL : CLOSING;
   const o = (id: BoxId) => fade(t, appear[id]);
   const logo = fade(t, mode === 'reveal' ? 8000 : 6000);

@@ -2,10 +2,10 @@ import { fade, stepIndex } from '../../engine/anim';
 import { SC9_EVIDENCE } from '../../scenario/practice';
 import { C } from '../../ui/tokens';
 
-export function StatusBar() {
+export function StatusBar({ clock }: { clock: string }) {
   return (
     <div className="absolute left-0 right-0 top-0 flex items-center justify-between px-6 font-sans text-[14px] font-semibold text-slate-900" style={{ height: 44, zIndex: 30 }}>
-      <span>15:00</span>
+      <span>{clock}</span>
       <span>5G ▮▮▮</span>
     </div>
   );

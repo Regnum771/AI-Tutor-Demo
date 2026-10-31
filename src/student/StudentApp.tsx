@@ -14,12 +14,12 @@ export function StudentApp() {
   const f = studentFrame(scene.id, t);
   return (
     <Stage width={390} height={844} background="#F8FAFC">
-      {f.screen === 'lock' && <LockScreen t={t} notification={f.notification} tapAt={scene.id === 9 ? SC9.tap : undefined} />}
+      {f.screen === 'lock' && <LockScreen t={t} notification={f.notification} clock={f.clock} tapAt={scene.id === 7 ? SC9.tap : undefined} />}
       {f.screen === 'plan' && <PlanScreen local={f.local} variant={f.variant} />}
       {f.screen === 'practice' && <PracticeScreen t={f.local} />}
       {f.screen === 'progress' && <ProgressScreen local={f.local} />}
-      {f.screen !== 'lock' && <StatusBar />}
-      {scene.id === 9 && <EvidencePill t={t} />}
+      {f.screen !== 'lock' && <StatusBar clock={f.clock} />}
+      {scene.id === 7 && <EvidencePill t={t} />}
       <Overlays scene={scene} t={t} slate={slate} toggles={toggles} variant="phone" />
     </Stage>
   );

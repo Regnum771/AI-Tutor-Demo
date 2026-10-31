@@ -8,7 +8,7 @@ const OUT = 'contact-sheet';
 const PORT = 5199;
 const verify = process.argv.includes('--verify');
 
-async function shoot(page: Page, app: 'dashboard' | 'student', scene: number, t: number): Promise<Buffer> {
+async function shoot(page: Page, app: 'teacher' | 'student', scene: number, t: number): Promise<Buffer> {
   await page.goto(`http://localhost:${PORT}/${app}.html?scene=${scene}&t=${t}`);
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(250);
@@ -23,9 +23,9 @@ async function main() {
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 });
   await mkdir(OUT, { recursive: true });
 
-  const jobs: { page: Page; app: 'dashboard' | 'student'; scene: number; t: number }[] = [];
+  const jobs: { page: Page; app: 'teacher' | 'student'; scene: number; t: number }[] = [];
   for (const s of SCENES) {
-    for (const t of s.shots) jobs.push({ page: dash, app: 'dashboard', scene: s.id, t });
+    for (const t of s.shots) jobs.push({ page: dash, app: 'teacher', scene: s.id, t });
     for (const t of STUDENT_SHOTS[s.id] ?? []) jobs.push({ page: phone, app: 'student', scene: s.id, t });
   }
 

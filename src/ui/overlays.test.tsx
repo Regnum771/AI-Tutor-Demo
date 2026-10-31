@@ -9,13 +9,13 @@ const render = (t: number, over: Partial<typeof DEFAULT_TOGGLES> = {}, slate = f
 
 describe('Overlays', () => {
   it('shows the lower-third title shortly after scene start, then hides it', () => {
-    expect(render(1500)).toContain('Multimodal Foundation Models');
-    expect(render(0)).not.toContain('Multimodal Foundation Models');
-    expect(render(14000)).not.toContain('Multimodal Foundation Models');
+    expect(render(1500)).toContain('Learning Digital Twins');
+    expect(render(0)).not.toContain('Learning Digital Twins');
+    expect(render(14000)).not.toContain('Learning Digital Twins');
   });
   it('never shows titles on the phone or when toggled off', () => {
-    expect(render(1500, {}, false, 'phone')).not.toContain('Multimodal Foundation Models');
-    expect(render(1500, { titles: false })).not.toContain('Multimodal Foundation Models');
+    expect(render(1500, {}, false, 'phone')).not.toContain('Learning Digital Twins');
+    expect(render(1500, { titles: false })).not.toContain('Learning Digital Twins');
   });
   it('shows the footer label unless toggled off', () => {
     expect(render(0)).toContain(FOOTER_LABEL);

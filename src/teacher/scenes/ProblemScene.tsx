@@ -2,7 +2,6 @@ import { fade, prog, stepIndex } from '../../engine/anim';
 import { SOURCE_WINDOWS, TEACHER_QUESTIONS } from '../../scenario/sources';
 import { FakeCursor, type CursorKey } from '../../ui/FakeCursor';
 import { C } from '../../ui/tokens';
-import type { SceneProps } from './types';
 
 const WINDOW_IN = (i: number) => 300 + i * 650;
 const QUESTIONS_IN = 6800;
@@ -21,7 +20,7 @@ const CURSOR: CursorKey[] = [
 const FOCUS_ORDER = ['lms', 'zalo', 'records', 'assessment', 'whatsapp', 'email'];
 const CLICK_TIMES = CURSOR.filter((k) => k.click).map((k) => k.t);
 
-export function Sc01Fragmented({ t, cursor }: SceneProps) {
+export function ProblemScene({ t, cursor }: { t: number; cursor: boolean }) {
   const focused = FOCUS_ORDER[stepIndex(t, CLICK_TIMES)];
   const veil = prog(t, QUESTIONS_IN - 300, 600) * 0.7;
   return (

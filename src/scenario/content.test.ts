@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EVIDENCE_ITEMS, MESSAGES, SOURCE_WINDOWS, TEACHER_QUESTIONS } from './sources';
-import { EXCHANGES, REASSESSMENT, refTarget } from './agents';
-import { ACTIVITIES, OPERATIONS, PATHWAY_INITIAL, RETRIEVED, STATUSES } from './orchestration';
-import { RESOURCES } from './agents';
-import { PATHWAY_A, PATHWAY_B, sessionsToTarget } from './simulation';
+import { ACTIVITIES, OPERATIONS, PATHWAY_INITIAL, PATHWAY_PROPOSED, STATUSES } from './orchestration';
 import { GUIDED, HINT_ROW, PROGRESS, Q1, SC9, SC9_EVIDENCE, equivalent } from './practice';
 import { MASTERY_INITIAL, MASTERY_MID } from './minhAnh';
 import { sceneById } from './scenes';
@@ -29,40 +26,17 @@ describe('sources', () => {
   });
 });
 
-describe('agents', () => {
-  it('exchanges alternate SAS→TAS→SAS→TAS with the spec card types', () => {
-    expect(EXCHANGES.map((c) => `${c.from}>${c.to}:${c.type}`)).toEqual([
-      'SAS>TAS:DIAGNOSIS', 'TAS>SAS:PROPOSAL', 'SAS>TAS:CHALLENGE', 'TAS>SAS:REFINEMENT',
-    ]);
-  });
-  it('every evidence ref resolves to a real twin field, KG node, objective or resource', () => {
-    for (const card of [...EXCHANGES, ...REASSESSMENT]) {
-      for (const r of card.refs) expect(refTarget(r), r).not.toBeNull();
-    }
-  });
-  it('refTarget rejects unknown refs', () => {
-    expect(refTarget('kg:nope')).toBeNull();
-    expect(refTarget('twin.mastery.nope')).toBeNull();
-    expect(refTarget('resources.nope')).toBeNull();
-  });
-});
-
 describe('orchestration', () => {
   it('has one status per operation and consistent content', () => {
     expect(OPERATIONS).toHaveLength(6);
     expect(STATUSES).toHaveLength(6);
     expect(ACTIVITIES).toHaveLength(5);
     expect(PATHWAY_INITIAL).toHaveLength(4);
-    for (const r of RETRIEVED) expect(RESOURCES[r]).toBeTruthy();
   });
-});
-
-describe('simulation', () => {
-  it('B reaches 0.75 in 3 sessions, A in 6', () => {
-    expect(sessionsToTarget(PATHWAY_A.curve)).toBe(6);
-    expect(sessionsToTarget(PATHWAY_B.curve)).toBe(3);
-    expect(PATHWAY_A.curve[0]).toBe(MASTERY_INITIAL.equivalence);
-    expect(PATHWAY_B.curve[0]).toBe(MASTERY_INITIAL.equivalence);
+  it('the teacher moves the mastery assessment from 19:00 to 20:00', () => {
+    expect(PATHWAY_PROPOSED[3].when).toBe('Today 19:00');
+    expect(PATHWAY_INITIAL[3].when).toBe('Today 20:00');
+    expect(PATHWAY_INITIAL.slice(0, 3)).toEqual(PATHWAY_PROPOSED.slice(0, 3));
   });
 });
 
@@ -81,10 +55,10 @@ describe('practice', () => {
     for (const s of GUIDED.steps) expect(equivalent(s.f, GUIDED.start), s.expr).toBe(true);
     expect(GUIDED.steps.at(-1)!.expr).toBe('p ∧ ¬q');
   });
-  it('Sc9 timeline is ascending and inside the scene', () => {
+  it('Sc7 (SC9) timeline is ascending and inside the scene', () => {
     const order = [SC9.tap, SC9.plan, SC9.practice, SC9.pickWrong, SC9.hint, SC9.pickRight, SC9.guided, ...SC9.guidedSteps, SC9.progress];
     order.forEach((t, i) => i && expect(t).toBeGreaterThan(order[i - 1]));
-    expect(SC9.progress).toBeLessThan(sceneById(9).durationMs);
+    expect(SC9.progress).toBeLessThan(sceneById(7).durationMs);
     SC9_EVIDENCE.forEach((e, i) => i && expect(e.at).toBeGreaterThan(SC9_EVIDENCE[i - 1].at));
   });
   it('phone progress matches the twin', () => {

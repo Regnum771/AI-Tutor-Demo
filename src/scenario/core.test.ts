@@ -7,9 +7,9 @@ import {
 } from './classroom';
 
 describe('scenes', () => {
-  it('has 12 scenes totalling 3:30', () => {
-    expect(SCENES.map((s) => s.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-    expect(TOTAL_MS).toBe(210000);
+  it('has 10 scenes totalling 2:30', () => {
+    expect(SCENES.map((s) => s.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(TOTAL_MS).toBe(150000);
   });
   it('shots are ascending and inside each scene', () => {
     for (const s of SCENES) {
@@ -21,10 +21,11 @@ describe('scenes', () => {
       });
     }
   });
-  it('cues fit their scenes and delivery precedes the phone notification', () => {
-    expect(CUES.sc7Notify).toBeLessThan(sceneById(7).durationMs);
-    expect(CUES.sc7Delivered).toBeLessThanOrEqual(CUES.sc7Notify);
-    expect(CUES.sc10Update).toBeLessThan(sceneById(10).durationMs);
+  it('cues lie inside Sc6 and Sc8', () => {
+    expect(CUES.approveNotify).toBe(7500);
+    expect(CUES.approveNotify).toBeLessThan(sceneById(6).durationMs);
+    expect(CUES.adaptUpdate).toBe(9000);
+    expect(CUES.adaptUpdate).toBeLessThan(sceneById(8).durationMs);
   });
   it('sceneById throws on unknown ids', () => {
     expect(() => sceneById(99)).toThrow();

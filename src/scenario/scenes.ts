@@ -2,39 +2,37 @@ export interface SceneDef {
   id: number;
   /** Short name shown in the controller. */
   label: string;
-  /** Lower-third title on the dashboard; empty = no title overlay. */
+  /** Lower-third title on the teacher window; empty = no title overlay. */
   title: string;
   subtitle: string;
+  /** Loop stage shown as the chapter label; empty = none. */
+  chapter: string;
   durationMs: number;
   /** Key timestamps rendered by the contact sheet. */
   shots: number[];
 }
 
 export const SCENES: SceneDef[] = [
-  { id: 1, label: 'Fragmented', title: 'Fragmented Data', subtitle: 'Heterogeneous Information. Limited Learning Intelligence.', durationMs: 12000, shots: [1500, 5000, 9500] },
-  { id: 2, label: 'Architecture', title: '', subtitle: '', durationMs: 13000, shots: [2500, 6500, 9500, 12500] },
-  { id: 3, label: 'Perceive', title: 'Multimodal Foundation Models', subtitle: 'Interpret. Extract. Connect.', durationMs: 15000, shots: [2000, 6500, 11500, 14000] },
-  { id: 4, label: 'Represent', title: 'Knowledge Graphs → Grounded Inference', subtitle: 'Learning Digital Twins → Dynamic Student Representation', durationMs: 15000, shots: [2500, 5500, 10500, 13500] },
-  { id: 5, label: 'Reason', title: 'Specialized Agent Intelligence', subtitle: 'Student Analysis Agent · Teaching Assistance Agent', durationMs: 15000, shots: [2500, 6500, 11000, 14000] },
-  { id: 6, label: 'Collaborate', title: 'Collaborative Agent Intelligence', subtitle: 'Multimodal Evidence. Knowledge-Grounded Reasoning.', durationMs: 25000, shots: [4000, 9500, 13500, 18000, 22000] },
-  { id: 7, label: 'Orchestrate', title: 'Agentic AI', subtitle: 'Adaptive Decisions → Service Coordination → Autonomous Execution', durationMs: 25000, shots: [3000, 7500, 10500, 14000, 17000, 21000] },
-  { id: 8, label: 'Govern', title: 'AI Coordinates. Digital Twins Monitor. Teachers Govern.', subtitle: '', durationMs: 15000, shots: [2500, 6000, 10500, 13500] },
-  { id: 9, label: 'Experience', title: 'Personalized Learning', subtitle: 'Adaptive Support. Continuous Evidence.', durationMs: 20000, shots: [5000, 10000, 15000, 18000] },
-  { id: 10, label: 'Simulate & Adapt', title: 'Simulate. Intervene. Monitor. Adapt.', subtitle: 'The closed-loop learning digital twin', durationMs: 30000, shots: [3500, 10000, 13500, 19500, 23000, 28500] },
-  { id: 11, label: 'Scale', title: 'One Integrated AI Architecture', subtitle: 'Multiple Learning Digital Twins. Personalized Interventions at Classroom Scale.', durationMs: 15000, shots: [500, 5500, 9500, 13500] },
-  { id: 12, label: 'Closing', title: '', subtitle: '', durationMs: 10000, shots: [2000, 8000] },
+  { id: 1, label: 'Problem', title: 'Fragmented Data', subtitle: 'Heterogeneous information. Limited learning intelligence.', chapter: '', durationMs: 15000, shots: [3000, 8000, 14000] },
+  { id: 2, label: 'Beyond', title: 'Multimodal Foundation Models', subtitle: 'Every source. One conversation.', chapter: 'Sense', durationMs: 10000, shots: [1500, 4500, 9500] },
+  { id: 3, label: 'Classroom', title: 'Learning Digital Twins', subtitle: 'A live model of every student.', chapter: 'Sense', durationMs: 15000, shots: [1500, 5000, 11500, 14500] },
+  { id: 4, label: 'Minh Anh', title: 'Collaborative Agent Intelligence', subtitle: 'Knowledge-grounded reasoning, with evidence.', chapter: 'Diagnose', durationMs: 25000, shots: [1500, 4000, 6500, 11000, 17000, 24000] },
+  { id: 5, label: 'Class gap', title: 'Knowledge Graphs → Grounded Inference', subtitle: 'Prerequisite gaps, across the class.', chapter: 'Diagnose', durationMs: 10000, shots: [1500, 4500, 9500] },
+  { id: 6, label: 'Approve', title: 'AI Coordinates. Teachers Govern.', subtitle: '', chapter: 'Intervene · Oversee', durationMs: 15000, shots: [1000, 3200, 5000, 7200, 14500] },
+  { id: 7, label: 'Student', title: 'Personalized Learning', subtitle: 'Adaptive support. Continuous evidence.', chapter: 'Intervene', durationMs: 20000, shots: [19000] },
+  { id: 8, label: 'Adapt', title: 'Monitor. Adapt.', subtitle: 'The closed-loop learning digital twin.', chapter: 'Adapt', durationMs: 15000, shots: [2500, 6000, 9000, 14500] },
+  { id: 9, label: 'How it works', title: 'One Integrated AI Architecture', subtitle: 'Multimodal Intelligence. Knowledge-Grounded Reasoning. Dynamic Digital Twins. Agentic Adaptation.', chapter: '', durationMs: 20000, shots: [4000, 11000, 15000, 19500] },
+  { id: 10, label: 'Closing', title: '', subtitle: '', chapter: '', durationMs: 5000, shots: [4500] },
 ];
 
 export const TOTAL_MS = SCENES.reduce((sum, s) => sum + s.durationMs, 0);
 
 /** Cross-app moments that both windows must agree on (scene time, ms). */
 export const CUES = {
-  /** Sc7: pipeline reaches DELIVERED on the dashboard. */
-  sc7Delivered: 20500,
-  /** Sc7: notification lands on the phone lock screen. */
-  sc7Notify: 21000,
-  /** Sc10: updated pathway delivered and shown on the phone. */
-  sc10Update: 27000,
+  /** Sc6: notification lands on the phone, 1 s after the teacher clicks Approve (6500). */
+  approveNotify: 7500,
+  /** Sc8: the follow-up plan appears on the phone, as the Classroom updates. */
+  adaptUpdate: 9000,
 } as const;
 
 export function sceneById(id: number): SceneDef {

@@ -7,10 +7,10 @@ import { openChannel, type AppName, type Channel } from '../engine/sync';
 import { useNow } from '../engine/useNow';
 import { SCENES, TOTAL_MS, sceneById } from '../scenario/scenes';
 
-const TOGGLE_LABELS: Record<keyof Toggles, string> = { titles: 'Titles', footer: 'Footer label', cursor: 'Cursor', tc: 'Timecode' };
+const TOGGLE_LABELS: Record<keyof Toggles, string> = { titles: 'Titles', footer: 'Footer label', cursor: 'Cursor', chapter: 'Chapter label', tc: 'Timecode' };
 const STANDALONE = [
-  { label: 'Copy phone Sc9 autoplay URL', path: '/student.html?scene=9&autoplay' },
-  { label: 'Copy dashboard Sc1 autoplay URL', path: '/dashboard.html?scene=1&autoplay' },
+  { label: 'Copy phone Sc7 autoplay URL', path: '/student.html?scene=7&autoplay' },
+  { label: 'Copy teacher Sc1 autoplay URL', path: '/teacher.html?scene=1&autoplay' },
 ];
 
 const btn = 'rounded-lg border border-line bg-surface px-4 py-2 text-[15px] font-semibold text-ink hover:border-dim';
@@ -18,7 +18,7 @@ const btn = 'rounded-lg border border-line bg-surface px-4 py-2 text-[15px] font
 export function ControllerApp() {
   const [state, setState] = useState<PlaybackState>(() => initialState(1));
   const [playAll, setPlayAll] = useState(false);
-  const [seen, setSeen] = useState<Record<AppName, number>>({ dashboard: 0, student: 0 });
+  const [seen, setSeen] = useState<Record<AppName, number>>({ teacher: 0, student: 0 });
   const chRef = useRef<Channel | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -147,12 +147,12 @@ export function ControllerApp() {
         </div>
 
         <div className="flex flex-wrap items-center gap-6 text-[16px]">
-          {(['dashboard', 'student'] as AppName[]).map((app) => (
+          {(['teacher', 'student'] as AppName[]).map((app) => (
             <span key={app}>
               <span style={{ color: alive(app) ? '#4ADE80' : '#F87171' }}>{alive(app) ? '●' : '○'}</span> {app}
             </span>
           ))}
-          <button className={btn} onClick={() => window.open('/dashboard.html', 'dashboard', 'width=1920,height=1080')}>Open dashboard window</button>
+          <button className={btn} onClick={() => window.open('/teacher.html?scene=1', 'teacher', 'width=1920,height=1080')}>Open teacher window</button>
           <button className={btn} onClick={() => window.open('/student.html', 'student', 'width=390,height=844')}>Open student window</button>
         </div>
 

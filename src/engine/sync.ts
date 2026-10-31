@@ -1,6 +1,6 @@
 import type { PlaybackState } from './playback';
 
-export type AppName = 'dashboard' | 'student';
+export type AppName = 'teacher' | 'student';
 
 export type SyncMessage =
   | { kind: 'state'; state: PlaybackState }
