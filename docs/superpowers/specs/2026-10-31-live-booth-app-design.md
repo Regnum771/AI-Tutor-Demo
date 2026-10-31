@@ -47,7 +47,10 @@ Shared by server and client (types plus pure reducers).
   - mastery per concept (the 12 `ConceptId`s)
   - status (`onTrack`, `support`, `highRisk`)
   - an evidence list: quiz items, activity log, attendance, messages and TA notes; every entry has a stable id (e.g. `s17-quiz2-q4`)
-- **`Plan`**: id, student id, sessions (time, title, concept, minutes, `isMasteryCheck`), rationale and status: `proposed`, `approved`, `sent`, `done` or `autoApproved`.
+- **`Plan`**: id, kind, sessions, rationale and status: `proposed`, `approved`, `sent`, `done`, `autoApproved` or `dismissed`. Three kinds:
+  - `pathway`: one student; sessions are (time, title, concept, minutes, `isMasteryCheck`). The only kind delivered to the phone.
+  - `classActivity`: a group of students (ids) and one or more class sessions, e.g. a Thursday tutorial on a shared gap. Approving it records it as scheduled.
+  - `checkIns`: 15-minute meetings with named students (time per student), e.g. for escalations. Approving it records the invitations as sent.
 - **`PhoneState`**: the student the phone represents, the delivered plan, the current session and item, and the answers so far.
 - **`StoryClock`**: story time, starting at 15:00 on the demo day. It moves only on demo events, never with wall time.
 - **`DemoState`** = all of the above plus the conversation log. `reset()` returns the seed.
@@ -70,7 +73,8 @@ Commands are plain POSTs:
 |---|---|---|
 | `POST /api/ask` | `{ text }` | Runs SAS, then TAS if needed (or TAS revision when a plan is open) |
 | `POST /api/plan/edit` | `{ planId, sessionIndex, time? , remove? }` | Inline edit of a proposed plan |
-| `POST /api/plan/approve` | `{ planId }` | Approves and sends the plan to the phone |
+| `POST /api/plan/approve` | `{ planId }` | Approves the plan; a `pathway` is also sent to the phone |
+| `POST /api/plan/dismiss` | `{ planId }` | **Not now**: marks the plan `dismissed` |
 | `POST /api/phone/open` | `{ sessionIndex }` | Starts a session on the phone (advances the story clock to its time) |
 | `POST /api/phone/answer` | `{ itemId, optionId }` | Grades a canned item and updates mastery and evidence |
 | `POST /api/phone/skip` | `{}` | "Skip to tonight": marks earlier sessions done with seeded results |
@@ -83,9 +87,43 @@ Commands are plain POSTs:
 - **`LiveTeacher`** stops generating canned events. It turns the SSE stream into the same `TeacherEvent` timeline, so `teacherFrame`, `TeacherScreen`, `ContextPanel` and `Classroom` render everything. New event kinds are added where needed: streamed agent steps, streamed answer blocks, a plan from data, and a class update.
 - **`Blocks`** gains evidence chips: a citation id rendered as a small chip; clicking it shows that evidence entry in the panel.
 - **`Classroom`** tiles and KPIs read live `ClassState`; scripted mode keeps passing the constants.
-- **The plan card** in `ContextPanel` renders any `Plan`: an editable time per session, a remove control while `proposed`, **Approve & send**, and the `autoApproved · within your policy` label.
+- **The plan card** in `ContextPanel` renders any `Plan`: an editable time per session, a remove control while `proposed`, the approve button (**Approve & send** for a pathway, **Approve plan** for a class activity, **Book all** for check-ins), **Not now**, and the `autoApproved · within your policy` label.
 - **The header** shows the story clock in live mode.
 - **The teacher window and the Director** each get a **Reset demo** button. The Director also shows the phone QR code.
+
+### 2.6 Unlisted UI
+
+Every visible element in live mode is one of three things, and none may look broken.
+
+**Live (driven by `DemoState`):**
+
+| Element | Live behaviour |
+|---|---|
+| Sidebar Classroom badge, Classroom KPIs, tiles, filters, student list and card | Computed from `ClassState`; update as phone answers arrive |
+| "Needs your attention today" figures | From state: count of score drops, need-support count, escalations |
+| Sidebar **Today** list | The session's conversation history. Each `ask` that starts a conversation adds an entry titled from the SAS focus (e.g. "Minh Anh · implication", "Class gap · equivalence"); clicking reopens it. Starts empty after reset |
+| **New conversation**, Chat / Classroom nav, panel **Close**, "View context" | As today |
+| Phone copy: student name, greeting, concept labels, plan heading | From the delivered plan's student and concepts |
+
+**Routed to the agents:**
+
+| Element | Live behaviour |
+|---|---|
+| Attention rows, **Ask about the class**, **Ask about [student]** | Send their prompt through `/api/ask` |
+| Follow-up chips under an answer | `report` returns 2–3 `followUps`; they become the chips |
+| **Not now** on a plan | Sets the plan to `dismissed`; the assistant acknowledges in one line (no model call) |
+| Class gap and escalation panels | Show live data; their proposals are `classActivity` and `checkIns` plans from TAS |
+
+**Decorative (visible for realism, inert):**
+
+| Element | Live behaviour |
+|---|---|
+| **Export** and any other clickable-looking control without a live action | Shows a shared "Not part of this demo" toast for 2 s |
+| Sidebar **This week** items, source chips, teacher card, "from 8 sources" | Static, no hover affordance |
+| "Saturday, 31 October" | Fixed story date, shown with the story clock |
+| Five-question tracker | Hidden in live mode (a narration device for the video) |
+
+Any control added later must fall into one of these three groups; the click-audit test (§6) enforces it.
 
 ## 3. Agents (`server/agents/`)
 
@@ -106,6 +144,7 @@ Runs first on every question.
   - `focus`: `{ kind: 'student', id }`, `{ kind: 'class' }` or `{ kind: 'none' }`
   - `gaps`: concept ids
   - `needs_plan`: a yes/no flag
+  - `followUps`: 2–3 short follow-up questions the teacher might ask next
 - The server rejects a `report` that cites ids not in `ClassState`, returns the error as the tool result, and allows one retry.
 
 ### 3.2 Teaching Assistance Agent (TAS)
@@ -113,12 +152,14 @@ Runs first on every question.
 Runs when SAS sets `needs_plan`, when the teacher explicitly asks for a plan, or (as a revision) when the teacher messages while a `proposed` plan is open.
 
 - **Input**: the SAS diagnosis, the practice-bank catalogue (concepts that have canned items), the policy and the story clock.
-- **Finishes with `propose_plan`**: 2–4 sessions and a rationale. The last session is the mastery check.
+- **Finishes with `propose_plan`**, choosing a kind (§2.2) and giving a rationale:
+  - `pathway`: 2–4 sessions; the last is the mastery check
+  - `classActivity`: the affected student ids and 1–2 class sessions
+  - `checkIns`: up to 5 students, one 15-minute slot each
 - **Server checks**:
-  - every concept is in the practice bank
   - every time falls after story "now"
-  - the total is at most 45 minutes
-  - there are at most 4 sessions
+  - every student id exists
+  - `pathway` only: every concept is in the practice bank, the total is at most 45 minutes, and there are at most 4 sessions
 - On a failed check, the error goes back as the tool result and TAS gets one retry. A second failure shows the teacher: "I couldn't draft a plan within your policy." No broken card appears.
 
 ### 3.3 Adapt
@@ -127,7 +168,7 @@ Triggered when the phone finishes the mastery check.
 
 - The server has already updated mastery (§4.3). TAS runs an `adapt` call with the before and after mastery and the plan's outcome.
 - It writes the unprompted assistant message (e.g. "Minh Anh passed tonight's mastery check: logical equivalence 0.35 → 0.78…").
-- If a gap remains and a follow-up fits the policy, it calls `propose_plan`. The plan is stored as `autoApproved` and delivered to the phone.
+- If a gap remains and a follow-up fits the policy, it calls `propose_plan` with kind `pathway`. The plan is stored as `autoApproved` and delivered to the phone.
 - **Policy constants**: follow-ups have at most 3 sessions and use practice-bank concepts only. Anything larger is created as `proposed` and waits for the teacher.
 
 ### 3.4 What the teacher sees
@@ -204,6 +245,8 @@ Status is recomputed from mastery with the same thresholds the roster uses, and 
   - a revision while a plan is open
   - canned fallback on error or timeout
   - adapt producing an auto-approved follow-up within the policy and a `proposed` one outside it
+- **Click audit**: render `LiveTeacher` (both views, with a plan open) and each phone screen against a stub client, click every `button`, and assert each one either dispatches an action or shows the demo toast (§2.6).
+- **Plan kinds**: approving a `classActivity` or `checkIns` plan changes its status and posts the confirmation, and never changes `PhoneState`.
 - **Optional live smoke test** (`npm run test:live`, needs the key, excluded from `npm test`): asks "Why did Minh Anh's quiz score drop?" and checks that the report cites existing evidence ids and that the plan passes its checks.
 - **Existing suite**: every scripted-video test and `contact-sheet --verify` passes unchanged.
 - **Build**: `tsc --strict` covers `server/` and `src/live/`; `npm run build` passes.
