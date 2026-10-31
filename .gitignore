@@ -4,3 +4,4 @@ contact-sheet/
 .superpowers/
 *.mp4
 *.mov
+.env.local
