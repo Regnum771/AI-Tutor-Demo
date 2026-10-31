@@ -47,6 +47,12 @@ describe('teacher scene scripts', () => {
   });
   it('Sc5 asks the class question, opens the class panel and ticks Q4', () => {
     expect(frame(5, 6500).panel?.id).toBe('class');
+    // Spec: panel at 6200, bars grow 6500–7500.
+    expect(frame(5, 6100).panel?.id).toBe('student');
+    expect(frame(5, 6500).panel?.bars).toBe(0);
+    expect(frame(5, 7000).panel?.bars).toBeGreaterThan(0.2);
+    expect(frame(5, 7000).panel?.bars).toBeLessThan(1);
+    expect(frame(5, 7500).panel?.bars).toBe(1);
     expect(frame(5, 8000).ticks[3]).toBe(true);
     expect(frame(5, 10000).messages).toHaveLength(4);
   });
@@ -58,6 +64,15 @@ describe('teacher scene scripts', () => {
     expect(frame(6, 6600).approved).toContain('student');
     expect(frame(6, 8000).messages).toHaveLength(3);
     expect(frame(6, 8000).ticks).toEqual([true, true, true, true, true]);
+  });
+  it('the Minh Anh pulse is continuous across the Sc3 to Sc4 cut', () => {
+    const end = frame(3, sceneById(3).durationMs).classroom.pulse;
+    const start = frame(4, 0).classroom.pulse;
+    expect(end).toBeGreaterThan(0);
+    expect(Math.abs(start - end)).toBeLessThan(0.01);
+  });
+  it('selecting Minh Anh stops the pulse', () => {
+    expect(frame(4, 1000).classroom.pulse).toBe(0);
   });
   it('Sc7 holds the last Sc6 frame', () => {
     expect(persistent(7, 20000)).toEqual(persistent(6, 15000));
@@ -71,7 +86,7 @@ describe('teacher scene scripts', () => {
     expect(frame(8, 8100).view).toBe('classroom');
     expect(frame(8, 11000).classroom.adapt).toBe(1);
   });
-  it('cursor keys are ascending and every click lands while the cursor is shown', () => {
+  it('cursor keys are in ascending time order', () => {
     for (const id of TEACHER_SCENES) {
       const keys = scriptFor(id).cursor.map((k) => k.t);
       expect(keys).toEqual([...keys].sort((a, b) => a - b));

@@ -1,8 +1,3 @@
-export const ENGINE_INPUTS = [
-  'SAS student diagnosis', 'TAS instructional strategy', 'Digital twin context',
-  'Knowledge graph relations', 'Available learning resources', 'Teacher-defined policies',
-];
-
 export const OPERATIONS = [
   { id: 'coordinate', title: 'Adaptive decision coordination', detail: 'Joint decision within teacher policy · adaptive track · auto-execute' },
   { id: 'retrieve', title: 'Resource retrieval', detail: '4 resources retrieved from the course knowledge base' },
@@ -13,8 +8,6 @@ export const OPERATIONS = [
 ];
 
 export const STATUSES = ['DECISION READY', 'RESOURCES RETRIEVED', 'PATHWAY CREATED', 'SCHEDULED', 'DELIVERED', 'MONITORING'] as const;
-
-export const RETRIEVED = ['implication-visual', 'worked-examples', 'guided-set', 'mastery-check'];
 
 export const ACTIVITIES = [
   'Visual explanation of logical operators', 'Worked examples', 'Guided exercises', 'Application problems', 'Mastery assessment',
@@ -41,4 +34,3 @@ export const PLAN_OBJECTIVES = ['Implication', 'Logical equivalence'];
 export const PLAN_OBJECTIVES_UPDATED = ['Equivalence laws', 'Application'];
 
 export const EXPECTED_OUTCOME = 'Logical equivalence mastery ≥ 0.75 within 3 sessions';
-export const MONITORING_CRITERIA = ['Mastery check score', 'Hint usage per item', 'Activity completion', 'Response time on implication items'];

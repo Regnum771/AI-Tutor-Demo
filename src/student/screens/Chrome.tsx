@@ -18,7 +18,7 @@ export function TouchDot({ t, at, x, y }: { t: number; at: number; x: number; y:
   return <div style={{ position: 'absolute', left: x - 22, top: y - 22, width: 44, height: 44, borderRadius: '50%', background: 'rgba(15,23,42,0.25)', border: '2px solid rgba(255,255,255,0.9)', opacity: o, zIndex: 40 }} />;
 }
 
-/** "Evidence synced ↑" pill after each Sc9 evidence event. */
+/** "Evidence synced ↑" pill after each Sc7 evidence event. */
 export function EvidencePill({ t }: { t: number }) {
   const i = stepIndex(t, SC9_EVIDENCE.map((e) => e.at));
   if (i < 0) return null;

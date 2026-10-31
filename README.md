@@ -44,7 +44,7 @@ Any window can render without the Director:
 - `teacher.html?scene=4&t=17000`: hold one frame
 - `student.html?scene=7&autoplay`: play a scene once
 - `teacher.html` with no `?scene`: the **live clickable draft** (type, approve, open the Classroom) for rehearsing the flow
-- Flags: `titles=0`, `footer=0`, `cursor=0`, `tc=1` (timecode burn-in), `scale=N` (force canvas scale)
+- Flags: `titles=0`, `footer=0`, `cursor=0`, `chapter=0` (hides the chapter label), `tc=1` (timecode burn-in), `scale=N` (force canvas scale)
 
 ## Recording
 
@@ -61,7 +61,7 @@ Any window can render without the Director:
 3. In the Director, click **Open teacher window** and **Open student window**.
 4. Make the teacher window fullscreen (F11) on a 4K display, or accept letterboxing. Capture the phone window cropped to its canvas (390x844 CSS px, 780x1688 at 2x).
 5. Record both windows at **60 fps** (OBS Window Capture or similar). Titles and the chapter label can stay on, or go off if you add lower thirds and chapters in DaVinci Resolve.
-6. Do one warm-up **Play all** before the real take, then a short dry-run recording of **Sc6** to check sync and frame rate: click Approve on the teacher window and confirm the notification appears on the phone 1 s later.
+6. Do one warm-up **Play all** before the real take, then a short dry-run recording of **Sc6** to check sync and frame rate: watch the scripted Approve at 6.5 s and confirm the notification appears on the phone at 7.5 s, 1 s later.
 7. Press **Play all** (or play single scenes). Every take is identical, so a re-recorded scene cuts in cleanly.
 8. Each scene starts with a 100 ms white **sync slate** (about 6 frames at 60 fps) in the top-left corner. Align the two recordings on it in Resolve.
 9. Each scene holds its first and last frame for 1 s; use these as edit handles.
@@ -73,27 +73,27 @@ Any window can render without the Director:
 | F2 | Sc1 | `teacher_stressed.mp4` | Screen-replace with the Sc1 teacher capture (Resolve planar tracker + corner pin), or match-cut on a push-in |
 | F3 | Sc2 | `teacher_morning.mp4` | The calm counterpart to F2, then cut to the teacher window |
 | F4 | Sc7 | `greenscreen_phone.mp4` | Key the green screen and corner-pin the student capture (`student.html?scene=7&autoplay`) |
-| F1 | Sc9 | `lecture hall.mp4` | Background for the architecture scene |
+| F1 | Sc9 | `lecture hall.mp4` | Leads into Sc9 How it works (F1 → T): the footage plays in the editor, then cuts to the teacher window |
 
-`lecture hall.mp4` has a small blurred patch in the centre. Cover it with a centred opening title (Manrope bold, white with a soft navy shadow), sized so the text block covers the patch, e.g. *"55 students. One lecturer. Data everywhere."* The title must be on screen from the first frame of the footage and dissolve out on the cut. Add a slow 105% push-in on the footage: the title stays fixed while the footage moves, which keeps the patch under the text.
+Footage plays in the editor; the T and P windows only render their own scenes.
 
 The footage files are git-ignored. Confirm each licence allows commercial and promotional use, keep the licence records with the project, and grade the footage warm to sit with the eggshell teacher UI.
 
 ## 60 s teaser
 
-The teaser is cut in the editor from the same recordings; it needs no extra build. The design spec (section 1) does not list exact cut points, so this is a suggested cut that totals 60 s:
+The teaser is cut in the editor from the same recordings; it needs no extra build. The design spec (section 1) does not list exact cut points, so this is a suggested cut that totals exactly 60 s (5 + 6 + 7 + 14 + 5 + 8 + 4 + 6 + 5). The cut is a suggestion pending your confirmation:
 
 | Take from | Length |
 |---|---|
 | Sc1 Problem, questions beat (8-13 s) | 5 s |
+| Fill: Sc2 greeting and attention rows (0-6 s) | 6 s |
 | Sc3 Classroom, tiles colouring (2-9 s) | 7 s |
-| Sc4 Minh Anh, question to answer (4.8-18.5 s) | 14 s |
-| Sc6 Approve, edit and approve with the phone notification (3.5-8 s) | 5 s |
+| Sc4 Minh Anh, question to answer (4.6-18.6 s) | 14 s |
+| Sc6 Approve, edit and approve with the phone notification (3.5-8.5 s) | 5 s |
 | Sc7 Student, practice with hint (8-16 s) | 8 s |
 | Sc8 Adapt, Classroom counts down (8-12 s) | 4 s |
 | Sc9 How it works, loop pulse (12-18 s) | 6 s |
 | Sc10 Closing | 5 s |
-| Fill: Sc2 greeting and attention rows | 6 s |
 
 ## Review frames without recording
 

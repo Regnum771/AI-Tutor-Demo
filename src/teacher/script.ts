@@ -1,6 +1,7 @@
 import type { CursorKey } from '../ui/FakeCursor';
 import { MINH_ANH } from '../scenario/minhAnh';
 import { TOPICS } from './conversations';
+import { sceneById } from '../scenario/scenes';
 import { PAST, type TeacherEvent } from './frame';
 
 export interface TeacherScript {
@@ -33,7 +34,7 @@ const OWN: Partial<Record<number, TeacherScript>> = {
     cursor: [
       { t: 600, x: 1100, y: 760 },
       { t: 1500, x: 70, y: 192, click: true },
-      { t: 2600, x: 520, y: 900 },
+      { t: 2600, x: 980, y: 740 },
     ],
   },
   4: {
@@ -50,10 +51,10 @@ const OWN: Partial<Record<number, TeacherScript>> = {
       { at: 19000, type: 'tick', q: 2 },
     ],
     cursor: [
-      { t: 0, x: 980, y: 820 },
-      { t: 800, x: 855, y: 564, click: true },
-      { t: 2200, x: 1560, y: 697, click: true },
-      { t: 3000, x: 1300, y: 960 },
+      { t: 0, x: 980, y: 740 },
+      { t: 800, x: 856, y: 521, click: true },
+      { t: 2200, x: 1562, y: 665, click: true },
+      { t: 3000, x: 1500, y: 730 },
     ],
   },
   5: {
@@ -61,13 +62,13 @@ const OWN: Partial<Record<number, TeacherScript>> = {
       { at: 800, type: 'send', text: ASK_CLASS },
       { at: 1200, type: 'think', lines: TOPICS.class.thinking, stepMs: 800, title: TOPICS.class.title },
       { at: 3000, type: 'assistant', kind: 'answer', topic: 'class', blockMs: 600 },
-      { at: 6000, type: 'panel', id: 'class' },
+      { at: 6200, type: 'panel', id: 'class', barsDelay: 300, barsMs: 1000 },
       { at: 8000, type: 'tick', q: 3 },
     ],
     cursor: [
-      { t: 0, x: 1000, y: 820 },
+      { t: 0, x: 1500, y: 730 },
       { t: 800, x: 690, y: 558, click: true },
-      { t: 1600, x: 1050, y: 860 },
+      { t: 1600, x: 900, y: 700 },
     ],
   },
   6: {
@@ -86,7 +87,7 @@ const OWN: Partial<Record<number, TeacherScript>> = {
       { t: 3500, x: 1680, y: 787, click: true },
       { t: 5500, x: 1600, y: 830 },
       { t: 6500, x: 1575, y: 787, click: true },
-      { t: 7500, x: 1300, y: 920 },
+      { t: 7500, x: 1300, y: 740 },
     ],
   },
   8: {
@@ -105,7 +106,12 @@ const OWN: Partial<Record<number, TeacherScript>> = {
 
 /** A scene's script: every earlier teacher scene's events replayed at PAST (finished), then its own. */
 export function scriptFor(scene: number): TeacherScript {
-  const prior = TEACHER_SCENES.filter((id) => id < scene).flatMap((id) => (OWN[id]?.events ?? []).map((e) => ({ ...e, at: PAST })));
+  // Finished events replay at PAST. The pulse is a running oscillation, so it keeps its phase: it is replayed
+  // at its real offset from this scene's start, which makes it continuous across the cut.
+  const elapsed = (id: number) => TEACHER_SCENES.filter((s) => s >= id && s < scene).reduce((sum, s) => sum + sceneById(s).durationMs, 0);
+  const prior = TEACHER_SCENES.filter((id) => id < scene).flatMap((id) =>
+    (OWN[id]?.events ?? []).map((e) => ({ ...e, at: e.type === 'pulse' ? e.at - elapsed(id) : PAST })),
+  );
   const own = OWN[scene] ?? { events: [], cursor: [] };
   return { events: [...prior, ...own.events], cursor: own.cursor };
 }

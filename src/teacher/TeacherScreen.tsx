@@ -118,7 +118,7 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
         )}
 
         {view === 'classroom' ? (
-          <Classroom cls={frame.classroom} actions={actions} />
+          <Classroom cls={frame.classroom} studentApproved={frame.approved.includes('student')} actions={actions} />
         ) : empty ? (
           <EmptyState frame={frame} actions={actions} composer={<Composer value={composerValue} onChange={composer?.onChange} readOnly={!composer} onSend={send} big />} />
         ) : (
@@ -232,7 +232,7 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
   const rows = frame.greeting.rows;
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <div className="mx-auto flex max-w-[760px] flex-col px-8 pt-[9vh]">
+      <div className="mx-auto flex max-w-[760px] flex-col px-8 pt-[97px]">
         <Eyebrow>Saturday, 31 October</Eyebrow>
         <h2 className="mt-3 font-serif text-[84px] leading-[0.92] tracking-[-0.01em]">
           {line1}<br /><span className="italic">{line2}</span>
@@ -247,7 +247,7 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
               key={row.topic}
               type="button"
               onClick={() => actions?.send(TOPICS[row.topic].prompt)}
-              className="group grid w-full grid-cols-[1fr_auto_auto] items-center gap-6 border-t border-egg-ink/70 py-3.5 text-left"
+              className="grid w-full grid-cols-[1fr_auto_auto] items-center gap-6 border-t border-egg-ink/70 py-3.5 text-left"
               style={{ opacity: rows[i], transform: `translateY(${(1 - rows[i]) * 12}px)` }}
             >
               <span>

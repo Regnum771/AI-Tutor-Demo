@@ -17,4 +17,3 @@ export const C = {
   mastered: '#4ADE80',
 } as const;
 
-export const masteryColor = (m: number): string => (m >= 0.7 ? C.mastered : m >= 0.5 ? C.gold : C.gap);

@@ -46,21 +46,6 @@ export const STUDENTS: Student[] = (() => {
   });
 })();
 
-export function kpis(students: Student[] = STUDENTS) {
-  const highRisk = students.filter((s) => s.status === 'highRisk').length;
-  const support = students.filter((s) => s.status === 'support').length;
-  return { total: students.length, needSupport: support + highRisk, highRisk };
-}
-
-export function portfolio(students: Student[] = STUDENTS) {
-  const count = (t: Track) => students.filter((s) => s.track === t).length;
-  return { routine: count('routine'), adaptive: count('adaptive'), complex: count('complex') };
-}
-
-export const KPIS_AFTER = { needSupport: 9, highRisk: 3 };
-export const PORTFOLIO_AFTER = { routine: 33, adaptive: 7, complex: 2 };
-export const OUTCOMES_AFTER = { improved: 14, adjust: 3, teacherAttention: 2 };
-
 export const EFFECTIVENESS = [
   { label: 'Guided conceptual practice', value: 82 },
   { label: 'Spaced retrieval', value: 74 },

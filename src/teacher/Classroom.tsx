@@ -32,7 +32,7 @@ export const adaptedBand = (s: Student, a: number): Band => {
   return bandOf(s);
 };
 export const adaptedMastery = (s: Student, a: number): number => {
-  if (s.index === MINH_ANH.index) return lerp(0.35, 0.72, a);
+  if (s.index === MINH_ANH.index) return lerp(MASTERY_INITIAL.equivalence, MASTERY_POST.equivalence, a);
   if (toSupport.has(s.index)) return lerp(s.mastery, 0.55, a);
   if (toOnTrack.has(s.index)) return lerp(s.mastery, 0.6, a);
   return s.mastery;
@@ -66,14 +66,16 @@ const RUNNING = [
 
 interface ClassroomProps {
   cls: FrameClassroom;
+  /** Minh Anh's proposal has been approved: her intervention is running. */
+  studentApproved?: boolean;
   actions?: TeacherActions;
 }
 
-export function Classroom({ cls, actions }: ClassroomProps) {
+export function Classroom({ cls, studentApproved = false, actions }: ClassroomProps) {
   const [filter, setFilter] = useState<Filter>('all');
   const a = cls.adapt;
   const k = cls.kpi;
-  const avg = STUDENTS.reduce((sum, s) => sum + s.mastery, 0) / STUDENTS.length;
+  const avg = STUDENTS.reduce((sum, s) => sum + adaptedMastery(s, a), 0) / STUDENTS.length;
   const count = (b: Band) => STUDENTS.filter((s) => adaptedBand(s, a) === b).length;
   const pick = (i: number) => actions?.select(cls.selected === i ? null : i);
   const needSupport = Math.round(needSupportAt(a) * k);
@@ -169,7 +171,8 @@ export function Classroom({ cls, actions }: ClassroomProps) {
                     <span className="text-[12px] text-egg-mute">agents running · you approve</span>
                   </div>
                   <ul className="divide-y divide-egg-line">
-                    {rows.map((r) => {
+                    {rows.map((row) => {
+                      const r = row.index === MINH_ANH.index && studentApproved ? { ...row, state: 'Running' } : row;
                       const s = STUDENTS[r.index];
                       return (
                         <li key={r.index}>

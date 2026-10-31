@@ -30,7 +30,7 @@ export const GUIDED = {
   ],
 };
 
-/** Sc9 timeline (scene time, ms), shared by the phone and the dashboard companion view. */
+/** Sc7 timeline (scene time, ms), shared by the phone. */
 export const SC9 = {
   tap: 1800,
   plan: 2400,

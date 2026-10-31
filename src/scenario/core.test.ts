@@ -3,7 +3,7 @@ import { CUES, SCENES, TOTAL_MS, sceneById } from './scenes';
 import { CONCEPTS, EDGES, pathEdges, type ConceptId } from './knowledgeGraph';
 import { DELTAS, MASTERY_INITIAL, MASTERY_MID, MASTERY_POST, MINH_ANH, gaps, lerpMastery } from './minhAnh';
 import {
-  KPIS_AFTER, OUTCOMES_AFTER, PORTFOLIO_AFTER, SCALE_STUDENTS, STUDENTS, initials, kpis, portfolio,
+  SCALE_STUDENTS, STUDENTS, initials,
 } from './classroom';
 
 describe('scenes', () => {
@@ -111,16 +111,13 @@ describe('classroom', () => {
     expect(STUDENTS[MINH_ANH.index].status).toBe('highRisk');
     expect(STUDENTS[MINH_ANH.index].track).toBe('adaptive');
   });
-  it('KPIs are 55 / 12 / 5 and improve after', () => {
-    expect(kpis()).toEqual({ total: 55, needSupport: 12, highRisk: 5 });
-    expect(KPIS_AFTER.needSupport).toBeLessThan(12);
-    expect(KPIS_AFTER.highRisk).toBeLessThan(5);
+  it('KPIs are 55 / 12 / 5', () => {
+    const n = (st: string) => STUDENTS.filter((s) => s.status === st).length;
+    expect({ total: STUDENTS.length, needSupport: n('support') + n('highRisk'), highRisk: n('highRisk') }).toEqual({ total: 55, needSupport: 12, highRisk: 5 });
   });
   it('portfolio is Routine 31 · Adaptive 9 · Complex 3', () => {
-    expect(portfolio()).toEqual({ routine: 31, adaptive: 9, complex: 3 });
-    const after = PORTFOLIO_AFTER.routine + PORTFOLIO_AFTER.adaptive + PORTFOLIO_AFTER.complex;
-    expect(after).toBeLessThanOrEqual(55);
-    expect(OUTCOMES_AFTER).toEqual({ improved: 14, adjust: 3, teacherAttention: 2 });
+    const n = (t: string) => STUDENTS.filter((s) => s.track === t).length;
+    expect({ routine: n('routine'), adaptive: n('adaptive'), complex: n('complex') }).toEqual({ routine: 31, adaptive: 9, complex: 3 });
   });
   it('scale students A–E map to fitting learners', () => {
     expect(SCALE_STUDENTS.map((s) => s.letter)).toEqual(['A', 'B', 'C', 'D', 'E']);

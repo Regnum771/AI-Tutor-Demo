@@ -24,7 +24,7 @@ export type TeacherEvent =
   | { at: number; type: 'think'; lines: string[]; stepMs: number; title: string; sansTitle?: boolean }
   | { at: number; type: 'assistant'; kind: AssistantKind; topic?: ContextId; index?: number; blockMs: number; stamp?: string }
   | { at: number; type: 'load'; topic: ContextId }
-  | { at: number; type: 'panel'; id: ContextId | null }
+  | { at: number; type: 'panel'; id: ContextId | null; barsDelay?: number; barsMs?: number }
   | { at: number; type: 'panelScroll'; y: number; dur: number }
   | { at: number; type: 'edit' }
   | { at: number; type: 'approve'; id: ContextId }
@@ -89,8 +89,8 @@ export interface TeacherFrame {
   classroom: FrameClassroom;
 }
 
-const openPanel = (id: ContextId, at: number, t: number): FramePanel => ({
-  id, appear: prog(t, at, 500), bars: prog(t, at + 1000, 2000), scroll: 0, edited: false, editFlash: 0, twin: 0, followUp: false,
+const openPanel = (id: ContextId, at: number, t: number, barsDelay = 1000, barsMs = 2000): FramePanel => ({
+  id, appear: prog(t, at, 500), bars: prog(t, at + barsDelay, barsMs), scroll: 0, edited: false, editFlash: 0, twin: 0, followUp: false,
 });
 
 /** Folds every event with `at <= t` (in array order) into the frame shown at time t. Pure. */
@@ -156,7 +156,7 @@ export function teacherFrame(events: TeacherEvent[], t: number): TeacherFrame {
         f.panel = openPanel(e.topic, e.at, t);
         break;
       case 'panel':
-        f.panel = e.id === null ? null : openPanel(e.id, e.at, t);
+        f.panel = e.id === null ? null : openPanel(e.id, e.at, t, e.barsDelay, e.barsMs);
         break;
       case 'panelScroll':
         if (f.panel) f.panel = { ...f.panel, scroll: lerp(f.panel.scroll, e.y, prog(t, e.at, e.dur, easeInOut)) };
