@@ -43,17 +43,21 @@ export function LiveTeacherView({ source }: { source: DemoSource }) {
   }
   seen.stamp(keysOf(state), t);
 
-  const showToast = (text: string) => setToast({ text, at: t });
+  const showToast = (text: string) => setToast({ text, at: Date.now() - t0 });
   const pushLocal = (...e: TeacherEvent[]) => setLocal((l) => [...l, ...e]);
   const frame = teacherFrame([...BASE, ...liveEvents(state, activeId, seen), ...local].sort((a, b) => a.at - b.at), t);
 
   const ask = async (text: string, conversationId: string | null) => {
     const question = text.trim();
-    if (!question || state.busy) return;
-    setDraft('');
+    if (!question) return;
+    if (state.busy) {
+      showToast('The agents are still working');
+      return;
+    }
     pushLocal({ at: t, type: 'view', view: 'chat' });
     const r = await post('ask', { text: question, conversationId });
     if (r.ok && typeof r.conversationId === 'string') {
+      setDraft('');
       if (r.conversationId !== activeId) setLocal((l) => l.filter(keepUi));
       setActiveId(r.conversationId);
     } else {
@@ -61,9 +65,11 @@ export function LiveTeacherView({ source }: { source: DemoSource }) {
     }
   };
   const showPanel = (p: LivePanel | null) => {
-    // An evidence chip for the student already open keeps that student's plan in the panel.
+    // An evidence chip for the student or class already open keeps that panel's plan.
     const cur = frame.panel?.live;
-    const merged = p?.kind === 'student' && cur?.kind === 'student' && cur.studentId === p.studentId && !p.planId ? { ...p, planId: cur.planId } : p;
+    const sameStudent = p?.kind === 'student' && cur?.kind === 'student' && cur.studentId === p.studentId;
+    const sameClass = p?.kind === 'class' && cur?.kind === 'class';
+    const merged = p && 'planId' in p && !p.planId && cur && (sameStudent || sameClass) ? { ...p, planId: cur.planId } : p;
     pushLocal({ at: t, type: 'panel', id: merged ? panelId(merged) : null, live: merged ?? undefined });
   };
   const switchTo = (id: string | null) => {
@@ -91,7 +97,7 @@ export function LiveTeacherView({ source }: { source: DemoSource }) {
 
   return (
     <LiveProvider value={ctx}>
-      <TeacherScreen frame={frame} actions={actions} composer={{ value: draft, onChange: setDraft }} />
+      <TeacherScreen frame={frame} actions={actions} composer={{ value: draft, onChange: setDraft, disabled: state.busy }} />
       {toast && t - toast.at < TOAST_MS && (
         <div role="status" className="pointer-events-none fixed bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-egg-ink px-4 py-2 font-sans text-[13.5px] font-semibold text-egg-card">
           {toast.text}

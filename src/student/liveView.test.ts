@@ -29,6 +29,15 @@ describe('phone views', () => {
     expect(p).toMatchObject({ concept: 'Logical equivalence', from: 35, accuracy: 100, done: 2, remaining: null, backLabel: 'Back to plan' });
     expect(p.to).toBeGreaterThan(60);
   });
+  it('accuracy leaves out the rows Skip wrote', () => {
+    let s = ok(phoneOpen(ok(phoneSkip(ok(phoneShowPlan(sent())))), 1));
+    const [first, ...rest] = sessionItems('equivalence', true);
+    const wrong = first.correct === 0 ? 1 : 0;
+    s = ok(phoneNext(ok(phoneAnswer(ok(phoneAnswer(s, wrong)), first.correct))));
+    for (const item of rest) s = ok(phoneNext(ok(phoneAnswer(s, item.correct))));
+    // Four answers, three of them correct: the skipped rows do not count.
+    expect(progressView(s)?.accuracy).toBe(75);
+  });
   it('offers Skip to tonight only on a plan for today', () => {
     const s = sent();
     s.plans[0].day = 'Tomorrow';

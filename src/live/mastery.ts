@@ -1,4 +1,6 @@
 import { STUDENTS, type Status, type Student } from '../scenario/classroom';
+import type { ConceptId } from '../scenario/knowledgeGraph';
+import { TWIN_FOCUS } from '../scenario/minhAnh';
 import type { DemoState, Mastery, StudentProfile } from './types';
 
 export const TARGET = 0.9;
@@ -10,11 +12,19 @@ const round2 = (v: number) => Math.round(v * 100) / 100;
 /** A correct answer moves the item's concept part of the way toward TARGET; a wrong one leaves it. */
 export function afterAnswer(value: number, correct: boolean, hinted: boolean): number {
   if (!correct) return value;
-  return round2(value + (TARGET - value) * (hinted ? GAIN_AFTER_HINT : GAIN_FIRST_TRY));
+  return Math.max(value, round2(value + (TARGET - value) * (hinted ? GAIN_AFTER_HINT : GAIN_FIRST_TRY)));
 }
 
 /** Week 6 is logical equivalence: the Classroom's per-student figure. */
 export const topicMastery = (m: Mastery): number => m.equivalence;
+
+/** The concepts to show for a student: the Week 6 focus plus anything their plans practise. */
+export function twinConcepts(state: DemoState, studentId: string): ConceptId[] {
+  const planned = state.plans
+    .filter((p) => p.kind === 'pathway' && p.status !== 'dismissed' && p.studentIds.includes(studentId))
+    .flatMap((p) => p.sessions.flatMap((s) => (s.concept ? [s.concept] : [])));
+  return [...new Set([...TWIN_FOCUS, ...planned])];
+}
 
 /** The bands the roster was built with: high risk < 0.42 ≤ support < 0.60 ≤ on track. */
 export function statusFor(m: Mastery): Status {

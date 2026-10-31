@@ -3,16 +3,17 @@ import { renderToStaticMarkup as html } from 'react-dom/server';
 import { keysOf, liveEvents, SeenClock } from '../live/events';
 import { ctxFor, stateWithPlan } from '../live/fixtures';
 import { LiveProvider } from '../live/LiveContext';
-import type { AssistantMsg, DemoState } from '../live/types';
+import type { AssistantMsg, DemoState, LivePanel } from '../live/types';
+import { COMPLEX } from '../scenario/classroom';
 import { PAST, teacherFrame, type TeacherEvent } from './frame';
 import { TeacherScreen, type TeacherActions } from './TeacherScreen';
 
 const noop = new Proxy({}, { get: () => () => undefined }) as TeacherActions;
 
-function render(state: DemoState, activeId: string | null = 'c1') {
+function render(state: DemoState, activeId: string | null = 'c1', extra: TeacherEvent[] = []) {
   const seen = new SeenClock();
   seen.stamp(keysOf(state), 0);
-  const events: TeacherEvent[] = [{ at: PAST, type: 'greeting' }, { at: PAST, type: 'classroomReveal' }, ...liveEvents(state, activeId, seen)];
+  const events: TeacherEvent[] = [{ at: PAST, type: 'greeting' }, { at: PAST, type: 'classroomReveal' }, ...liveEvents(state, activeId, seen), ...extra];
   return html(
     <LiveProvider value={ctxFor(state, activeId)}>
       <TeacherScreen frame={teacherFrame(events, 10)} actions={noop} composer={{ value: '', onChange: () => {} }} />
@@ -20,7 +21,46 @@ function render(state: DemoState, activeId: string | null = 'c1') {
   );
 }
 
+const inClassroom = (selected: number | null = null): TeacherEvent[] => [
+  { at: 1, type: 'view', view: 'classroom' },
+  ...(selected === null ? [] : [{ at: 1, type: 'select' as const, index: selected }]),
+];
+
+describe('live classroom', () => {
+  it('computes the heatmap from the students and leaves out topics with no concept', () => {
+    const s = stateWithPlan();
+    const g1 = s.students.filter((x) => x.group === 'G1');
+    g1.forEach((x, i) => { x.mastery.equivalence = 0.7 + i * 0.01; });
+    const avg = g1.reduce((a, x) => a + x.mastery.equivalence, 0) / g1.length;
+    const out = render(s, null, inClassroom());
+    expect(out).toContain(`title="Logical equivalence · G1: ${avg.toFixed(2)} mastery"`);
+    expect(out).not.toContain('Predicates');
+  });
+  it('the scripted Classroom keeps the scripted topics', () => {
+    const events: TeacherEvent[] = [{ at: PAST, type: 'classroomReveal' }, ...inClassroom()];
+    expect(html(<TeacherScreen frame={teacherFrame(events, 10)} />)).toContain('Predicates');
+  });
+  it('an escalated student who recovers reads as on track', () => {
+    const s = stateWithPlan();
+    const student = s.students[COMPLEX[0]];
+    expect(render(s, null, inClassroom())).toContain(`title="${student.name} · Needs you`);
+    student.status = 'onTrack';
+    expect(render(s, null, inClassroom())).toContain(`title="${student.name} · On track`);
+  });
+  it('the student card shows what the plan practises', () => {
+    const sessions = [{ time: '15:30', title: 'Laws', minutes: 8, concept: 'equivLaws' as const, isMasteryCheck: true, studentId: null }];
+    expect(render(stateWithPlan(), null, inClassroom(16))).not.toContain('Equivalence laws:');
+    expect(render(stateWithPlan('pathway', { sessions }), null, inClassroom(16))).toContain('Equivalence laws:');
+  });
+});
+
 describe('live teacher screen', () => {
+  it('offers "Open context" only when another panel is showing', () => {
+    const other: LivePanel = { kind: 'student', studentId: 's29', planId: null, highlight: null };
+    expect(render(stateWithPlan())).not.toContain('Open context');
+    expect(render(stateWithPlan(), 'c1', [{ at: 1, type: 'panel', id: 'student', live: other }])).toContain('Open context');
+    expect(render(stateWithPlan(), 'c1', [{ at: 1, type: 'panel', id: null }])).toContain('Open context');
+  });
   it('renders an agent answer with bold figures, evidence chips and follow-ups', () => {
     const out = render(stateWithPlan());
     expect(out).toContain('<strong class="font-semibold text-egg-ink">75% to 42%</strong>');

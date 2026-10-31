@@ -26,7 +26,7 @@ export interface TeacherActions {
   askClass(): void;
 }
 
-interface ComposerOverride { value: string; onChange(v: string): void }
+interface ComposerOverride { value: string; onChange(v: string): void; disabled?: boolean }
 
 /** Layout effect in the browser (runs before paint); plain effect under SSR so renderToStaticMarkup stays warning-free. */
 const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
@@ -153,7 +153,7 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
         {view === 'classroom' ? (
           <Classroom cls={frame.classroom} studentApproved={frame.approved.includes('student')} actions={actions} />
         ) : empty ? (
-          <EmptyState frame={frame} actions={actions} composer={<Composer value={composerValue} onChange={composer?.onChange} readOnly={!composer} onSend={send} big />} />
+          <EmptyState frame={frame} actions={actions} composer={<Composer value={composerValue} onChange={composer?.onChange} readOnly={!composer} disabled={composer?.disabled} onSend={send} big />} />
         ) : (
           <>
             <div ref={threadRef} className="min-h-0 flex-1 overflow-y-auto">
@@ -166,7 +166,7 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
                       key={i}
                       msg={m}
                       isLast={m === lastAnswer && frame.thinking === null}
-                      panelShowing={live ? panel !== null : panel?.id === m.topic}
+                      panelShowing={live ? JSON.stringify(panel?.live ?? null) === JSON.stringify(m.live?.panel ?? null) : panel?.id === m.topic}
                       onContext={openContext}
                       actions={actions}
                     />
@@ -177,7 +177,7 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
             </div>
             <div className="shrink-0 px-8 pb-5">
               <div className="mx-auto max-w-[760px]">
-                <Composer value={composerValue} onChange={composer?.onChange} readOnly={!composer} onSend={send} />
+                <Composer value={composerValue} onChange={composer?.onChange} readOnly={!composer} disabled={composer?.disabled} onSend={send} />
                 {!scripted && <div className="mt-2 text-center text-[11.5px] text-egg-faint">Illustrative demo data · fictional students</div>}
               </div>
             </div>
@@ -319,8 +319,8 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
   );
 }
 
-function Composer({ value, onChange, onSend, readOnly, big = false }: {
-  value: string; onChange?: (v: string) => void; onSend: () => void; readOnly: boolean; big?: boolean;
+function Composer({ value, onChange, onSend, readOnly, disabled = false, big = false }: {
+  value: string; onChange?: (v: string) => void; onSend: () => void; readOnly: boolean; disabled?: boolean; big?: boolean;
 }) {
   return (
     <form
@@ -329,11 +329,11 @@ function Composer({ value, onChange, onSend, readOnly, big = false }: {
     >
       <textarea
         value={value}
-        readOnly={readOnly}
+        readOnly={readOnly || disabled}
         onChange={(e) => onChange?.(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend(); } }}
         rows={big ? 2 : 1}
-        placeholder="Ask about a student, a gap, or your class…"
+        placeholder={disabled ? 'The agents are working…' : 'Ask about a student, a gap, or your class…'}
         className="block w-full resize-none bg-transparent px-2 py-1.5 text-[15.5px] text-egg-ink placeholder:text-egg-faint focus:outline-none"
       />
       <div className="mt-1 flex items-center gap-2 px-1">

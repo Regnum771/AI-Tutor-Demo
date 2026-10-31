@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLive } from '../live/LiveContext';
-import { classKpis, topicMastery } from '../live/mastery';
-import type { DemoState, LivePanel, Plan, StudentProfile } from '../live/types';
+import { classKpis, topicMastery, twinConcepts } from '../live/mastery';
+import type { DemoState, Evidence, LivePanel, Plan, StudentProfile } from '../live/types';
 import { GROUPS } from '../scenario/classroom';
 import { conceptById } from '../scenario/knowledgeGraph';
-import { TWIN_FOCUS } from '../scenario/minhAnh';
 import { egg } from '../ui/theme';
 import { Avatar, Button, Eyebrow, LevelChip, Mark, Meter, Section } from './parts';
 
@@ -86,6 +85,25 @@ export function LivePlanCard({ plan }: { plan: Plan }) {
   );
 }
 
+/** Evidence entries, newest first; the highlighted one is scrolled into view. */
+function EvidenceList({ entries, highlight }: { entries: Evidence[]; highlight: string | null }) {
+  const hi = useRef<HTMLLIElement>(null);
+  useEffect(() => { hi.current?.scrollIntoView?.({ block: 'center' }); }, [highlight]);
+  return (
+    <ul className="divide-y divide-egg-line">
+      {[...entries].reverse().map((e) => (
+        <li key={e.id} ref={e.id === highlight ? hi : undefined} className="grid grid-cols-[96px_1fr] gap-3 py-2" style={e.id === highlight ? { background: egg('accent', 0.18) } : undefined} data-evidence={e.id}>
+          <span className="font-mono text-[10.5px] uppercase leading-[18px] tracking-wide text-egg-mute">{e.source}</span>
+          <span className="text-[13.5px] text-egg-ink">
+            {e.text}
+            <span className="ml-1.5 text-[12px] text-egg-mute">{e.when}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function StudentLive({ s, plan, highlight, bars, state }: { s: StudentProfile; plan: Plan | null; highlight: string | null; bars: number; state: DemoState }) {
   const level = s.escalated ? 'personal' : s.status === 'onTrack' ? null : s.status;
   const classPractice = (Math.round(mean(state.students.map((x) => x.practicePerWeek)) * 10) / 10).toFixed(1);
@@ -118,27 +136,17 @@ function StudentLive({ s, plan, highlight, bars, state }: { s: StudentProfile; p
         </div>
       </div>
       <Section title="Concept mastery" aside="gap below 0.50">
-        {TWIN_FOCUS.map((c) => <Meter key={c} label={conceptById(c).label} value={s.mastery[c]} grow={bars} />)}
+        {twinConcepts(state, s.id).map((c) => <Meter key={c} label={conceptById(c).label} value={s.mastery[c]} grow={bars} />)}
       </Section>
       {plan && <LivePlanCard plan={plan} />}
       <Section title="Evidence" aside={`${s.evidence.length} entries`}>
-        <ul className="divide-y divide-egg-line">
-          {[...s.evidence].reverse().map((e) => (
-            <li key={e.id} className="grid grid-cols-[96px_1fr] gap-3 py-2" style={e.id === highlight ? { background: egg('accent', 0.18) } : undefined} data-evidence={e.id}>
-              <span className="font-mono text-[10.5px] uppercase leading-[18px] tracking-wide text-egg-mute">{e.source}</span>
-              <span className="text-[13.5px] text-egg-ink">
-                {e.text}
-                <span className="ml-1.5 text-[12px] text-egg-mute">{e.when}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
+        <EvidenceList entries={s.evidence} highlight={highlight} />
       </Section>
     </>
   );
 }
 
-function ClassLive({ state, plan, bars }: { state: DemoState; plan: Plan | null; bars: number }) {
+function ClassLive({ state, plan, highlight, bars }: { state: DemoState; plan: Plan | null; highlight: string | null; bars: number }) {
   const k = classKpis(state.students);
   const affected = state.students.filter((s) => s.status !== 'onTrack').sort((a, b) => topicMastery(a.mastery) - topicMastery(b.mastery));
   return (
@@ -170,6 +178,9 @@ function ClassLive({ state, plan, bars }: { state: DemoState; plan: Plan | null;
             </li>
           ))}
         </ul>
+      </Section>
+      <Section title="Class evidence" aside={`${state.classEvidence.length} entries`}>
+        <EvidenceList entries={state.classEvidence} highlight={highlight} />
       </Section>
     </>
   );
@@ -219,6 +230,6 @@ export function LivePanelBody({ live, bars }: { live: LivePanel; bars: number })
     const s = state.students.find((x) => x.id === live.studentId);
     return s ? <StudentLive s={s} plan={plan} highlight={live.highlight} bars={bars} state={state} /> : null;
   }
-  if (live.kind === 'class') return <ClassLive state={state} plan={plan} bars={bars} />;
+  if (live.kind === 'class') return <ClassLive state={state} plan={plan} highlight={live.highlight ?? null} bars={bars} />;
   return plan ? <CheckInsLive state={state} plan={plan} /> : null;
 }

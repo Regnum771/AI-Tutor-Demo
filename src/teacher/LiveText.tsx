@@ -3,7 +3,7 @@ import type { LiveBlock, LivePanel } from '../live/types';
 
 /** Where a cited evidence id opens: the class panel, or the student's panel with that entry highlighted. */
 export const panelForEvidence = (id: string): LivePanel =>
-  id.startsWith('class-') ? { kind: 'class', planId: null } : { kind: 'student', studentId: id.split('-')[0], planId: null, highlight: id };
+  id.startsWith('class-') ? { kind: 'class', planId: null, highlight: id } : { kind: 'student', studentId: id.split('-')[0], planId: null, highlight: id };
 
 /** A live answer block: `**bold**` spans, then one chip per cited evidence entry. */
 export function LiveText({ block }: { block: LiveBlock }) {

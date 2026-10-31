@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { STUDENTS, groupOf } from '../scenario/classroom';
 import { MASTERY_INITIAL } from '../scenario/minhAnh';
 import { fmt, parseTime, STORY_START, TONIGHT } from './clock';
-import { afterAnswer, statusFor, topicMastery } from './mastery';
+import { stateWithPlan } from './fixtures';
+import { afterAnswer, statusFor, topicMastery, twinConcepts } from './mastery';
 
 describe('story clock', () => {
   it('formats and parses HH:MM', () => {
@@ -22,6 +23,8 @@ describe('mastery rule', () => {
     expect(afterAnswer(0.3, true, true)).toBe(0.39);
     expect(afterAnswer(0.3, false, false)).toBe(0.3);
     expect(afterAnswer(0.3, false, true)).toBe(0.3);
+    expect(afterAnswer(0.97, true, false)).toBe(0.97);
+    expect(afterAnswer(0.97, true, true)).toBe(0.97);
   });
   it('bands status on logical equivalence', () => {
     const m = (equivalence: number) => ({ ...MASTERY_INITIAL, equivalence });
@@ -33,6 +36,21 @@ describe('mastery rule', () => {
   });
   it('the roster statuses already agree with the bands', () => {
     for (const s of STUDENTS) expect(statusFor({ ...MASTERY_INITIAL, equivalence: s.mastery }), s.name).toBe(s.status);
+  });
+});
+
+describe('twinConcepts', () => {
+  const sessions = [{ time: '15:30', title: 'Laws', minutes: 8, concept: 'equivLaws' as const, isMasteryCheck: true, studentId: null }];
+  it('is the Week 6 focus plus what the student’s plans practise, once each', () => {
+    const base = twinConcepts(stateWithPlan(), 's17');
+    expect(base).toContain('equivalence');
+    expect(base).not.toContain('equivLaws');
+    expect(twinConcepts(stateWithPlan('pathway', { sessions }), 's17')).toEqual([...base, 'equivLaws']);
+  });
+  it('ignores dismissed plans and other students’ plans', () => {
+    const base = twinConcepts(stateWithPlan(), 's17');
+    expect(twinConcepts(stateWithPlan('pathway', { sessions, status: 'dismissed' }), 's17')).toEqual(base);
+    expect(twinConcepts(stateWithPlan('pathway', { sessions }), 's29')).toEqual(base);
   });
 });
 

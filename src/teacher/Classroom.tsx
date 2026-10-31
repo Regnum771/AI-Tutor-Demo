@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { lerp } from '../engine/anim';
 import { COMPLEX, GROUPS, HEATMAP, SCALE_STUDENTS, STUDENTS, TOPICS, groupOf, type Student } from '../scenario/classroom';
-import { conceptById } from '../scenario/knowledgeGraph';
+import { conceptById, type ConceptId } from '../scenario/knowledgeGraph';
 import { egg } from '../ui/theme';
 import { MASTERY_INITIAL, MASTERY_POST, MINH_ANH, TWIN_FOCUS } from '../scenario/minhAnh';
 import { DEMO_ONLY, useLive } from '../live/LiveContext';
-import { liveStudents } from '../live/mastery';
+import { liveStudents, twinConcepts } from '../live/mastery';
+import type { StudentProfile } from '../live/types';
 import type { FrameClassroom } from './frame';
 import type { TeacherActions } from './TeacherScreen';
 import { Avatar, Button, Eyebrow, LevelChip, Mark, Meter, type Level } from './parts';
@@ -14,7 +15,7 @@ type Band = 'onTrack' | Level;
 type Filter = 'all' | Band;
 
 /** One status per student: escalated students read as "needs you" rather than high risk. */
-const bandOf = (s: Student): Band => (COMPLEX.includes(s.index) ? 'personal' : s.status);
+const bandOf = (s: Student): Band => (COMPLEX.includes(s.index) && s.status !== 'onTrack' ? 'personal' : s.status);
 const shortName = (s: Student) => (s.index === MINH_ANH.index ? MINH_ANH.short : s.name.split(' ').slice(-1)[0]);
 
 /** Students who move band once the adapted pathway lands (adapt >= 0.5), derived from the data so counts always agree. */
@@ -203,7 +204,7 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
                 </section>
               )
             )}
-            {cls.kpi > 0 && <Heatmap compact={scripted} />}
+            {cls.kpi > 0 && <Heatmap compact={scripted} {...(live ? liveHeatmap(live.state.students) : {})} />}
           </aside>
         </div>
       </div>
@@ -211,8 +212,21 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
   );
 }
 
+/** Live topic rows from the students' mastery; scripted topics with no concept are not shown live. */
+const LIVE_TOPICS: { label: string; concepts: ConceptId[] }[] = [
+  { label: 'Propositions', concepts: ['propositions'] },
+  { label: 'Logical operators', concepts: ['negation', 'conjunction', 'disjunction'] },
+  { label: 'Implication', concepts: ['implication'] },
+  { label: 'Logical equivalence', concepts: ['equivalence'] },
+];
+const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
+const liveHeatmap = (students: StudentProfile[]) => ({
+  topics: LIVE_TOPICS.map((t) => t.label),
+  rows: LIVE_TOPICS.map((t) => GROUPS.map((g) => mean(students.filter((s) => s.group === g).flatMap((s) => t.concepts.map((c) => s.mastery[c]))))),
+});
+
 /** Topic × group mastery. One fixed hue in every theme: the more orange, the bigger the gap. Values are always printed. */
-function Heatmap({ compact }: { compact: boolean }) {
+function Heatmap({ compact, topics = TOPICS, rows = HEATMAP }: { compact: boolean; topics?: string[]; rows?: number[][] }) {
   const tint = (v: number) => Math.max(0, Math.min(1, (0.9 - v) / 0.5)) * 100;
   return (
     <section>
@@ -228,10 +242,10 @@ function Heatmap({ compact }: { compact: boolean }) {
           </tr>
         </thead>
         <tbody>
-          {TOPICS.map((t, r) => (
+          {topics.map((t, r) => (
             <tr key={t}>
               <td className="whitespace-nowrap pr-2 text-[12.5px] text-egg-ink">{t}</td>
-              {HEATMAP[r].map((v, c) => (
+              {rows[r].map((v, c) => (
                 <td
                   key={c}
                   title={`${t} · ${GROUPS[c]}: ${v.toFixed(2)} mastery`}
@@ -250,7 +264,8 @@ function Heatmap({ compact }: { compact: boolean }) {
 }
 
 function StudentCard({ s, adapt, appear, actions }: { s: Student; adapt: number; appear: number; actions?: TeacherActions }) {
-  const profile = useLive()?.state.students[s.index];
+  const state = useLive()?.state;
+  const profile = state?.students[s.index];
   const b = adaptedBand(s, adapt);
   const isMinhAnh = s.index === MINH_ANH.index;
   return (
@@ -264,8 +279,8 @@ function StudentCard({ s, adapt, appear, actions }: { s: Student; adapt: number;
         {b === 'onTrack' ? <span className="rounded-full border border-egg-line px-2.5 py-0.5 text-[11.5px] text-egg-mute">On track</span> : <LevelChip level={b} />}
       </div>
       <div className="mt-4 border-t border-egg-line pt-3">
-        {profile ? (
-          TWIN_FOCUS.map((c) => <Meter key={c} label={conceptById(c).label} value={profile.mastery[c]} />)
+        {state && profile ? (
+          twinConcepts(state, profile.id).map((c) => <Meter key={c} label={conceptById(c).label} value={profile.mastery[c]} />)
         ) : isMinhAnh ? (
           TWIN_FOCUS.map((c) => <Meter key={c} label={conceptById(c).label} value={lerp(MASTERY_INITIAL[c], MASTERY_POST[c], adapt)} />)
         ) : (

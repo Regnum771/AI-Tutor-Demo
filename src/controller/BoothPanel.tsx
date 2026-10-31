@@ -1,5 +1,5 @@
 import QRCode from 'qrcode';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 
 type Info = { lanUrl: string | null; offline: boolean };
 
@@ -10,12 +10,17 @@ export function BoothPanel() {
   const [info, setInfo] = useState<Info | null | 'down'>(null);
   const [qr, setQr] = useState<string | null>(null);
   useEffect(() => {
-    fetch('/api/info').then((r) => r.json() as Promise<Info>).then(setInfo).catch(() => setInfo('down'));
+    fetch('/api/info').then((r) => { if (!r.ok) throw new Error(); return r.json() as Promise<Info>; }).then(setInfo).catch(() => setInfo('down'));
   }, []);
   useEffect(() => {
     if (info && info !== 'down' && info.lanUrl) void QRCode.toDataURL(info.lanUrl, { margin: 1, width: 220 }).then(setQr);
   }, [info]);
-  const reset = () => void fetch('/api/reset', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+  const reset = (e: MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.blur(); // the Director's Space handler plays and pauses; a focused button would also fire
+    void fetch('/api/reset', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
+      .then((r) => { if (!r.ok) throw new Error(); })
+      .catch(() => setInfo('down'));
+  };
   return (
     <section className="flex flex-wrap items-start gap-6 rounded-xl border border-line bg-surface p-5">
       <div>

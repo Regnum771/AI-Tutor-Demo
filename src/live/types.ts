@@ -71,7 +71,7 @@ export interface LiveBlock {
 
 export type LivePanel =
   | { kind: 'student'; studentId: string; planId: string | null; highlight: string | null }
-  | { kind: 'class'; planId: string | null }
+  | { kind: 'class'; planId: string | null; highlight?: string | null }
   | { kind: 'checkIns'; planId: string };
 
 export interface AssistantMsg {

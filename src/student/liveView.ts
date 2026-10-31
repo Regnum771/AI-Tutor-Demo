@@ -64,7 +64,7 @@ export function progressView(state: DemoState): ProgressView | null {
   if (!plan) return null;
   const student = studentById(state, plan.studentIds[0])!;
   const target = targetOf(plan);
-  const practice = student.evidence.filter((e) => e.kind === 'practice');
+  const practice = student.evidence.filter((e) => e.kind === 'practice' && !e.text.includes('skipped ahead'));
   const correct = practice.filter((e) => e.text.includes('correct')).length;
   return {
     concept: conceptById(target).label,

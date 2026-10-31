@@ -5,7 +5,7 @@ import { themeFromSearch, ThemeScope } from '../ui/theme';
 import { LiveTeacher } from './LiveTeacher';
 import { TeacherApp } from './TeacherApp';
 
-/** `?scene=N` → scripted (Director-synced, recordable); no scene → the live clickable draft (`?theme=sage` for the sage accents). */
+/** `?scene=N` → scripted (Director-synced, recordable); no scene → the live booth teacher, which needs `npm run booth` (`?theme=sage` for the sage accents). */
 const scripted = new URLSearchParams(window.location.search).has('scene');
 
 createRoot(document.getElementById('root')!).render(

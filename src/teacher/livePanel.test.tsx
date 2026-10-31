@@ -6,6 +6,7 @@ import type { DemoState, LivePanel } from '../live/types';
 import { ContextPanel } from './ContextPanel';
 import { PAST, teacherFrame } from './frame';
 import { LivePanelBody } from './LivePanel';
+import { panelForEvidence } from './LiveText';
 
 const render = (state: DemoState, live: LivePanel) =>
   html(<LiveProvider value={ctxFor(state)}><LivePanelBody live={live} bars={1} /></LiveProvider>);
@@ -35,6 +36,23 @@ describe('live panels', () => {
     expect(out).toContain('Group G1:');
     expect(out).toContain('Who’s affected');
     expect(out).toContain('Approve plan');
+  });
+  it('class panel: lists the class evidence and highlights a cited entry', () => {
+    const plain = render(stateWithPlan('classActivity'), { kind: 'class', planId: 'p1' });
+    expect(plain).toContain('Class evidence');
+    expect(plain).toContain('data-evidence="class-quiz2-q4"');
+    expect(plain).not.toMatch(/style="background:[^"]*" data-evidence="class-quiz2-q4"/);
+    const lit = render(stateWithPlan('classActivity'), { kind: 'class', planId: 'p1', highlight: 'class-quiz2-q4' });
+    expect(lit).toMatch(/style="background:[^"]*" data-evidence="class-quiz2-q4"/);
+  });
+  it('an evidence chip carries its id to the panel', () => {
+    expect(panelForEvidence('class-quiz2-q4')).toEqual({ kind: 'class', planId: null, highlight: 'class-quiz2-q4' });
+    expect(panelForEvidence('s17-quiz2')).toEqual({ kind: 'student', studentId: 's17', planId: null, highlight: 's17-quiz2' });
+  });
+  it('student panel: a meter for what the plan practises', () => {
+    const sessions = [{ time: '15:30', title: 'Laws', minutes: 8, concept: 'equivLaws' as const, isMasteryCheck: true, studentId: null }];
+    expect(render(stateWithPlan(), student())).not.toContain('Equivalence laws:');
+    expect(render(stateWithPlan('pathway', { sessions }), student())).toContain('Equivalence laws:');
   });
   it('check-ins panel: each student with their latest note', () => {
     const out = render(stateWithPlan('checkIns'), { kind: 'checkIns', planId: 'p1' });

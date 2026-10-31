@@ -25,13 +25,13 @@ function unmount() {
   host = null;
 }
 
-async function mount() {
+async function mount(state = stateWithPlan(), reply: { ok: boolean; [k: string]: unknown } = { ok: true, conversationId: 'c1' }) {
   const calls: string[] = [];
   const source: DemoSource = {
-    state: stateWithPlan(),
+    state,
     post: async (path) => {
       calls.push(path);
-      return { ok: true, conversationId: 'c1' };
+      return reply;
     },
   };
   host = document.createElement('div');
@@ -45,6 +45,64 @@ const buttons = (el: HTMLElement) => [...el.querySelectorAll('button')];
 const click = async (b: Element) => act(async () => (b as HTMLElement).click());
 const byText = (el: HTMLElement, text: string) => buttons(el).find((b) => b.textContent?.trim() === text)!;
 const skip = (b: HTMLButtonElement) => b.disabled || b.type === 'submit' || b.hasAttribute('aria-current');
+
+const textarea = (el: HTMLElement) => el.querySelector('textarea')!;
+/** Types into the composer the way a browser does, then presses Enter. */
+async function typeAndSend(el: HTMLElement, text: string) {
+  await act(async () => {
+    const box = textarea(el);
+    Object.getOwnPropertyDescriptor(Object.getPrototypeOf(box), 'value')!.set!.call(box, text);
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await act(async () => { textarea(el).dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
+}
+
+describe('live teacher evidence chips', () => {
+  it('a class chip carries its highlight to the panel and keeps the plan open', async () => {
+    const s = stateWithPlan('classActivity');
+    const answer = s.conversations[0].msgs[1];
+    if (answer.role === 'assistant') answer.blocks[0].cites = ['class-quiz2-q4'];
+    const m = await mount(s);
+    expect(m.el.textContent).not.toContain('Open context');
+    await click(m.el.querySelector('[data-cite="class-quiz2-q4"]')!);
+    expect(m.el.querySelector('[data-evidence="class-quiz2-q4"]')).not.toBeNull();
+    expect(byText(m.el, 'Approve plan')).toBeTruthy();
+    // The panel now differs from the message's: the highlight reached it.
+    expect(m.el.textContent).toContain('Open context');
+  });
+});
+
+describe('live teacher busy state', () => {
+  const busy = () => ({ ...stateWithPlan(), busy: true });
+  it('an attention row posts nothing while the agents work, and says why', async () => {
+    const m = await mount(busy());
+    await click(byText(m.el, '+ New conversation'));
+    await click(buttons(m.el).find((b) => b.textContent?.includes('Quiz 2 dropped'))!);
+    expect(m.calls).toEqual([]);
+    expect(document.querySelector('[role="status"]')?.textContent).toContain('The agents are still working');
+  });
+  it('the composer is read-only and says so while the agents work', async () => {
+    const m = await mount(busy());
+    expect(textarea(m.el).readOnly).toBe(true);
+    expect(textarea(m.el).placeholder).toBe('The agents are working…');
+    unmount();
+    const idle = await mount();
+    expect(textarea(idle.el).readOnly).toBe(false);
+    expect(textarea(idle.el).placeholder).toBe('Ask about a student, a gap, or your class…');
+  });
+  it('keeps the draft until the server accepts the question', async () => {
+    const refused = await mount(stateWithPlan(), { ok: false, error: 'Please keep questions under 500 characters.' });
+    await typeAndSend(refused.el, 'A long question');
+    expect(refused.calls).toEqual(['ask']);
+    expect(textarea(refused.el).value).toBe('A long question');
+    expect(document.querySelector('[role="status"]')?.textContent).toContain('under 500 characters');
+    unmount();
+    const accepted = await mount();
+    await typeAndSend(accepted.el, 'A short question');
+    expect(accepted.calls).toEqual(['ask']);
+    expect(textarea(accepted.el).value).toBe('');
+  });
+});
 
 const SCENARIOS: [string, (el: HTMLElement) => Promise<void>][] = [
   ['conversation with its plan (reopened after a refresh)', async () => {}],
