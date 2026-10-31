@@ -11,6 +11,12 @@ describe('student screens', () => {
     expect(html(<LockScreen t={0} notification={1} clock="14:58" />)).toContain('Your personalized plan is ready');
     expect(html(<LockScreen t={0} notification={0} clock="14:58" />)).not.toContain('Your personalized plan is ready');
   });
+  it('lock screen uses the serif clock and the asterisk app icon', () => {
+    const lock = html(<LockScreen t={0} notification={1} clock="16:58" />);
+    expect(lock).toMatch(/font-serif[^>]*>16:58</);
+    expect(lock).toContain('<svg');
+    expect(lock).not.toContain('>BT<');
+  });
   it('plan screen shows the right pathway per variant', () => {
     expect(html(<PlanScreen local={5000} variant="initial" />)).toContain('Review logical operators');
     const updated = html(<PlanScreen local={5000} variant="updated" />);

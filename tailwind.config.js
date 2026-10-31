@@ -13,6 +13,9 @@ export default {
         egg: {
           bg: '#F2EDE4', paper: '#F8F4EC', card: '#FFFDF8', line: '#DCD3C5', ink: '#1A1714',
           mute: '#6B6359', faint: '#9C9285', orange: '#FF5B1F', tint: '#FFE5D6',
+          // Phone answer states only (right / wrong, done ticks)
+          sage: { DEFAULT: '#4F7A5A', tint: '#E4EDE3' },
+          brick: { DEFAULT: '#B5452F', tint: '#F6E1DA' },
         },
       },
       fontFamily: {

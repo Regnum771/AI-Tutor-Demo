@@ -13,7 +13,7 @@ export function StudentApp() {
   const { scene, t, slate, toggles } = useSceneClock();
   const f = studentFrame(scene.id, t);
   return (
-    <Stage width={390} height={844} background="#F8FAFC">
+    <Stage width={390} height={844} background="#F2EDE4">
       {f.screen === 'lock' && <LockScreen t={t} notification={f.notification} clock={f.clock} tapAt={scene.id === 7 ? SC9.tap : undefined} />}
       {f.screen === 'plan' && <PlanScreen local={f.local} variant={f.variant} clock={f.clock} />}
       {f.screen === 'practice' && <PracticeScreen t={f.local} />}
