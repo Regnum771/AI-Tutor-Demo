@@ -8,7 +8,7 @@ export const OPTION_TOP = 215;
 export const OPTION_STEP = 65;
 const tf = (b: boolean) => (b ? 'T' : 'F');
 
-const OPTION_CLS = {
+export const OPTION_CLS = {
   idle: 'border-egg-line bg-egg-card',
   wrong: 'border-egg-brick bg-egg-brick-tint',
   right: 'border-egg-sage bg-egg-sage-tint',
