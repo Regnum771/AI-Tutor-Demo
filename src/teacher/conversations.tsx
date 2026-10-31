@@ -9,7 +9,9 @@ export type Block = { kind: 'p' | 'li'; body: ReactNode };
 /** Short labels for the five teacher questions (tracker strip). Order matches TEACHER_QUESTIONS. */
 export const QUESTION_SHORT = ['Who is falling behind?', 'What are the gaps?', 'Topic or prerequisite?', 'Group or individual?', 'What happens next?'];
 
-export type ContextId = 'student' | 'class' | 'attention';
+import type { ContextId } from './route';
+export type { ContextId } from './route';
+export { routePrompt } from './route';
 
 export interface Topic {
   id: ContextId;
@@ -95,15 +97,6 @@ export const TOPICS: Record<ContextId, Topic> = {
     followUps: ['Draft the invitations', 'What did we already try?', 'Show the escalation policy'],
   },
 };
-
-/** Free-typed prompts are routed by keyword; the draft only knows these three topics. */
-export function routePrompt(text: string): ContextId | null {
-  const s = text.toLowerCase();
-  if (/minh|anh|her\b|quiz score/.test(s)) return 'student';
-  if (/personal|need me|needs me|1:1|attention|which 3/.test(s)) return 'attention';
-  if (/class|gap|week|group|everyone/.test(s)) return 'class';
-  return null;
-}
 
 export const FALLBACK: Block[] = [
   { kind: 'p', body: <>
