@@ -42,7 +42,7 @@ Footage map: F1 `lecture hall.mp4`, F2 `teacher_stressed.mp4`, F3 `teacher_morni
 
 ### 2.1 Beats and cues (scene time, ms)
 
-**Sc1 Problem.** This is the existing Sc1 composition restyled to the light theme. The 8 source windows cascade in from 0 to 8000. From 8000 to 13000, the five questions (`TEACHER_QUESTIONS`) appear as open "?" chips. The scene holds to 15000.
+**Sc1 Problem.** The popups sit on a transparent layer over the `teacher_stressed.mp4` footage, which plays for the whole scene. Every popup is in English, with a header in its app's colour (`src/scenario/clutter.ts`). From 300 to 3050, six popups appear in an orderly 3 × 2 grid. From 3700 to about 7800, 31 more pile up in a seeded shuffle (no app twice in a row), faster and faster, tilted, each in its own cell of a jittered 6 × 6 grid, until they cover the screen. At 7700 an ink veil dims everything. From 8000 to 13000, the five questions (`TEACHER_QUESTIONS`) appear as open "?" chips. The scene holds to 15000.
 
 **Sc2 Beyond.** The chat's opening screen, with the empty composer:
 - 500–2500: the greeting "Good afternoon, Lam." types in.

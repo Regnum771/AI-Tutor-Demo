@@ -1,50 +1,60 @@
 import { fade, prog, stepIndex } from '../../engine/anim';
-import { SOURCE_WINDOWS, TEACHER_QUESTIONS } from '../../scenario/sources';
+import { APP_HEADER, MESSY_START, POPUPS } from '../../scenario/clutter';
+import { TEACHER_QUESTIONS } from '../../scenario/sources';
 import { FakeCursor, type CursorKey } from '../../ui/FakeCursor';
 
-const WINDOW_IN = (i: number) => 300 + i * 650;
 const QUESTIONS_IN = 8000;
 const QUESTION_STEP = 1000;
+const POP_MS = 220;
+
+/** Grid centre of orderly popup i (3 columns x 2 rows). */
+const centre = (i: number) => ({ x: POPUPS[i].x + POPUPS[i].w / 2, y: POPUPS[i].y + POPUPS[i].h / 2 });
 
 const CURSOR: CursorKey[] = [
-  { t: 2000, x: 1700, y: 1000 },
-  { t: 2600, x: 300, y: 90, click: true },
-  { t: 3600, x: 900, y: 60, click: true },
-  { t: 4600, x: 330, y: 420, click: true },
-  { t: 5600, x: 900, y: 400, click: true },
-  { t: 6600, x: 1500, y: 110, click: true },
-  { t: 7400, x: 1550, y: 440, click: true },
-  { t: 8000, x: 1750, y: 1000 },
+  { t: 1200, x: 1700, y: 900 },
+  { t: 1900, ...centre(1), click: true },
+  { t: 3400, ...centre(5), click: true },
+  { t: 3900, x: 1750, y: 1000 },
 ];
-const FOCUS_ORDER = ['lms', 'zalo', 'records', 'assessment', 'whatsapp', 'email'];
-const CLICK_TIMES = CURSOR.filter((k) => k.click).map((k) => k.t);
+const CLICKS = CURSOR.filter((k) => k.click);
+const FOCUS = [1, 5];
 
+/** Sc1: the teacher's sources pile up over the live-action background (transparent here), then the five questions. */
 export function ProblemScene({ t, cursor }: { t: number; cursor: boolean }) {
-  const focused = FOCUS_ORDER[stepIndex(t, CLICK_TIMES)];
-  const veil = prog(t, QUESTIONS_IN - 300, 600) * 0.75;
+  const click = stepIndex(t, CLICKS.map((k) => k.t));
+  const focused = t < MESSY_START && click >= 0 ? FOCUS[click] : -1;
+  const veil = prog(t, QUESTIONS_IN - 300, 600) * 0.6;
   return (
-    <div className="absolute inset-0" style={{ background: '#F2EDE4' }}>
-      {SOURCE_WINDOWS.map((w, i) => {
-        const o = fade(t, WINDOW_IN(i));
-        const isFocused = w.kind === focused;
+    <div className="absolute inset-0">
+      {POPUPS.map((p, i) => {
+        const o = prog(t, p.at, POP_MS);
+        if (o <= 0) return null;
+        const head = APP_HEADER[p.kind];
+        const lift = p.rot === 0 ? `translateY(${(1 - o) * 24}px)` : `scale(${0.9 + 0.1 * o})`;
         return (
           <div
-            key={w.kind}
-            className="absolute overflow-hidden rounded-xl border-2 "
-            style={{ left: w.x, top: w.y, width: w.w, height: w.h, opacity: o, transform: `translateY(${(1 - o) * 30}px)`, zIndex: isFocused ? 20 : 10 + (i % 3), background: '#FFFDF8', borderColor: isFocused ? '#1A1714' : '#DCD3C5', boxShadow: '0 18px 40px -20px rgba(26,23,20,0.35)' }}
+            key={p.title}
+            className="absolute overflow-hidden rounded-xl"
+            style={{
+              left: p.x, top: p.y, width: p.w, height: p.h, opacity: o, zIndex: i === focused ? 25 : 10 + i,
+              transform: `${lift} rotate(${p.rot}deg)`,
+              background: '#FFFDF8',
+              border: i === focused ? '2px solid #1A1714' : '1px solid rgba(26,23,20,0.14)',
+              boxShadow: '0 22px 44px -18px rgba(26,23,20,0.45)',
+            }}
           >
-            <div className="flex items-center gap-2 px-4" style={{ height: 40, background: '#F8F4EC' }}>
-              {[0, 1, 2].map((d) => <span key={d} className="h-3 w-3 rounded-full" style={{ background: '#DCD3C5' }} />)}
-              <span className="ml-2 truncate text-[17px] font-sans font-semibold text-[#6B6359]">{w.title}</span>
+            <div className="flex items-center gap-2 px-4" style={{ height: 40, background: head.bg, color: head.fg }}>
+              {[0, 1, 2].map((d) => <span key={d} className="h-2.5 w-2.5 rounded-full" style={{ background: head.fg, opacity: 0.45 }} />)}
+              <span className="ml-2 truncate font-sans text-[16px] font-semibold">{p.title}</span>
             </div>
-            <div className="space-y-2 px-5 py-4">
-              {w.lines.map((l) => <div key={l} className="font-sans text-[18px] leading-snug text-[#1A1714]">{l}</div>)}
+            <div className="space-y-1.5 px-5 py-3.5">
+              {p.lines.map((l) => <div key={l} className="font-sans text-[17px] leading-snug text-[#1A1714]">{l}</div>)}
             </div>
           </div>
         );
       })}
-      <div className="absolute inset-0" style={{ background: '#F2EDE4', opacity: veil, zIndex: 30 }} />
-      <div className="absolute" style={{ left: 520, top: 250, width: 880, zIndex: 40 }}>
+      <div className="absolute inset-0" style={{ background: '#1A1714', opacity: veil, zIndex: 40 }} />
+      <div className="absolute" style={{ left: 520, top: 250, width: 880, zIndex: 45 }}>
         {TEACHER_QUESTIONS.map((q, i) => {
           const o = fade(t, QUESTIONS_IN + i * QUESTION_STEP);
           if (o <= 0) return null;
@@ -56,7 +66,7 @@ export function ProblemScene({ t, cursor }: { t: number; cursor: boolean }) {
           );
         })}
       </div>
-      <FakeCursor t={t} keys={CURSOR} visible={cursor && t >= 2000 && t < 8200} />
+      <FakeCursor t={t} keys={CURSOR} visible={cursor && t >= 1200 && t < 3900} />
     </div>
   );
 }

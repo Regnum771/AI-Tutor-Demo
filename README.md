@@ -70,7 +70,7 @@ Any window can render without the Director:
 
 | Shot | Scene | File | Notes |
 |---|---|---|---|
-| F2 | Sc1 | `teacher_stressed.mp4` | Screen-replace with the Sc1 teacher capture (Resolve planar tracker + corner pin), or match-cut on a push-in |
+| F2 | Sc1 | `teacher_stressed.mp4` | Plays under the whole scene. The Sc1 popups are a transparent layer on top, so key or overlay the teacher capture over the footage |
 | F3 | Sc2 | `teacher_morning.mp4` | The calm counterpart to F2, then cut to the teacher window |
 | F4 | Sc7 | `greenscreen_phone.mp4` | Key the green screen and corner-pin the student capture (`student.html?scene=7&autoplay`) |
 | F1 | Sc9 | `lecture hall.mp4` | Leads into Sc9 How it works (F1 → T): the footage plays in the editor, then cuts to the teacher window |
