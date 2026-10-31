@@ -80,7 +80,7 @@ describe('Minh Anh', () => {
     expect(MASTERY_INITIAL.implication).toBe(0.31);
     expect(MASTERY_INITIAL.biconditional).toBe(0.35);
     expect(MASTERY_INITIAL.equivalence).toBe(0.35);
-    expect(MASTERY_POST.equivalence).toBe(0.72);
+    expect(MASTERY_POST.equivalence).toBe(0.78);
   });
   it('mastery only improves from initial → mid → post', () => {
     for (const c of CONCEPTS) {
@@ -97,7 +97,7 @@ describe('Minh Anh', () => {
     expect(eq.after).toBe(MASTERY_POST.equivalence.toFixed(2));
   });
   it('lerpMastery and gaps', () => {
-    expect(lerpMastery(MASTERY_INITIAL, MASTERY_POST, 1).equivalence).toBeCloseTo(0.72);
+    expect(lerpMastery(MASTERY_INITIAL, MASTERY_POST, 1).equivalence).toBeCloseTo(0.78);
     expect(gaps(MASTERY_INITIAL)).toEqual(['implication', 'biconditional', 'equivalence']);
   });
 });

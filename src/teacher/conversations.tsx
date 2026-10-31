@@ -141,6 +141,6 @@ export function studentBrief(s: Student): Block[] {
 
 /** Sc8: the unprompted message after Minh Anh's mastery check. */
 export const ADAPT: Block[] = [
-  { kind: 'p', body: <>Minh Anh passed tonight’s mastery check: logical equivalence <B>0.35 → 0.72</B>. She’s reached the target.</> },
+  { kind: 'p', body: <>Minh Anh passed tonight’s mastery check: logical equivalence <B>0.35 → 0.78</B>. She’s reached the target.</> },
   { kind: 'p', body: <>One gap remains: <B>applying equivalence laws</B>. Within your policy, I’ve sent her a 3-session follow-up for tomorrow.</> },
 ];

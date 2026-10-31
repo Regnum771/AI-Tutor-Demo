@@ -58,7 +58,7 @@ describe('TeacherScreen', () => {
   it('shows the adapt message with its stamp', () => {
     const out = render([{ at: PAST, type: 'load', topic: 'student' }, { at: PAST, type: 'assistant', kind: 'adapt', blockMs: 0, stamp: '20:41' }]);
     expect(out).toContain('20:41');
-    expect(out).toContain('0.35 → 0.72');
+    expect(out).toContain('0.35 → 0.78');
   });
 
   const FOOT = 'Illustrative demo data · fictional students';

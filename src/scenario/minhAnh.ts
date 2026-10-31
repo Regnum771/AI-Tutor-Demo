@@ -26,7 +26,7 @@ export const MASTERY_MID: Mastery = { ...MASTERY_INITIAL, implication: 0.52, bic
 /** After the mastery assessment (Sc8 adapt). */
 export const MASTERY_POST: Mastery = {
   ...MASTERY_INITIAL, implication: 0.74, biconditional: 0.66, truthTables: 0.8, expressions: 0.68,
-  equivalence: 0.72, deMorgan: 0.64, equivLaws: 0.52, applications: 0.45,
+  equivalence: 0.78, deMorgan: 0.64, equivLaws: 0.52, applications: 0.45,
 };
 
 export const ERRORS_INITIAL: Partial<Record<ConceptId, number>> = { implication: 6, biconditional: 2, equivalence: 3 };
@@ -38,7 +38,7 @@ export const DELTAS = [
   { label: 'Incorrect answers (per set)', before: '6', after: '2' },
   { label: 'Hints requested (per item)', before: '1.8', after: '0.6' },
   { label: 'Avg response time', before: '74 s', after: '41 s' },
-  { label: 'Logical equivalence mastery', before: '0.35', after: '0.72' },
+  { label: 'Logical equivalence mastery', before: '0.35', after: '0.78' },
 ];
 
 export function lerpMastery(a: Mastery, b: Mastery, p: number): Mastery {

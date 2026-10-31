@@ -85,11 +85,11 @@ Footage map: F1 `lecture hall.mp4`, F2 `teacher_stressed.mp4`, F3 `teacher_morni
 **Sc7 Student.** P plays the existing 20 s practice timeline (old Sc9): tap, plan, practice with a wrong answer and a hint, guided step, progress. T holds the last frame of Sc6.
 
 **Sc8 Adapt.** Opens on the end of Sc6:
-- 1000: an unprompted assistant message reveals, stamped 20:41: *"Minh Anh passed tonight's mastery check: logical equivalence 0.35 → 0.72. She's reached the target. One gap remains: applying equivalence laws. Within your policy, I've sent her a 3-session follow-up for tomorrow."*
+- 1000: an unprompted assistant message reveals, stamped 20:41: *"Minh Anh passed tonight's mastery check: logical equivalence 0.35 → 0.78. She's reached the target. One gap remains: applying equivalence laws. Within your policy, I've sent her a 3-session follow-up for tomorrow."*
 - 3000–5000: the panel's mastery bars animate from `MASTERY_INITIAL` to `MASTERY_POST`.
 - 5000: the proposal card switches to the follow-up (`PATHWAY_UPDATED`), labelled "Auto-approved · within your policy".
 - 8000: the cursor clicks **Classroom**.
-- 8500–11000: the totals count down: need support 12 → 9, high risk 5 → 3. Minh Anh's tile changes from orange to peach and its number reads 0.72.
+- 8500–11000: the totals count down: need support 12 → 9, high risk 5 → 3. Minh Anh's tile changes from orange to peach and its number reads 0.78.
 - `CUES.adaptUpdate` = 9000: P switches to the updated plan.
 
 **Sc9 How it works.** This is the existing architecture view restyled to the light theme. The layers are labelled Sources (LMS, Zalo, WhatsApp, Email…) → Multimodal layer → Knowledge graph + Digital twin → SAS ⇄ TAS → Orchestration engine. The engine branches to two endpoints, Teacher app and Student app, and a return arrow (evidence) runs from Student app back to Sources.
