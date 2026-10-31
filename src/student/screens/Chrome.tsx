@@ -14,7 +14,7 @@ export function StatusBar({ clock }: { clock: string }) {
 export function TouchDot({ t, at, x, y }: { t: number; at: number; x: number; y: number }) {
   const o = fade(t, at - 300, at + 350, 150);
   if (o <= 0) return null;
-  return <div style={{ position: 'absolute', left: x - 22, top: y - 22, width: 44, height: 44, borderRadius: '50%', background: 'rgba(15,23,42,0.25)', border: '2px solid rgba(255,255,255,0.9)', opacity: o, zIndex: 40 }} />;
+  return <div style={{ position: 'absolute', left: x - 22, top: y - 22, width: 44, height: 44, borderRadius: '50%', background: 'rgba(26,23,20,0.25)', border: '2px solid rgba(255,255,255,0.9)', opacity: o, zIndex: 40 }} />;
 }
 
 /** "Evidence synced ↑" pill after each Sc7 evidence event. */

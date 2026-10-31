@@ -12,8 +12,8 @@ export function ProgressScreen({ local }: { local: number }) {
   return (
     <div className="absolute inset-0 bg-egg-bg px-5 pt-14 font-sans text-egg-ink">
       <div className="font-serif text-[40px] leading-none">Your progress</div>
-      <div className="mt-5 flex items-center gap-5 rounded-3xl border border-egg-line bg-egg-card p-5">
-        <svg width={150} height={150} viewBox="0 0 150 150">
+      <div className="mt-5 flex items-center gap-4 rounded-3xl border border-egg-line bg-egg-card p-5">
+        <svg width={128} height={128} viewBox="0 0 150 150">
           <circle cx={75} cy={75} r={R} className="stroke-egg-line" strokeWidth={14} fill="none" />
           <circle cx={75} cy={75} r={R} className="stroke-egg-orange" strokeWidth={14} fill="none" strokeLinecap="round" strokeDasharray={`${(m / 100) * CIRC} ${CIRC}`} transform="rotate(-90 75 75)" />
           <text x={75} y={88} textAnchor="middle" fontSize={40} className="fill-egg-ink font-serif">{m}%</text>
@@ -21,7 +21,7 @@ export function ProgressScreen({ local }: { local: number }) {
         <div>
           <Eyebrow>{PROGRESS.concept} mastery</Eyebrow>
           <div className="mt-1 text-[15px] text-egg-mute">up from {PROGRESS.from}% this week</div>
-          <div className="mt-2 text-[15px] font-semibold">Accuracy today {PROGRESS.accuracyToday}%</div>
+          <div className="mt-2 whitespace-nowrap text-[15px] font-semibold">Accuracy today {PROGRESS.accuracyToday}%</div>
         </div>
       </div>
       <div className="mt-6"><Eyebrow>Today · {PROGRESS.done} of {PROGRESS.total} activities complete</Eyebrow></div>
