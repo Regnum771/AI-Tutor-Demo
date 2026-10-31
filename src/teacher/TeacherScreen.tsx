@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { STUDENTS, type Student } from '../scenario/classroom';
 import { Blocks } from './Blocks';
-import { Classroom } from './Classroom';
+import { Classroom, needSupportAt } from './Classroom';
 import { ADAPT, FALLBACK, QUESTION_SHORT, studentBrief, TOPICS, type Block, type ContextId } from './conversations';
 import { ContextPanel } from './ContextPanel';
 import { GREETING, type FrameMsg, type TeacherFrame, type View } from './frame';
@@ -86,7 +86,7 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
 
   return (
     <div className="flex h-full bg-egg-bg font-sans text-egg-ink antialiased">
-      <Sidebar view={view} active={view === 'chat' ? panel?.id ?? null : null} actions={actions} />
+      <Sidebar badge={needSupportAt(frame.classroom.adapt)} view={view} active={view === 'chat' ? panel?.id ?? null : null} actions={actions} />
 
       <main className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-[60px] shrink-0 items-center gap-4 border-b border-egg-line px-8">
@@ -144,7 +144,7 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
             <div className="shrink-0 px-8 pb-5">
               <div className="mx-auto max-w-[760px]">
                 <Composer value={composerValue} onChange={composer?.onChange} readOnly={!composer} onSend={send} />
-                <div className="mt-2 text-center text-[11.5px] text-egg-faint">Illustrative demo data · fictional students</div>
+                {!scripted && <div className="mt-2 text-center text-[11.5px] text-egg-faint">Illustrative demo data · fictional students</div>}
               </div>
             </div>
           </>
@@ -156,7 +156,7 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
   );
 }
 
-function Sidebar({ view, active, actions }: { view: View; active: ContextId | null; actions?: TeacherActions }) {
+function Sidebar({ badge, view, active, actions }: { badge: number; view: View; active: ContextId | null; actions?: TeacherActions }) {
   const nav = (v: View, label: string) => (
     <button
       type="button"
@@ -164,7 +164,7 @@ function Sidebar({ view, active, actions }: { view: View; active: ContextId | nu
       className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[14px] ${view === v ? 'bg-egg-card font-semibold shadow-[0_0_0_1px_#DCD3C5]' : 'text-egg-mute hover:text-egg-ink'}`}
     >
       {label}
-      {v === 'classroom' && <span className="rounded-full bg-egg-orange px-2 text-[11px] font-semibold text-egg-ink">12</span>}
+      {v === 'classroom' && <span className="rounded-full bg-egg-orange px-2 text-[11px] font-semibold text-egg-ink">{badge}</span>}
     </button>
   );
   return (
@@ -264,7 +264,7 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
           ))}
         </div>
         <div className="mt-10">{composer}</div>
-        <div className="mt-2 text-center text-[11.5px] text-egg-faint">Illustrative demo data · fictional students</div>
+        {actions && <div className="mt-2 text-center text-[11.5px] text-egg-faint">Illustrative demo data · fictional students</div>}
       </div>
     </div>
   );

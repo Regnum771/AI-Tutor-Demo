@@ -16,6 +16,31 @@ const bandOf = (s: Student): Band => (COMPLEX.includes(s.index) ? 'personal' : s
 export const groupOf = (i: number) => GROUPS[(i + 2) % GROUPS.length];
 const shortName = (s: Student) => (s.index === MINH_ANH.index ? MINH_ANH.short : s.name.split(' ').slice(-1)[0]);
 
+/** Students who move band once the adapted pathway lands (adapt >= 0.5), derived from the data so counts always agree. */
+const ADAPT_SUPPORT_TO_ON_TRACK = 3; // need support 12 -> 9
+const escalated = (s: Student) => COMPLEX.includes(s.index);
+const toSupport = new Set(STUDENTS.filter((s) => s.status === 'highRisk' && !escalated(s)).map((s) => s.index));
+const toOnTrack = new Set(
+  STUDENTS.filter((s) => s.status === 'support' && !escalated(s))
+    .sort((x, y) => y.mastery - x.mastery || x.index - y.index)
+    .slice(0, ADAPT_SUPPORT_TO_ON_TRACK)
+    .map((s) => s.index),
+);
+export const adaptedBand = (s: Student, a: number): Band => {
+  if (a >= 0.5 && toSupport.has(s.index)) return 'support';
+  if (a >= 0.5 && toOnTrack.has(s.index)) return 'onTrack';
+  return bandOf(s);
+};
+export const adaptedMastery = (s: Student, a: number): number => {
+  if (s.index === MINH_ANH.index) return lerp(0.35, 0.72, a);
+  if (toSupport.has(s.index)) return lerp(s.mastery, 0.55, a);
+  if (toOnTrack.has(s.index)) return lerp(s.mastery, 0.6, a);
+  return s.mastery;
+};
+/** Students not on track (the "need support" headline), unmultiplied. */
+export const needSupportAt = (a: number) => STUDENTS.filter((s) => adaptedBand(s, a) !== 'onTrack').length;
+const highRiskAt = (a: number) => STUDENTS.filter((s) => ['highRisk', 'personal'].includes(adaptedBand(s, a))).length;
+
 const BAND: Record<Band, { label: string; cell: string; mark: string }> = {
   onTrack: { label: 'On track', cell: 'border-egg-line bg-egg-card text-egg-ink', mark: '' },
   support: { label: 'Needs support', cell: 'border-transparent bg-egg-tint text-egg-ink', mark: 'Support' },
@@ -46,10 +71,9 @@ export function Classroom({ cls, actions }: ClassroomProps) {
   const a = cls.adapt;
   const k = cls.kpi;
   const avg = STUDENTS.reduce((sum, s) => sum + s.mastery, 0) / STUDENTS.length;
-  const count = (b: Band) => STUDENTS.filter((s) => bandOf(s) === b).length;
+  const count = (b: Band) => STUDENTS.filter((s) => adaptedBand(s, a) === b).length;
   const pick = (i: number) => actions?.select(cls.selected === i ? null : i);
-  const needSupport = Math.round(lerp(12, 9, a) * k);
-  const minhBand = (s: Student): Band => (s.index === MINH_ANH.index && a >= 0.5 ? 'support' : bandOf(s));
+  const needSupport = Math.round(needSupportAt(a) * k);
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
@@ -71,7 +95,7 @@ export function Classroom({ cls, actions }: ClassroomProps) {
           {[
             { label: 'Students', value: String(Math.round(55 * k)) },
             { label: 'Need support', value: String(needSupport), accent: true },
-            { label: 'High risk', value: String(Math.round(lerp(5, 3, a) * k)), note: `${COMPLEX.length} escalated to you` },
+            { label: 'High risk', value: String(Math.round(highRiskAt(a) * k)), note: `${COMPLEX.length} escalated to you` },
             { label: 'Running', value: String(Math.round(RUNNING_TOTAL * k)), note: 'interventions, 0 overdue' },
             { label: 'Avg. mastery', value: (avg * k).toFixed(2) },
           ].map((kpi, i) => (
@@ -104,9 +128,9 @@ export function Classroom({ cls, actions }: ClassroomProps) {
               {STUDENTS.map((s, i) => {
                 if (i >= cls.tiles) return <div key={s.id} className="h-[78px] rounded-xl border border-dashed border-egg-line bg-transparent" />;
                 const isMinh = s.index === MINH_ANH.index;
-                const b = minhBand(s);
+                const b = adaptedBand(s, a);
                 const dim = filter !== 'all' && filter !== b;
-                const mastery = isMinh ? lerp(0.35, 0.72, a) : s.mastery;
+                const mastery = adaptedMastery(s, a);
                 const glow = isMinh && cls.pulse > 0 && cls.selected !== s.index;
                 return (
                   <button
@@ -130,7 +154,7 @@ export function Classroom({ cls, actions }: ClassroomProps) {
 
           <aside className="space-y-8">
             {cls.selected !== null ? (
-              <StudentCard s={STUDENTS[cls.selected]} appear={cls.selectAppear} actions={actions} />
+              <StudentCard s={STUDENTS[cls.selected]} adapt={a} appear={cls.selectAppear} actions={actions} />
             ) : (
               cls.kpi > 0 && (
                 <section>
@@ -206,8 +230,8 @@ function Heatmap() {
   );
 }
 
-function StudentCard({ s, appear, actions }: { s: Student; appear: number; actions?: TeacherActions }) {
-  const b = bandOf(s);
+function StudentCard({ s, adapt, appear, actions }: { s: Student; adapt: number; appear: number; actions?: TeacherActions }) {
+  const b = adaptedBand(s, adapt);
   const isMinhAnh = s.index === MINH_ANH.index;
   return (
     <section className="rounded-2xl border-2 border-egg-ink bg-egg-card p-5" style={{ opacity: appear }}>

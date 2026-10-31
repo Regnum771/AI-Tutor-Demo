@@ -37,4 +37,35 @@ describe('TeacherScreen', () => {
     expect(out).toContain('20:41');
     expect(out).toContain('0.35 → 0.72');
   });
+
+  const FOOT = 'Illustrative demo data · fictional students';
+  const clsFrame = (adapt: number, kpi = 1) => {
+    const f = teacherFrame([{ at: PAST, type: 'classroomReveal' }], 0);
+    return { ...f, view: 'classroom' as const, classroom: { ...f.classroom, kpi, tiles: 55, adapt } };
+  };
+  it('classroom counts agree after adapt', () => {
+    const out = html(<TeacherScreen frame={clsFrame(1)} />);
+    expect(out).toContain('>9</span>'); // sidebar badge
+    expect(out).toContain('<span class="text-egg-orange">9</span> need support');
+    expect(out).toContain('High risk 0');
+    expect(out).toContain('Needs you 3');
+    expect(out).toContain('Needs support 6');
+    expect(out).toContain('On track 46');
+  });
+  it('classroom counts are the original before adapt', () => {
+    const out = html(<TeacherScreen frame={clsFrame(0)} />);
+    expect(out).toContain('>12</span>');
+    expect(out).toContain('High risk 2');
+    expect(out).toContain('Needs you 3');
+    expect(out).toContain('Needs support 7');
+  });
+  it('in-app footer only in live mode', () => {
+    const f = teacherFrame([], 0);
+    const noop = new Proxy({}, { get: () => () => undefined }) as never;
+    expect(html(<TeacherScreen frame={f} />)).not.toContain(FOOT);
+    expect(html(<TeacherScreen frame={f} actions={noop} />)).toContain(FOOT);
+    const chat = teacherFrame([{ at: PAST, type: 'send', text: 'hi' }], 0);
+    expect(html(<TeacherScreen frame={chat} />)).not.toContain(FOOT);
+    expect(html(<TeacherScreen frame={chat} actions={noop} />)).toContain(FOOT);
+  });
 });

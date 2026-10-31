@@ -20,7 +20,7 @@ export function ContextPanel({ panel, approved, actions }: PanelProps) {
   const id = panel.id;
   return (
     <aside
-      className="flex h-full w-[460px] shrink-0 flex-col border-l border-egg-line bg-egg-paper"
+      className="relative flex h-full w-[460px] shrink-0 flex-col border-l border-egg-line bg-egg-paper"
       style={{ opacity: panel.appear, transform: `translateX(${(1 - panel.appear) * 24}px)` }}
     >
       <div className="flex items-center justify-between border-b border-egg-line px-6 py-4">
@@ -34,6 +34,12 @@ export function ContextPanel({ panel, approved, actions }: PanelProps) {
           {id === 'attention' && <AttentionContext panel={panel} approved={approved} actions={actions} />}
         </div>
       </div>
+      {!actions && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0">
+          <div className="h-8" style={{ background: 'linear-gradient(to bottom, rgba(248,244,236,0), #F8F4EC)' }} />
+          <div className="h-[76px] bg-egg-paper" />
+        </div>
+      )}
     </aside>
   );
 }
