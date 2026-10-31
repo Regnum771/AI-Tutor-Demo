@@ -106,3 +106,30 @@ describe('Sc9 Experience (dashboard companion)', () => {
     expect(s).toContain('0.52');
   });
 });
+
+describe('Sc5 Reason', () => {
+  it('shows both agents, SAS diagnosis and TAS analysis', () => {
+    const s = render(5, 14000);
+    expect(s).toContain('Student Analysis Agent');
+    expect(s).toContain('Teaching Assistance Agent');
+    expect(s).toContain('SAS · Student Diagnosis');
+    expect(s).toContain('Incomplete understanding of logical operators');
+    expect(s).toContain('TAS · Instructional Analysis');
+    expect(s).toContain('Mastery assessment');
+  });
+});
+
+describe('Sc6 Collaborate', () => {
+  it('delivers the challenge to TAS and narrows the plan', () => {
+    const s = render(6, 13500);
+    expect(s).toContain('CHALLENGE');
+    expect(s).toContain('line-through');
+  });
+  it('ends with the co-signed joint decision', () => {
+    const s = render(6, 22000);
+    expect(s).toContain('Joint decision');
+    expect(s).toContain('Targeted Prerequisite Reinforcement');
+    expect(s).toContain('SAS ✓');
+    expect(s).toContain('TAS ✓');
+  });
+});
