@@ -29,7 +29,7 @@ export function LivePhoneView({ source }: { source: DemoSource }) {
   }
   const ph = state.phone;
   // Screen entrances animate from when this screen first appeared.
-  const key = `${state.epoch}:${ph.screen}:${ph.planId}:${ph.session}:${ph.item}`;
+  const key = ph.screen === 'progress' ? `${state.epoch}:progress:${ph.lastDone}` : `${state.epoch}:${ph.screen}:${ph.planId}:${ph.session}:${ph.item}`;
   if (!firstSeen.current.has(key)) firstSeen.current.set(key, now);
   const local = now - firstSeen.current.get(key)!;
   const clock = fmt(state.clock);
@@ -49,7 +49,12 @@ export function LivePhoneView({ source }: { source: DemoSource }) {
         <LivePractice key={`${ph.session}:${ph.item}`} state={state} onAnswer={(o) => send('phone/answer', { option: o })} onNext={() => send('phone/next')} />
       )}
       {ph.screen === 'progress' && progress && <ProgressScreen local={local} live={progress} onBack={() => send('phone/plan')} />}
-      {ph.screen !== 'lock' && <StatusBar clock={clock} />}
+      {ph.screen !== 'lock' && (
+        <>
+          <div className="absolute inset-x-0 top-0 bg-egg-bg" style={{ height: 44, zIndex: 29 }} />
+          <StatusBar clock={clock} />
+        </>
+      )}
     </Stage>
   );
 }

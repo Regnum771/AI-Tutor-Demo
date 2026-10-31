@@ -42,6 +42,11 @@ describe('live phone screens', () => {
     expect(out).toMatch(/<text[^>]*>71%</);
     expect(out).toContain('Back to plan');
   });
+  it('a finished plan ends with a closing line, not a dead end', () => {
+    const out = html(<PlanScreen local={5000} variant="initial" live={{ ...view, done: [0, 1], next: null, canSkip: false }} onOpen={() => {}} />);
+    expect(out).toContain('All done for now');
+    expect(out).not.toContain('Up next');
+  });
   it('practice: a wrong answer shows that option’s hint; a right one shows Next and the worked rewrite', () => {
     const wrong = html(<LivePractice state={ok(phoneAnswer(practice(), 0))} onAnswer={() => {}} onNext={() => {}} />);
     expect(wrong).toContain('Not quite');

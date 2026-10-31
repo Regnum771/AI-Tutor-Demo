@@ -67,6 +67,9 @@ export function PlanScreen({ local, variant, clock = '17:00', live, onOpen, onSk
           Skip to tonight
         </button>
       )}
+      {live && live.next === null && (
+        <div className="mt-4 rounded-2xl bg-egg-sage-tint p-3 text-center text-[15px] font-semibold text-egg-sage">All done for now · nice work</div>
+      )}
     </div>
   );
 }

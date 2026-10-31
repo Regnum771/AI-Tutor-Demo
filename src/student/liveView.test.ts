@@ -29,4 +29,9 @@ describe('phone views', () => {
     expect(p).toMatchObject({ concept: 'Logical equivalence', from: 35, accuracy: 100, done: 2, remaining: null, backLabel: 'Back to plan' });
     expect(p.to).toBeGreaterThan(60);
   });
+  it('offers Skip to tonight only on a plan for today', () => {
+    const s = sent();
+    s.plans[0].day = 'Tomorrow';
+    expect(planView(s)?.canSkip).toBe(false);
+  });
 });

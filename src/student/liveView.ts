@@ -43,7 +43,7 @@ export function planView(state: DemoState): PlanView | null {
     items: plan.sessions.map((s) => ({ title: s.title, when: `${plan.day} ${s.time}`, mins: s.minutes })),
     done,
     next: next < 0 ? null : next,
-    canSkip: plan.sessions.some((_, i) => i < check && !done.includes(i)),
+    canSkip: plan.day === 'Today' && plan.sessions.some((_, i) => i < check && !done.includes(i)),
   };
 }
 
