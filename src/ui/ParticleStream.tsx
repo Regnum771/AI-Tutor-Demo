@@ -8,13 +8,13 @@ export type ParticleKind = EvidenceKind;
 export function ParticleShape({ kind, x, y, color, opacity = 1 }: { kind: ParticleKind; x: number; y: number; color: string; opacity?: number }) {
   switch (kind) {
     case 'structured':
-      return <rect x={x - 6} y={y - 6} width={12} height={12} fill={color} opacity={opacity} />;
+      return <rect x={x - 6} y={y - 6} width={12} height={12} style={{ fill: color }} opacity={opacity} />;
     case 'text':
-      return <rect x={x - 11} y={y - 3} width={22} height={6} rx={3} fill={color} opacity={opacity} />;
+      return <rect x={x - 11} y={y - 3} width={22} height={6} rx={3} style={{ fill: color }} opacity={opacity} />;
     case 'interaction':
-      return <circle cx={x} cy={y} r={6} fill={color} opacity={opacity} />;
+      return <circle cx={x} cy={y} r={6} style={{ fill: color }} opacity={opacity} />;
     case 'document':
-      return <rect x={x - 6} y={y - 8} width={12} height={16} rx={2} fill="none" stroke={color} strokeWidth={2.5} opacity={opacity} />;
+      return <rect x={x - 6} y={y - 8} width={12} height={16} rx={2} style={{ fill: 'none', stroke: color }} strokeWidth={2.5} opacity={opacity} />;
   }
 }
 

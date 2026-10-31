@@ -3,11 +3,38 @@
 @tailwind utilities;
 
 html, body, #root { margin: 0; height: 100%; }
+
+/* Egg palette as RGB channels (see tailwind.config.js). Classic: eggshell + orange. */
+:root {
+  --egg-bg: 242 237 228; --egg-paper: 248 244 236; --egg-card: 255 253 248; --egg-line: 220 211 197;
+  --egg-ink: 26 23 20; --egg-mute: 107 99 89; --egg-faint: 156 146 133;
+  --egg-accent: 255 91 31; --egg-accent-ink: 255 91 31; --egg-tint: 255 229 214;
+  --egg-sage: 79 122 90; --egg-sage-tint: 228 237 227;
+  --egg-brick: 181 69 47; --egg-brick-tint: 246 225 218;
+  /* Teacher sidebar: in classic it is the page itself. */
+  --side-bg: 242 237 228; --side-ink: 26 23 20; --side-mute: 107 99 89; --side-mark: 255 91 31;
+  --side-hi: 255 253 248; --side-ring: 220 211 197; --side-edge: 220 211 197;
+  --side-card: 248 244 236; --side-chip: 255 253 248; --side-line: 220 211 197;
+  --side-cta: 26 23 20; --side-cta-ink: 255 253 248;
+}
+
+/* Sage: the same eggshell paper; only the accents change. A pastel VNU sage for fills, a deep sage for
+   accent text. Right answers move to pine so they stay distinct from the accent. */
+[data-theme='sage'] {
+  --egg-accent: 143 176 138; --egg-accent-ink: 78 114 84; --egg-tint: 227 236 219;
+  --egg-sage: 47 111 98; --egg-sage-tint: 217 235 229;
+  /* Sidebar: a deep sage panel, a lighter sage highlight, off-white text. */
+  --side-bg: 67 94 72; --side-ink: 248 244 236; --side-mute: 201 214 201; --side-mark: 185 209 178;
+  --side-hi: 89 119 94; --side-ring: 89 119 94; --side-edge: 67 94 72;
+  --side-card: 76 104 81; --side-chip: 89 119 94; --side-line: 95 125 100;
+  --side-cta: 248 244 236; --side-cta-ink: 26 23 20;
+}
+
 body { background: #000; overflow: hidden; font-family: Inter, sans-serif; }
 
-body.teacher { background: #F2EDE4; }
+body.teacher { background: rgb(var(--egg-bg)); }
 .chat-prose p { margin: 0 0 0.85em; }
 .chat-prose p:last-child { margin-bottom: 0; }
 .chat-prose ul { margin: 0 0 0.85em; padding: 0; list-style: none; }
 .chat-prose li { position: relative; padding-left: 1.4em; margin: 0.35em 0; }
-.chat-prose li::before { content: ''; position: absolute; left: 0.2em; top: 0.72em; width: 0.55em; height: 1.5px; background: #FF5B1F; }
+.chat-prose li::before { content: ''; position: absolute; left: 0.2em; top: 0.72em; width: 0.55em; height: 1.5px; background: rgb(var(--egg-accent)); }

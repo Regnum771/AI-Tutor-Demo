@@ -14,6 +14,10 @@ describe('full-canvas scenes', () => {
     const out = html(<HowItWorks t={19000} />);
     for (const s of ['Multimodal Foundation Models', 'Knowledge Graph', 'Learning Digital Twin', 'Agentic AI', 'Teacher app', 'Student app', 'SAS', 'TAS']) expect(out).toContain(s);
   });
+  it('How it works shows inner parts, link labels and the governance layer by the end', () => {
+    const out = html(<HowItWorks t={19000} />);
+    for (const s of ['Misconceptions', 'Policy check', 'approved pathway', 'new evidence', 'Teacher governance', 'Approval before action']) expect(out).toContain(s);
+  });
   it('Closing shows the wordmark and tagline', () => {
     const out = html(<Closing t={4000} />);
     expect(out).toContain('Beyond');

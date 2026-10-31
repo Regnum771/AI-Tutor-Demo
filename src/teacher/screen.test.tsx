@@ -69,7 +69,7 @@ describe('TeacherScreen', () => {
   it('classroom counts agree after adapt', () => {
     const out = html(<TeacherScreen frame={clsFrame(1)} />);
     expect(out).toContain('>9</span>'); // sidebar badge
-    expect(out).toContain('<span class="text-egg-orange">9</span> need support');
+    expect(out).toContain('<span class="text-egg-accent-ink">9</span> need support');
     expect(out).toContain('High risk 0');
     expect(out).toContain('Needs you 3');
     expect(out).toContain('Needs support 6');

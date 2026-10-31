@@ -65,7 +65,8 @@ describe('playback', () => {
     expect(s.scene).toBe(9);
     expect(s.playing).toBe(false);
     expect(localTime(s, 0, 20000)).toBe(6000);
-    expect(s.toggles).toEqual({ titles: false, footer: true, cursor: true, chapter: false, tc: true });
+    expect(s.toggles).toEqual({ titles: false, footer: true, cursor: true, chapter: false, tc: true, sage: false });
+    expect(stateFromSearch('?scene=4&theme=sage', 0, 3).toggles.sage).toBe(true);
   });
   it('stateFromSearch autoplay starts immediately without pre-roll', () => {
     const s = stateFromSearch('?scene=9&autoplay', 1000, 3);

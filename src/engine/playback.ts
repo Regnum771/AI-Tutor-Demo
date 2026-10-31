@@ -1,4 +1,5 @@
 import { clamp } from './anim';
+import { themeFromSearch } from '../ui/theme';
 
 export const HANDLE_MS = 1000;
 export const PREROLL_MS = 3000;
@@ -10,9 +11,11 @@ export interface Toggles {
   cursor: boolean;
   chapter: boolean;
   tc: boolean;
+  /** Sage accents and the leaf-book mark instead of orange and the asterisk. */
+  sage: boolean;
 }
 
-export const DEFAULT_TOGGLES: Toggles = { titles: true, footer: true, cursor: true, chapter: true, tc: false };
+export const DEFAULT_TOGGLES: Toggles = { titles: true, footer: true, cursor: true, chapter: true, tc: false, sage: false };
 
 /**
  * Raw time runs from the start of the leading handle: raw 0..HANDLE_MS holds frame 0,
@@ -88,7 +91,7 @@ export function togglePlay(s: PlaybackState): Command {
   return s.pausedAt <= HANDLE_MS ? { type: 'start', scene: s.scene } : { type: 'play' };
 }
 
-/** Standalone mode: ?scene=9&t=6000 holds a frame; &autoplay plays; titles=0 footer=0 cursor=0 chapter=0 tc=1. */
+/** Standalone mode: ?scene=9&t=6000 holds a frame; &autoplay plays; titles=0 footer=0 cursor=0 chapter=0 tc=1 theme=sage. */
 export function stateFromSearch(search: string, now: number, fallbackScene: number): PlaybackState {
   const q = new URLSearchParams(search);
   const scene = Number(q.get('scene') ?? fallbackScene);
@@ -99,6 +102,7 @@ export function stateFromSearch(search: string, now: number, fallbackScene: numb
     cursor: q.get('cursor') !== '0',
     chapter: q.get('chapter') !== '0',
     tc: q.get('tc') === '1',
+    sage: themeFromSearch(search) === 'sage',
   };
   const base: PlaybackState = { ...initialState(scene), toggles };
   return q.has('autoplay')

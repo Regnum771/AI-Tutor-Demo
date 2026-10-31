@@ -5,6 +5,7 @@ import { greetingFor, PlanScreen } from './screens/PlanScreen';
 import { PracticeScreen } from './screens/PracticeScreen';
 import { ProgressScreen } from './screens/ProgressScreen';
 import { SC9 } from '../scenario/practice';
+import { ThemeScope } from '../ui/theme';
 
 describe('student screens', () => {
   it('plan screen: serif course title, sans name, one Up next', () => {
@@ -17,11 +18,20 @@ describe('student screens', () => {
     expect(html(<LockScreen t={0} notification={1} clock="14:58" />)).toContain('Your personalized plan is ready');
     expect(html(<LockScreen t={0} notification={0} clock="14:58" />)).not.toContain('Your personalized plan is ready');
   });
-  it('lock screen uses the serif clock and the asterisk app icon', () => {
+  it('lock screen uses the serif clock and the app mark', () => {
     const lock = html(<LockScreen t={0} notification={1} clock="16:58" />);
     expect(lock).toMatch(/font-serif[^>]*>16:58</);
     expect(lock).toContain('<svg');
     expect(lock).not.toContain('>BT<');
+  });
+  it('the app mark follows the theme: asterisk (classic), leaf-book with a bud (sage)', () => {
+    const classic = html(<LockScreen t={0} notification={1} clock="16:58" />);
+    const sage = html(<ThemeScope theme="sage"><LockScreen t={0} notification={1} clock="16:58" /></ThemeScope>);
+    expect(classic).toContain('<rect');
+    expect(classic).not.toContain('<circle');
+    expect(sage).toContain('data-theme="sage"');
+    expect(sage).toContain('<circle');
+    expect(sage).not.toMatch(/<svg[^>]*>\s*<rect/);
   });
   it('plan screen shows the right pathway per variant', () => {
     expect(html(<PlanScreen local={5000} variant="initial" />)).toContain('Review logical operators');

@@ -2,6 +2,7 @@ import { useSceneClock } from '../engine/PlaybackProvider';
 import { Stage } from '../engine/Stage';
 import { FakeCursor } from '../ui/FakeCursor';
 import { Overlays } from '../ui/Overlays';
+import { ThemeScope } from '../ui/theme';
 import { teacherFrame } from './frame';
 import { Closing } from './scenes/Closing';
 import { HowItWorks } from './scenes/HowItWorks';
@@ -29,9 +30,11 @@ export function TeacherApp() {
     );
   }
   return (
-    <Stage width={1920} height={1080} background="#F2EDE4">
-      {body}
-      <Overlays scene={scene} t={t} slate={slate} toggles={toggles} variant="teacher" />
-    </Stage>
+    <ThemeScope theme={toggles.sage ? 'sage' : 'classic'}>
+      <Stage width={1920} height={1080} background="#F2EDE4">
+        {body}
+        <Overlays scene={scene} t={t} slate={slate} toggles={toggles} variant="teacher" />
+      </Stage>
+    </ThemeScope>
   );
 }

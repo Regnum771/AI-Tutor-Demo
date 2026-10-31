@@ -2,6 +2,7 @@ import { fade, prog, stepIndex } from '../../engine/anim';
 import { APP_HEADER, MESSY_START, POPUPS, QUESTIONS_IN } from '../../scenario/clutter';
 import { TEACHER_QUESTIONS } from '../../scenario/sources';
 import { FakeCursor, type CursorKey } from '../../ui/FakeCursor';
+import { egg } from '../../ui/theme';
 
 const QUESTION_STEP = 1000;
 const POP_MS = 220;
@@ -61,7 +62,7 @@ export function ProblemScene({ t, cursor }: { t: number; cursor: boolean }) {
           if (o <= 0) return null;
           return (
             <div key={q} className="mb-4 flex items-center gap-4 rounded-2xl border-2 px-6 py-4" style={{ opacity: o, transform: `translateX(${(1 - o) * -40}px)`, background: '#FFFDF8', borderColor: '#1A1714' }}>
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-sans text-[24px] font-extrabold" style={{ background: '#FF5B1F', color: '#1A1714' }}>?</span>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-sans text-[24px] font-extrabold" style={{ background: egg('accent'), color: '#1A1714' }}>?</span>
               <span className="font-sans text-[24px] text-[#1A1714]">{q}</span>
             </div>
           );

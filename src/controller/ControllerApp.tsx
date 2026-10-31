@@ -7,7 +7,7 @@ import { openChannel, type AppName, type Channel } from '../engine/sync';
 import { useNow } from '../engine/useNow';
 import { SCENES, TOTAL_MS, sceneById } from '../scenario/scenes';
 
-const TOGGLE_LABELS: Record<keyof Toggles, string> = { titles: 'Titles', footer: 'Footer label', cursor: 'Cursor', chapter: 'Chapter label', tc: 'Timecode' };
+const TOGGLE_LABELS: Record<keyof Toggles, string> = { titles: 'Titles', footer: 'Footer label', cursor: 'Cursor', chapter: 'Chapter label', tc: 'Timecode', sage: 'Sage theme' };
 const STANDALONE = [
   { label: 'Copy phone Sc7 autoplay URL', path: '/student.html?scene=7&autoplay' },
   { label: 'Copy teacher Sc1 autoplay URL', path: '/teacher.html?scene=1&autoplay' },

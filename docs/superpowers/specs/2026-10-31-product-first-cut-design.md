@@ -94,6 +94,9 @@ Footage map: F1 `lecture hall.mp4`, F2 `teacher_stressed.mp4`, F3 `teacher_morni
 
 **Sc9 How it works.** This is the existing architecture view restyled to the light theme. The layers are labelled Sources (LMS, Zalo, WhatsApp, Email…) → Multimodal layer → Knowledge graph + Digital twin → SAS ⇄ TAS → Orchestration engine. The engine branches to two endpoints, Teacher app and Student app, and a return arrow (evidence) runs from Student app back to Sources.
 - 0–12000: the layers build in turn.
+- Each box carries a one-line role and 2–3 parts (e.g. Twin: Mastery · Misconceptions · Engagement; Engine: Schedule · Policy check · Deliver); the Multimodal box lists its four input types against the particle shapes. The parts fade in as the narration names each layer: 2000 Multimodal, 4000 Knowledge graph, 6000 Twin, 9300 Agents (SAS · diagnoses ⇄ TAS · plans), 11000 Engine, 11600 Teacher app, 12200 Student app.
+- Every link is labelled with what flows on it (concepts, evidence, signals, grounds, learner state, decisions, proposals ⇄ approvals, approved pathway, new evidence), 500 ms after its link appears.
+- 15500: the Teacher governance band (Policies & guardrails · Approval before action · Override anytime · Audit trail) drops in across the top, landing on "…with teachers in control."
 - 12000–18000: one loop pulse travels the whole cycle.
 - The scene holds to 20000.
 

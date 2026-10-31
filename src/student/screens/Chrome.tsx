@@ -25,7 +25,7 @@ export function EvidencePill({ t }: { t: number }) {
   if (o <= 0) return null;
   return (
     <div className="absolute right-4 flex items-center gap-1.5 rounded-full bg-egg-ink px-3 py-1 font-sans text-[12px] font-semibold text-egg-card" style={{ top: 48, opacity: o, zIndex: 35 }}>
-      <span className="h-1.5 w-1.5 rounded-full bg-egg-orange" />
+      <span className="h-1.5 w-1.5 rounded-full bg-egg-accent" />
       Evidence synced ↑
     </div>
   );

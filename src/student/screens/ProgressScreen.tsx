@@ -15,7 +15,7 @@ export function ProgressScreen({ local }: { local: number }) {
       <div className="mt-5 flex items-center gap-4 rounded-3xl border border-egg-line bg-egg-card p-5">
         <svg width={128} height={128} viewBox="0 0 150 150">
           <circle cx={75} cy={75} r={R} className="stroke-egg-line" strokeWidth={14} fill="none" />
-          <circle cx={75} cy={75} r={R} className="stroke-egg-orange" strokeWidth={14} fill="none" strokeLinecap="round" strokeDasharray={`${(m / 100) * CIRC} ${CIRC}`} transform="rotate(-90 75 75)" />
+          <circle cx={75} cy={75} r={R} className="stroke-egg-accent" strokeWidth={14} fill="none" strokeLinecap="round" strokeDasharray={`${(m / 100) * CIRC} ${CIRC}`} transform="rotate(-90 75 75)" />
           <text x={75} y={88} textAnchor="middle" fontSize={40} className="fill-egg-ink font-serif">{m}%</text>
         </svg>
         <div>

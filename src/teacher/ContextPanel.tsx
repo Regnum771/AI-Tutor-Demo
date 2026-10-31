@@ -7,8 +7,9 @@ import { EXPECTED_OUTCOME, PATHWAY_INITIAL, PATHWAY_PROPOSED, PATHWAY_UPDATED } 
 import { EVIDENCE_ITEMS } from '../scenario/sources';
 import type { ContextId } from './conversations';
 import type { FramePanel } from './frame';
-import { Asterisk, Avatar, Button, Eyebrow, LevelChip, Meter } from './parts';
+import { Avatar, Button, Eyebrow, LevelChip, Mark, Meter } from './parts';
 import type { TeacherActions } from './TeacherScreen';
+import { egg } from '../ui/theme';
 
 interface PanelProps {
   panel: FramePanel;
@@ -65,17 +66,17 @@ function Proposal({ id, title, by, steps, outcome, approved, actions, approveLab
   return (
     <section className="mt-7 rounded-2xl border-2 border-egg-ink bg-egg-card p-5">
       <div className="flex items-center gap-2">
-        <Asterisk size={14} />
+        <Mark size={14} />
         <Eyebrow>Proposed intervention</Eyebrow>
       </div>
       <h3 className="mt-2 font-serif text-[28px] leading-[1.05] text-egg-ink">{title}</h3>
       <div className="mt-1 text-[12.5px] text-egg-mute">{by}</div>
       <ol className="mt-4 divide-y divide-egg-line border-y border-egg-line">
         {steps.map((s, i) => (
-          <li key={s.what} className="grid grid-cols-[22px_1fr_auto] items-baseline gap-2 py-2.5" style={i === flashRow ? { background: `rgba(255,91,31,${0.25 * flash})` } : undefined}>
+          <li key={s.what} className="grid grid-cols-[22px_1fr_auto] items-baseline gap-2 py-2.5" style={i === flashRow ? { background: egg('accent', 0.25 * flash) } : undefined}>
             <span className="font-mono text-[11px] text-egg-mute">{String(i + 1).padStart(2, '0')}</span>
             <span className="text-[13.5px] text-egg-ink">{s.what}</span>
-            <span className="font-serif text-[19px] leading-none text-egg-orange">{s.when}</span>
+            <span className="font-serif text-[19px] leading-none text-egg-accent-ink">{s.when}</span>
           </li>
         ))}
       </ol>
@@ -85,11 +86,11 @@ function Proposal({ id, title, by, steps, outcome, approved, actions, approveLab
       <div className="mt-5 flex flex-wrap gap-2">
         {followUp ? (
           <span className="inline-flex items-center gap-2 rounded-full bg-egg-ink px-4 py-2 text-[13.5px] font-semibold text-egg-card">
-            <span className="h-2 w-2 rounded-full bg-egg-orange" /> Auto-approved · tomorrow 09:00
+            <span className="h-2 w-2 rounded-full bg-egg-accent" /> Auto-approved · tomorrow 09:00
           </span>
         ) : approved ? (
           <span className="inline-flex items-center gap-2 rounded-full bg-egg-ink px-4 py-2 text-[13.5px] font-semibold text-egg-card">
-            <span className="h-2 w-2 rounded-full bg-egg-orange" /> {doneLabel}
+            <span className="h-2 w-2 rounded-full bg-egg-accent" /> {doneLabel}
           </span>
         ) : (
           <>

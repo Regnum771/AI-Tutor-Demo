@@ -1,6 +1,6 @@
 import { fade } from '../../engine/anim';
 import { GUIDED, HINT_ROW, Q1, SC9, TT_ROWS } from '../../scenario/practice';
-import { Asterisk } from '../../teacher/parts';
+import { Mark } from '../../teacher/parts';
 import { TouchDot } from './Chrome';
 
 /** Centre y of option 0, and the distance between option centres (55px box + 10px gap). Checked by `contact-sheet --verify`. */
@@ -33,8 +33,8 @@ function Question({ t }: { t: number }) {
         })}
       </div>
       {t >= SC9.hint && (
-        <div className="mt-4 rounded-2xl border border-egg-orange/40 bg-egg-tint p-4" style={{ opacity: fade(t, SC9.hint) }}>
-          <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-egg-ink"><Asterisk size={12} />Hint</div>
+        <div className="mt-4 rounded-2xl border border-egg-accent/40 bg-egg-tint p-4" style={{ opacity: fade(t, SC9.hint) }}>
+          <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-egg-ink"><Mark size={12} />Hint</div>
           <div className="mt-1 text-[14px] leading-snug text-egg-ink">{Q1.hint}</div>
           <table className="mt-3 w-full text-center font-mono text-[15px] text-egg-ink">
             <thead>
@@ -44,7 +44,7 @@ function Question({ t }: { t: number }) {
               {TT_ROWS.map(([p, q]) => {
                 const hi = p === HINT_ROW.p && q === HINT_ROW.q;
                 return (
-                  <tr key={`${p}${q}`} className={hi ? 'bg-egg-orange/25 font-bold' : undefined}>
+                  <tr key={`${p}${q}`} className={hi ? 'bg-egg-accent/25 font-bold' : undefined}>
                     <td>{tf(p)}</td><td>{tf(q)}</td><td>{tf(!p || q)}</td><td>{tf(!q || p)}</td>
                   </tr>
                 );
@@ -92,7 +92,7 @@ export function PracticeScreen({ t }: { t: number }) {
         <span>{guided ? 2 : 1} / 2</span>
       </div>
       <div className="mt-2 h-1.5 rounded-full bg-egg-line">
-        <div className="h-full rounded-full bg-egg-orange" style={{ width: guided ? '75%' : '40%' }} />
+        <div className="h-full rounded-full bg-egg-accent" style={{ width: guided ? '75%' : '40%' }} />
       </div>
       {guided ? <Guided t={t} /> : <Question t={t} />}
     </div>

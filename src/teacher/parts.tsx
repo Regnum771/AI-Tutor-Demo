@@ -1,13 +1,35 @@
 import type { ReactNode } from 'react';
 import { initials } from '../scenario/classroom';
+import { useTheme } from '../ui/theme';
 
-/** Six-armed asterisk from the reference list markers; the assistant's mark. */
-export function Asterisk({ size = 18, className = 'text-egg-orange', rotate }: { size?: number; className?: string; rotate?: number }) {
+type MarkProps = { size?: number; className?: string; rotate?: number };
+
+/** The assistant's mark, per theme. `rotate` animates it while thinking (degrees; the leaf-book sways instead). */
+export function Mark(props: MarkProps) {
+  return useTheme() === 'sage' ? <LeafBook {...props} /> : <Asterisk {...props} />;
+}
+
+/** Six-armed asterisk from the reference list markers; the classic mark. */
+function Asterisk({ size = 18, className = 'text-egg-accent-ink', rotate }: MarkProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" className={className} style={rotate === undefined ? undefined : { transform: `rotate(${rotate}deg)` }} aria-hidden>
       {[0, 60, 120].map((a) => (
         <rect key={a} x="10.6" y="1" width="2.8" height="22" rx="1.4" fill="currentColor" transform={`rotate(${a} 12 12)`} />
       ))}
+    </svg>
+  );
+}
+
+const LEAF = 'M11.2 20.5C5.6 20.2 2.6 15.6 2.4 8.6C7.6 9 11 12.6 11.2 20.5Z';
+
+/** Two leaves opening like the pages of a book, with a bud above: the sage mark. */
+function LeafBook({ size = 18, className = 'text-egg-accent-ink', rotate }: MarkProps) {
+  const sway = rotate === undefined ? 0 : 9 * Math.sin(rotate / 30);
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden>
+      <path d={LEAF} fill="currentColor" transform={`rotate(${-sway} 12 20.5)`} />
+      <path d={LEAF} fill="currentColor" transform={`rotate(${sway} 12 20.5) matrix(-1 0 0 1 24 0)`} />
+      <circle cx="12" cy="5.8" r="2.6" fill="currentColor" />
     </svg>
   );
 }
@@ -30,20 +52,20 @@ const SOURCE_LABEL: Record<SourceKey, string> = {
 export function Src({ k }: { k: SourceKey }) {
   return (
     <span className="mx-0.5 inline-flex translate-y-[-1px] items-center gap-1 rounded-full border border-egg-line bg-egg-card px-2 py-px align-middle font-mono text-[10.5px] uppercase tracking-wide text-egg-mute">
-      <span className="h-1.5 w-1.5 rounded-full bg-egg-orange" />
+      <span className="h-1.5 w-1.5 rounded-full bg-egg-accent" />
       {SOURCE_LABEL[k]}
     </span>
   );
 }
 
-export function Eyebrow({ children }: { children: ReactNode }) {
-  return <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-egg-mute">{children}</div>;
+export function Eyebrow({ children, className = 'text-egg-mute' }: { children: ReactNode; className?: string }) {
+  return <div className={`font-mono text-[11px] uppercase tracking-[0.14em] ${className}`}>{children}</div>;
 }
 
 export type Level = 'highRisk' | 'support' | 'personal';
 const LEVEL: Record<Level, { label: string; cls: string }> = {
-  highRisk: { label: 'High risk', cls: 'bg-egg-orange text-egg-ink' },
-  support: { label: 'Needs support', cls: 'bg-egg-tint text-egg-ink' },
+  highRisk: { label: 'High risk', cls: 'bg-egg-risk text-egg-ink' },
+  support: { label: 'Needs support', cls: 'bg-egg-risk-tint text-egg-ink' },
   personal: { label: 'Needs you', cls: 'bg-egg-ink text-egg-card' },
 };
 
@@ -55,7 +77,7 @@ export function LevelChip({ level }: { level: Level }) {
 export function Avatar({ name, size = 32, accent = false }: { name: string; size?: number; accent?: boolean }) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold ${accent ? 'bg-egg-orange text-egg-ink' : 'border border-egg-line bg-egg-card text-egg-ink'}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold ${accent ? 'bg-egg-accent text-egg-ink' : 'border border-egg-line bg-egg-card text-egg-ink'}`}
       style={{ width: size, height: size, fontSize: size * 0.36 }}
     >
       {initials(name)}
@@ -70,7 +92,7 @@ export function Meter({ label, value, threshold = 0.5, grow = 1 }: { label: stri
     <div className="group grid grid-cols-[132px_1fr_64px] items-center gap-3 py-[5px]" title={`${label}: ${value.toFixed(2)} mastery`}>
       <div className="truncate text-[13px] text-egg-ink">{label}</div>
       <div className="relative h-2 rounded-full bg-egg-line/60">
-        <div className={`absolute inset-y-0 left-0 rounded-full ${gap ? 'bg-egg-orange' : 'bg-egg-ink'}`} style={{ width: `${value * grow * 100}%` }} />
+        <div className={`absolute inset-y-0 left-0 rounded-full ${gap ? 'bg-egg-accent' : 'bg-egg-ink'}`} style={{ width: `${value * grow * 100}%` }} />
         <div className="absolute -top-1 h-4 w-px bg-egg-ink/50" style={{ left: `${threshold * 100}%` }} />
       </div>
       <div className="text-right font-mono text-[12px] tabular-nums text-egg-ink">
@@ -83,7 +105,7 @@ export function Meter({ label, value, threshold = 0.5, grow = 1 }: { label: stri
 
 export function Button({ children, kind = 'ghost', onClick }: { children: ReactNode; kind?: 'primary' | 'dark' | 'ghost'; onClick?: () => void }) {
   const cls = {
-    primary: 'bg-egg-orange text-egg-ink hover:brightness-95',
+    primary: 'bg-egg-accent text-egg-ink hover:brightness-95',
     dark: 'bg-egg-ink text-egg-card hover:bg-black',
     ghost: 'border border-egg-ink/25 text-egg-ink hover:border-egg-ink',
   }[kind];

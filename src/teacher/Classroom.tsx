@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { lerp } from '../engine/anim';
 import { COMPLEX, GROUPS, HEATMAP, SCALE_STUDENTS, STUDENTS, TOPICS, type Student } from '../scenario/classroom';
 import { conceptById } from '../scenario/knowledgeGraph';
+import { egg } from '../ui/theme';
 import { MASTERY_INITIAL, MASTERY_POST, MINH_ANH, TWIN_FOCUS } from '../scenario/minhAnh';
 import type { FrameClassroom } from './frame';
 import type { TeacherActions } from './TeacherScreen';
-import { Asterisk, Avatar, Button, Eyebrow, LevelChip, Meter, type Level } from './parts';
+import { Avatar, Button, Eyebrow, LevelChip, Mark, Meter, type Level } from './parts';
 
 type Band = 'onTrack' | Level;
 type Filter = 'all' | Band;
@@ -43,10 +44,12 @@ const highRiskAt = (a: number) => STUDENTS.filter((s) => ['highRisk', 'personal'
 
 const BAND: Record<Band, { label: string; cell: string; mark: string }> = {
   onTrack: { label: 'On track', cell: 'border-egg-line bg-egg-card text-egg-ink', mark: '' },
-  support: { label: 'Needs support', cell: 'border-transparent bg-egg-tint text-egg-ink', mark: 'Support' },
-  highRisk: { label: 'High risk', cell: 'border-transparent bg-egg-orange text-egg-ink', mark: 'Risk' },
+  support: { label: 'Needs support', cell: 'border-transparent bg-egg-risk-tint text-egg-ink', mark: 'Support' },
+  highRisk: { label: 'High risk', cell: 'border-transparent bg-egg-risk text-egg-ink', mark: 'Risk' },
   personal: { label: 'Needs you', cell: 'border-transparent bg-egg-ink text-egg-card', mark: 'You' },
 };
+/** Fixed risk colour (egg-risk, #FF5B1F) for the High risk pulse ring and the gap heatmap. */
+const risk = (a: number) => `rgb(255 91 31 / ${a})`;
 const BANDS: Band[] = ['highRisk', 'personal', 'support', 'onTrack'];
 /** Every student on a routine, adaptive or teacher-led track. */
 const RUNNING_TOTAL = STUDENTS.filter((s) => s.track !== 'none').length;
@@ -90,12 +93,12 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
           <div>
             <Eyebrow>Discrete Mathematics · DM-2026 · Week 6</Eyebrow>
             <h2 className="mt-2 font-serif text-[56px] leading-[0.95]">
-              55 students, <span className="text-egg-orange">{needSupport}</span> need support
+              55 students, <span className="text-egg-accent-ink">{needSupport}</span> need support
             </h2>
           </div>
           <div className="ml-auto flex gap-2 pb-1">
             <Button>Export</Button>
-            <Button kind="primary" onClick={() => actions?.askClass()}><Asterisk size={13} className="text-egg-ink" /> Ask about the class</Button>
+            <Button kind="primary" onClick={() => actions?.askClass()}><Mark size={13} className="text-egg-ink" /> Ask about the class</Button>
           </div>
         </div>
 
@@ -109,7 +112,7 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
           ].map((kpi, i) => (
             <div key={kpi.label} className={`${scripted ? 'py-3' : 'py-4'} ${i ? 'border-l border-egg-line pl-5' : ''}`}>
               <Eyebrow>{kpi.label}</Eyebrow>
-              <div className={`mt-1 font-serif text-[52px] leading-none ${kpi.accent ? 'text-egg-orange' : ''}`}>{kpi.value}</div>
+              <div className={`mt-1 font-serif text-[52px] leading-none ${kpi.accent ? 'text-egg-accent-ink' : ''}`}>{kpi.value}</div>
               {'note' in kpi && <div className="mt-1 text-[12px] text-egg-mute" style={{ opacity: k }}>{kpi.note}</div>}
             </div>
           ))}
@@ -147,7 +150,7 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
                     onClick={() => pick(s.index)}
                     title={`${s.name} · ${BAND[b].label} · mastery ${mastery.toFixed(2)}`}
                     className={`flex ${tileH} flex-col justify-between rounded-xl border p-2 text-left ${BAND[b].cell} ${dim ? 'opacity-20' : ''} ${cls.selected === s.index ? 'outline outline-2 outline-offset-2 outline-egg-ink' : ''}`}
-                    style={glow ? { boxShadow: `0 0 0 ${2 + 6 * cls.pulse}px rgba(255,91,31,${0.35 + 0.4 * cls.pulse})` } : undefined}
+                    style={glow ? { boxShadow: `0 0 0 ${2 + 6 * cls.pulse}px ${risk(0.35 + 0.4 * cls.pulse)}` } : undefined}
                   >
                     <div className="flex items-start justify-between">
                       <span className="text-[10.5px] font-semibold opacity-70">{BAND[b].mark}</span>
@@ -182,7 +185,7 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
                               <span className="block truncate text-[13.5px] font-semibold">{s.name}</span>
                               <span className="block truncate text-[12.5px] text-egg-mute">{r.what}</span>
                             </span>
-                            <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold ${r.state === 'Running' ? 'border border-egg-line text-egg-mute' : r.state === 'Needs you' ? 'bg-egg-ink text-egg-card' : 'bg-egg-orange text-egg-ink'}`}>
+                            <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold ${r.state === 'Running' ? 'border border-egg-line text-egg-mute' : r.state === 'Needs you' ? 'bg-egg-ink text-egg-card' : 'bg-egg-risk text-egg-ink'}`}>
                               {r.state}
                             </span>
                           </button>
@@ -202,7 +205,7 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
   );
 }
 
-/** Topic × group mastery. One hue: the more orange, the bigger the gap. Values are always printed. */
+/** Topic × group mastery. One fixed hue in every theme: the more orange, the bigger the gap. Values are always printed. */
 function Heatmap({ compact }: { compact: boolean }) {
   const tint = (v: number) => Math.max(0, Math.min(1, (0.9 - v) / 0.5)) * 100;
   return (
@@ -227,7 +230,7 @@ function Heatmap({ compact }: { compact: boolean }) {
                   key={c}
                   title={`${t} · ${GROUPS[c]}: ${v.toFixed(2)} mastery`}
                   className={`${compact ? 'h-7' : 'h-8'} rounded-md text-center font-mono tabular-nums text-egg-ink ${v < 0.5 ? 'font-bold' : ''}`}
-                  style={{ background: `color-mix(in oklab, #FF5B1F ${tint(v)}%, #FFFDF8)` }}
+                  style={{ background: `color-mix(in oklab, ${risk(1)} ${tint(v)}%, ${egg('card')})` }}
                 >
                   {v.toFixed(2)}
                 </td>
@@ -262,7 +265,7 @@ function StudentCard({ s, adapt, appear, actions }: { s: Student; adapt: number;
       </div>
       <div className="mt-4 flex gap-2">
         <Button kind="primary" onClick={() => actions?.askStudent(s)}>
-          <Asterisk size={13} className="text-egg-ink" /> Ask about {shortName(s)}
+          <Mark size={13} className="text-egg-ink" /> Ask about {shortName(s)}
         </Button>
         <Button onClick={() => actions?.select(null)}>Close</Button>
       </div>

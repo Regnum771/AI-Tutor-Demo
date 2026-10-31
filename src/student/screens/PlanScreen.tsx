@@ -1,6 +1,6 @@
 import { fade } from '../../engine/anim';
 import { PATHWAY_INITIAL, PATHWAY_UPDATED, PLAN_OBJECTIVES, PLAN_OBJECTIVES_UPDATED } from '../../scenario/orchestration';
-import { Asterisk, Eyebrow } from '../../teacher/parts';
+import { Eyebrow, Mark } from '../../teacher/parts';
 import { StepMarker } from './Chrome';
 
 /** Greeting derived from the displayed clock (HH:MM): morning before 12:00, afternoon before 18:00, evening after. */
@@ -19,7 +19,7 @@ export function PlanScreen({ local, variant, clock = '17:00' }: { local: number;
       <div className="text-[26px] font-bold">Minh Anh</div>
       {variant === 'updated' && (
         <div className="mt-3 flex items-center gap-2 rounded-2xl bg-egg-tint px-4 py-2 text-[14px] font-semibold" style={{ opacity: fade(local, 100) }}>
-          <Asterisk size={14} />
+          <Mark size={14} />
           Plan updated · based on your progress
         </div>
       )}
@@ -37,13 +37,13 @@ export function PlanScreen({ local, variant, clock = '17:00' }: { local: number;
           const o = fade(local, 300 + i * 250);
           return (
             <div key={it.title} className="relative flex items-center gap-3 border-b border-egg-line py-3.5 pl-3" style={{ opacity: o, transform: `translateY(${(1 - o) * 12}px)` }}>
-              {i === next && <span className="absolute bottom-2 left-0 top-2 w-0.5 rounded-full bg-egg-orange" />}
+              {i === next && <span className="absolute bottom-2 left-0 top-2 w-0.5 rounded-full bg-egg-accent" />}
               <StepMarker n={i + 1} done={variant === 'initial' && i < 2} />
               <div>
                 <div className="text-[16px] font-semibold">{it.title}</div>
                 <div className="text-[13px] text-egg-mute">{it.when} · {it.mins} min</div>
               </div>
-              {i === next && <span className="ml-auto whitespace-nowrap rounded-full bg-egg-orange px-2.5 py-0.5 text-[12px] font-semibold text-egg-ink">Up next</span>}
+              {i === next && <span className="ml-auto whitespace-nowrap rounded-full bg-egg-accent px-2.5 py-0.5 text-[12px] font-semibold text-egg-ink">Up next</span>}
             </div>
           );
         })}

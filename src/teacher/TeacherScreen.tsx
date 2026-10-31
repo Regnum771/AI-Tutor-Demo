@@ -5,7 +5,7 @@ import { Classroom, needSupportAt } from './Classroom';
 import { ADAPT, FALLBACK, QUESTION_SHORT, studentBrief, TOPICS, type Block, type ContextId } from './conversations';
 import { ContextPanel } from './ContextPanel';
 import { GREETING, type FrameMsg, type TeacherFrame, type View } from './frame';
-import { Arrow, Asterisk, Avatar, Eyebrow } from './parts';
+import { Arrow, Avatar, Eyebrow, Mark } from './parts';
 
 export interface TeacherActions {
   send(text: string): void;
@@ -108,7 +108,7 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
             <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-egg-mute">Five questions</span>
             {QUESTION_SHORT.map((q, i) => (
               <span key={q} className="flex items-center gap-2 text-[13.5px]">
-                <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full border ${frame.ticks[i] ? 'border-egg-orange bg-egg-orange text-egg-ink' : 'border-egg-ink/40'}`}>
+                <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full border ${frame.ticks[i] ? 'border-egg-accent bg-egg-accent text-egg-ink' : 'border-egg-ink/40'}`}>
                   {frame.ticks[i] && <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden><path d="M2 5.2 4.2 7.4 8 2.8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                 </span>
                 <span className={frame.ticks[i] ? 'text-egg-ink' : 'text-egg-mute'}>{q}</span>
@@ -161,19 +161,19 @@ function Sidebar({ badge, view, active, actions }: { badge: number; view: View; 
     <button
       type="button"
       onClick={() => actions?.setView(v)}
-      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[14px] ${view === v ? 'bg-egg-card font-semibold shadow-[0_0_0_1px_#DCD3C5]' : 'text-egg-mute hover:text-egg-ink'}`}
+      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[14px] ${view === v ? 'bg-side-hi font-semibold shadow-[0_0_0_1px_rgb(var(--side-ring))]' : 'text-side-mute hover:text-side-ink'}`}
     >
       {label}
-      {v === 'classroom' && <span className="rounded-full bg-egg-orange px-2 text-[11px] font-semibold text-egg-ink">{badge}</span>}
+      {v === 'classroom' && <span className="rounded-full bg-egg-accent px-2 text-[11px] font-semibold text-egg-ink">{badge}</span>}
     </button>
   );
   return (
-    <nav className="flex w-[264px] shrink-0 flex-col border-r border-egg-line px-5 py-5">
+    <nav className="flex w-[264px] shrink-0 flex-col border-r border-side-edge bg-side-bg px-5 py-5 text-side-ink">
       <div className="flex items-center gap-2">
         <span className="font-serif text-[30px] leading-none">Beyond</span>
-        <Asterisk size={16} />
+        <Mark size={16} className="text-side-mark" />
       </div>
-      <button type="button" onClick={() => actions?.reset()} className="mt-6 flex items-center gap-2 rounded-full bg-egg-ink px-4 py-2.5 text-[13.5px] font-semibold text-egg-card hover:bg-black">
+      <button type="button" onClick={() => actions?.reset()} className="mt-6 flex items-center gap-2 rounded-full bg-side-cta px-4 py-2.5 text-[13.5px] font-semibold text-side-cta-ink hover:brightness-90">
         <span className="text-[18px] leading-none">+</span> New conversation
       </button>
       <div className="mt-5 space-y-0.5">
@@ -181,34 +181,34 @@ function Sidebar({ badge, view, active, actions }: { badge: number; view: View; 
         {nav('classroom', 'Classroom')}
       </div>
 
-      <div className="mt-7"><Eyebrow>Today</Eyebrow></div>
+      <div className="mt-7"><Eyebrow className="text-side-mute">Today</Eyebrow></div>
       <ul className="mt-2 space-y-0.5">
         {ORDER.map((t) => (
           <li key={t}>
             <button
               type="button"
               onClick={() => actions?.open(t)}
-              className={`w-full truncate rounded-lg px-3 py-2 text-left text-[13.5px] ${active === t ? 'bg-egg-card font-semibold text-egg-ink shadow-[0_0_0_1px_#DCD3C5]' : 'text-egg-mute hover:bg-egg-card/60 hover:text-egg-ink'}`}
+              className={`w-full truncate rounded-lg px-3 py-2 text-left text-[13.5px] ${active === t ? 'bg-side-hi font-semibold text-side-ink shadow-[0_0_0_1px_rgb(var(--side-ring))]' : 'text-side-mute hover:bg-side-hi/60 hover:text-side-ink'}`}
             >
               {TOPICS[t].title}
             </button>
           </li>
         ))}
       </ul>
-      <div className="mt-6"><Eyebrow>This week</Eyebrow></div>
-      <ul className="mt-2 space-y-0.5 text-[13.5px] text-egg-mute">
+      <div className="mt-6"><Eyebrow className="text-side-mute">This week</Eyebrow></div>
+      <ul className="mt-2 space-y-0.5 text-[13.5px] text-side-mute">
         {['Assignment 3 extension requests', 'Week 7 room change', 'Quiz 2 item analysis'].map((t) => (
           <li key={t} className="truncate rounded-lg px-3 py-2">{t}</li>
         ))}
       </ul>
 
-      <div className="mt-auto rounded-2xl border border-egg-line bg-egg-paper p-4">
+      <div className="mt-auto rounded-2xl border border-side-line bg-side-card p-4">
         <div className="font-serif text-[22px] leading-none">Discrete Mathematics</div>
-        <div className="mt-1 text-[12.5px] text-egg-mute">DM-2026 · 55 students</div>
+        <div className="mt-1 text-[12.5px] text-side-mute">DM-2026 · 55 students</div>
         <div className="mt-3 flex flex-wrap gap-1">
           {SOURCES.map((s) => (
-            <span key={s} className="inline-flex items-center gap-1 rounded-full bg-egg-card px-2 py-0.5 text-[10.5px] text-egg-mute">
-              <span className="h-1.5 w-1.5 rounded-full bg-egg-orange" />{s}
+            <span key={s} className="inline-flex items-center gap-1 rounded-full bg-side-chip px-2 py-0.5 text-[10.5px] text-side-mute">
+              <span className="h-1.5 w-1.5 rounded-full bg-egg-accent" />{s}
             </span>
           ))}
         </div>
@@ -217,7 +217,7 @@ function Sidebar({ badge, view, active, actions }: { badge: number; view: View; 
         <Avatar name={TEACHER} size={34} />
         <div>
           <div className="text-[13.5px] font-semibold">{TEACHER}</div>
-          <div className="text-[12px] text-egg-mute">Lecturer</div>
+          <div className="text-[12px] text-side-mute">Lecturer</div>
         </div>
       </div>
     </nav>
@@ -253,10 +253,10 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
               <span>
                 <span className="block text-[13px] italic text-egg-mute">{row.who}</span>
                 <span className="mt-0.5 flex items-center gap-2 text-[17px] font-semibold uppercase tracking-[0.04em]">
-                  <Asterisk size={13} className="text-egg-ink" />{row.what}
+                  <Mark size={13} className="text-egg-ink" />{row.what}
                 </span>
               </span>
-              <span className="font-serif text-[40px] leading-none text-egg-orange">{figureOf(i, rows[i])}</span>
+              <span className="font-serif text-[40px] leading-none text-egg-accent-ink">{figureOf(i, rows[i])}</span>
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-egg-ink text-egg-card">
                 <Arrow size={15} dir="right" />
               </span>
@@ -290,7 +290,7 @@ function Composer({ value, onChange, onSend, readOnly, big = false }: {
       <div className="mt-1 flex items-center gap-2 px-1">
         <span className="rounded-full border border-egg-line px-2.5 py-1 text-[12px] text-egg-mute">+ Attach</span>
         <span className="rounded-full border border-egg-line px-2.5 py-1 text-[12px] text-egg-mute">Class · DM-2026</span>
-        <button type="submit" aria-label="Send" className={`ml-auto flex h-9 w-9 items-center justify-center rounded-full ${value.trim() ? 'bg-egg-orange text-egg-ink' : 'bg-egg-ink text-egg-card'}`}>
+        <button type="submit" aria-label="Send" className={`ml-auto flex h-9 w-9 items-center justify-center rounded-full ${value.trim() ? 'bg-egg-accent text-egg-ink' : 'bg-egg-ink text-egg-card'}`}>
           <Arrow size={16} />
         </button>
       </div>
@@ -314,7 +314,7 @@ function AssistantMsg({ msg, isLast, panelShowing, actions }: { msg: FrameMsg; i
   const topic = msg.topic ? TOPICS[msg.topic] : null;
   return (
     <div className="mb-9 grid grid-cols-[28px_1fr] gap-3" style={rise(msg.appear, 6)}>
-      <div className="pt-1"><Asterisk size={20} /></div>
+      <div className="pt-1"><Mark size={20} /></div>
       <div>
         {msg.stamp && <div className="mb-1 font-mono text-[11px] text-egg-mute">{msg.stamp}</div>}
         <div className="chat-prose text-[15.5px] leading-[1.65] text-egg-ink/90">
@@ -333,7 +333,7 @@ function AssistantMsg({ msg, isLast, panelShowing, actions }: { msg: FrameMsg; i
         {isLast && done && topic && (
           <div className="mt-5 flex flex-wrap gap-2">
             {topic.followUps.map((f) => (
-              <button key={f} type="button" onClick={() => actions?.send(f)} className="rounded-full border border-egg-line bg-egg-card px-3.5 py-1.5 text-[13px] text-egg-ink hover:border-egg-orange">
+              <button key={f} type="button" onClick={() => actions?.send(f)} className="rounded-full border border-egg-line bg-egg-card px-3.5 py-1.5 text-[13px] text-egg-ink hover:border-egg-accent">
                 {f}
               </button>
             ))}
@@ -348,7 +348,7 @@ function Thinking({ thinking }: { thinking: NonNullable<TeacherFrame['thinking']
   const lines = thinking.lines.slice(0, thinking.shown);
   return (
     <div className="mb-9 grid grid-cols-[28px_1fr] gap-3">
-      <div className="pt-0.5"><Asterisk size={20} className="text-egg-orange" rotate={thinking.elapsed * 0.15} /></div>
+      <div className="pt-0.5"><Mark size={20} className="text-egg-accent-ink" rotate={thinking.elapsed * 0.15} /></div>
       <div className="space-y-1.5">
         {lines.map((l, i) => (
           <div key={l} className="flex items-center gap-2 text-[13.5px] text-egg-mute">

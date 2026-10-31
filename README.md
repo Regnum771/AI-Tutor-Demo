@@ -35,7 +35,8 @@ All three windows must stay in the **same browser profile**, because they sync o
 
 Controls: `Space` play/pause (frame 0 gets a 3-second pre-roll) · `←`/`→` change scene · `R` restart · **Play all** runs scenes 1 to 10 continuously (any manual navigation disarms it).
 
-Toggles: **Titles**, **Footer label**, **Cursor**, **Chapter label**, **Timecode**. The chapter label (top-right of the teacher window) is on by default; turn it off if you add the chapters in Resolve.
+Toggles: **Titles**, **Footer label**, **Cursor**, **Chapter label**, **Timecode**, **Sage theme**. The chapter label (top-right of the teacher window) is on by default; turn it off if you add the chapters in Resolve.
+**Sage theme** keeps the eggshell paper but swaps the orange accents for VNU sage and the asterisk mark for the leaf-book mark (two leaves opening like a book, with a bud); both windows switch together.
 
 ## Standalone frames
 
@@ -44,7 +45,7 @@ Any window can render without the Director:
 - `teacher.html?scene=4&t=17000`: hold one frame
 - `student.html?scene=7&autoplay`: play a scene once
 - `teacher.html` with no `?scene`: the **live clickable draft** (type, approve, open the Classroom) for rehearsing the flow
-- Flags: `titles=0`, `footer=0`, `cursor=0`, `chapter=0` (hides the chapter label), `tc=1` (timecode burn-in), `scale=N` (force canvas scale)
+- Flags: `titles=0`, `footer=0`, `cursor=0`, `chapter=0` (hides the chapter label), `tc=1` (timecode burn-in), `theme=sage` (sage accents and mark; also works on the live draft), `scale=N` (force canvas scale)
 
 ## Recording
 
