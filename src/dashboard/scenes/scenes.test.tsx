@@ -46,3 +46,42 @@ describe('Sc2 Architecture / Sc12 Closing', () => {
     expect(s).toContain('Dynamic Digital Twins');
   });
 });
+
+describe('Sc3 Perceive', () => {
+  it('shows KPIs, extracted evidence and Minh Anh profile', () => {
+    const s = render(3, 14000);
+    expect(s).toContain('Classroom Command Center');
+    expect(s).toContain('Need support');
+    expect(s).toContain('Confused why p → q ≠ q → p');
+    expect(s).toContain('Nguyễn Minh Anh');
+    expect(s).toContain('75% → 42%');
+  });
+});
+
+describe('Sc8 Govern', () => {
+  it('shows the portfolio and the edited escalation rule', () => {
+    const before = render(8, 3000);
+    expect(before).toContain('Routine');
+    expect(before).toContain('31');
+    expect(before).toContain('3 sessions');
+    const after = render(8, 6000);
+    expect(after).toContain('2 sessions');
+    expect(after).toContain('Policy updated');
+  });
+  it('opens Minh Anh intervention summary', () => {
+    const s = render(8, 13500);
+    expect(s).toContain('Intervention summary');
+    expect(s).toContain('MONITORING');
+    expect(s).toContain('Logical equivalence mastery ≥ 0.70');
+  });
+});
+
+describe('Sc11 Scale', () => {
+  it('shows parallel interventions and outcomes', () => {
+    const s = render(11, 13500);
+    expect(s).toContain('Visual scaffolding');
+    expect(s).toContain('Teacher-supported intervention');
+    expect(s).toContain('Improved learning');
+    expect(s).toContain('Guided conceptual practice');
+  });
+});
