@@ -63,6 +63,8 @@ const MESSY: Popup[] = [
   { kind: 'assessment', title: 'Assessment System · Mid-term', lines: ['Mid-term draft due for review'] },
   { kind: 'attendance', title: 'Attendance · Tutorial 5', lines: ['9 absences · 2 unexplained'] },
   { kind: 'materials', title: 'Learning Materials · Video', lines: ['Lecture 5 recording · 22% watched'] },
+  { kind: 'email', title: 'Inbox · TA notes (Linh)', lines: ['Tutorial 5: Minh Anh stayed quiet, skipped Q3'] },
+  { kind: 'zalo', title: 'Zalo · TA Duc', lines: ['Two students haven’t spoken in tutorials for 3 weeks'] },
 ];
 
 /** Deterministic PRNG (mulberry32) so every render shuffles and scatters the same way. */
@@ -97,8 +99,10 @@ export interface PlacedPopup extends Popup {
   rot: number;
 }
 
-export const ORDERLY_STEP = 550;
-export const MESSY_START = 3700;
+/** Timed to the narration: grid 0.5–5.5 s, pile-up from 6.3 s, full clutter holds, questions from 16.5 s. */
+export const ORDERLY_STEP = 850;
+export const MESSY_START = 6300;
+export const QUESTIONS_IN = 16500;
 
 const COLS = 6;
 const ROWS = 6;
@@ -110,7 +114,7 @@ const GRID_Y = [80, 340];
 function place(): PlacedPopup[] {
   const rand = rng(20261031);
   const orderly = ORDERLY.map((p, i) => ({
-    ...p, at: 300 + i * ORDERLY_STEP, x: GRID_X[i % 3], y: GRID_Y[Math.floor(i / 3)], w: GRID_W, h: GRID_H, rot: 0,
+    ...p, at: 500 + i * ORDERLY_STEP, x: GRID_X[i % 3], y: GRID_Y[Math.floor(i / 3)], w: GRID_W, h: GRID_H, rot: 0,
   }));
   // Messy popups each take a cell of a jittered 6x6 grid (in shuffled order), so together they cover the screen.
   const cells = Array.from({ length: COLS * ROWS }, (_, i) => i);
@@ -119,7 +123,7 @@ function place(): PlacedPopup[] {
     [cells[i], cells[j]] = [cells[j], cells[i]];
   }
   let at = MESSY_START;
-  let gap = 460;
+  let gap = 520;
   const messy = shuffle(MESSY, rand).map((p, i) => {
     const w = 380 + Math.round(rand() * 160);
     const h = p.lines.length > 1 ? 170 : 140;
@@ -133,7 +137,7 @@ function place(): PlacedPopup[] {
       rot: Math.round((rand() * 2 - 1) * 60) / 10,
     };
     at += gap;
-    gap = Math.max(85, Math.round(gap * 0.84));
+    gap = Math.max(110, Math.round(gap * 0.87));
     return placed;
   });
   return [...orderly, ...messy];

@@ -13,6 +13,6 @@ describe('ControllerApp', () => {
     expect(s).toContain('Chapter label');
     expect(s).toContain('Classroom');
     expect(s).toContain('How it works');
-    expect(s).toContain('Total 02:30.0');
+    expect(s).toContain('Total 02:39.0');
   });
 });

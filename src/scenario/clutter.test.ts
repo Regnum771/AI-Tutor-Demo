@@ -1,14 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
-import { APP_HEADER, MESSY_START, POPUPS } from './clutter';
+import { VEIL_Z } from '../teacher/scenes/ProblemScene';
+import { APP_HEADER, MESSY_START, POPUPS, QUESTIONS_IN } from './clutter';
 
 const ORDERLY = POPUPS.filter((p) => p.at < MESSY_START);
 const MESSY = POPUPS.filter((p) => p.at >= MESSY_START);
 
 describe('Sc1 popups', () => {
-  it('pile up: at least 24, every source app, all before the questions at 8 s', () => {
+  it('pile up: at least 24, every source app, done 3 s before the questions', () => {
     expect(POPUPS.length).toBeGreaterThanOrEqual(24);
     expect(new Set(POPUPS.map((p) => p.kind))).toEqual(new Set(Object.keys(APP_HEADER)));
-    expect(Math.max(...POPUPS.map((p) => p.at))).toBeLessThan(8000);
+    expect(Math.max(...POPUPS.map((p) => p.at))).toBeLessThan(QUESTIONS_IN - 3000);
+  });
+
+  it('all stack below the veil and the questions', () => {
+    expect(10 + POPUPS.length).toBeLessThan(VEIL_Z);
   });
 
   it('are written in English (no Vietnamese letters)', () => {

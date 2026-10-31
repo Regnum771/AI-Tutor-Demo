@@ -8,7 +8,7 @@ import { TEACHER_QUESTIONS } from '../../scenario/sources';
 describe('full-canvas scenes', () => {
   it('Problem shows the questions only from 8000', () => {
     expect(html(<ProblemScene t={7000} cursor={false} />)).not.toContain(TEACHER_QUESTIONS[0]);
-    expect(html(<ProblemScene t={14000} cursor={false} />)).toContain(TEACHER_QUESTIONS[4]);
+    expect(html(<ProblemScene t={23000} cursor={false} />)).toContain(TEACHER_QUESTIONS[4]);
   });
   it('How it works names every layer and both apps', () => {
     const out = html(<HowItWorks t={19000} />);

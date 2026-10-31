@@ -7,9 +7,9 @@ import {
 } from './classroom';
 
 describe('scenes', () => {
-  it('has 10 scenes totalling 2:30', () => {
+  it('has 10 scenes totalling 2:39', () => {
     expect(SCENES.map((s) => s.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-    expect(TOTAL_MS).toBe(150000);
+    expect(TOTAL_MS).toBe(159000);
   });
   it('shots are ascending and inside each scene', () => {
     for (const s of SCENES) {

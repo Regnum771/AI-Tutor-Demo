@@ -1,20 +1,21 @@
 import { fade, prog, stepIndex } from '../../engine/anim';
-import { APP_HEADER, MESSY_START, POPUPS } from '../../scenario/clutter';
+import { APP_HEADER, MESSY_START, POPUPS, QUESTIONS_IN } from '../../scenario/clutter';
 import { TEACHER_QUESTIONS } from '../../scenario/sources';
 import { FakeCursor, type CursorKey } from '../../ui/FakeCursor';
 
-const QUESTIONS_IN = 8000;
 const QUESTION_STEP = 1000;
 const POP_MS = 220;
+/** Popups stack from 10 + index; the veil and questions must sit above all of them. */
+export const VEIL_Z = 100;
 
 /** Grid centre of orderly popup i (3 columns x 2 rows). */
 const centre = (i: number) => ({ x: POPUPS[i].x + POPUPS[i].w / 2, y: POPUPS[i].y + POPUPS[i].h / 2 });
 
 const CURSOR: CursorKey[] = [
-  { t: 1200, x: 1700, y: 900 },
-  { t: 1900, ...centre(1), click: true },
-  { t: 3400, ...centre(5), click: true },
-  { t: 3900, x: 1750, y: 1000 },
+  { t: 2000, x: 1700, y: 900 },
+  { t: 2600, ...centre(1), click: true },
+  { t: 5300, ...centre(5), click: true },
+  { t: 6000, x: 1750, y: 1000 },
 ];
 const CLICKS = CURSOR.filter((k) => k.click);
 const FOCUS = [1, 5];
@@ -25,7 +26,7 @@ export function ProblemScene({ t, cursor }: { t: number; cursor: boolean }) {
   const focused = t < MESSY_START && click >= 0 ? FOCUS[click] : -1;
   const veil = prog(t, QUESTIONS_IN - 300, 600) * 0.6;
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0 isolate">
       {POPUPS.map((p, i) => {
         const o = prog(t, p.at, POP_MS);
         if (o <= 0) return null;
@@ -53,8 +54,8 @@ export function ProblemScene({ t, cursor }: { t: number; cursor: boolean }) {
           </div>
         );
       })}
-      <div className="absolute inset-0" style={{ background: '#1A1714', opacity: veil, zIndex: 40 }} />
-      <div className="absolute" style={{ left: 520, top: 250, width: 880, zIndex: 45 }}>
+      <div className="absolute inset-0" style={{ background: '#1A1714', opacity: veil, zIndex: VEIL_Z }} />
+      <div className="absolute" style={{ left: 520, top: 250, width: 880, zIndex: VEIL_Z + 1 }}>
         {TEACHER_QUESTIONS.map((q, i) => {
           const o = fade(t, QUESTIONS_IN + i * QUESTION_STEP);
           if (o <= 0) return null;
@@ -66,7 +67,7 @@ export function ProblemScene({ t, cursor }: { t: number; cursor: boolean }) {
           );
         })}
       </div>
-      <FakeCursor t={t} keys={CURSOR} visible={cursor && t >= 1200 && t < 3900} />
+      <FakeCursor t={t} keys={CURSOR} visible={cursor && t >= 2000 && t < 6000} />
     </div>
   );
 }

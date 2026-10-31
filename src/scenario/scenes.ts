@@ -13,7 +13,7 @@ export interface SceneDef {
 }
 
 export const SCENES: SceneDef[] = [
-  { id: 1, label: 'Problem', title: 'Fragmented Data', subtitle: 'Heterogeneous information. Limited learning intelligence.', chapter: '', durationMs: 15000, shots: [3000, 8000, 14000] },
+  { id: 1, label: 'Problem', title: 'Fragmented Data', subtitle: 'Heterogeneous information. Limited learning intelligence.', chapter: '', durationMs: 24000, shots: [3000, 10000, 15000, 22000] },
   { id: 2, label: 'Beyond', title: 'Multimodal Foundation Models', subtitle: 'Every source. One conversation.', chapter: 'Sense', durationMs: 10000, shots: [1500, 4500, 9500] },
   { id: 3, label: 'Classroom', title: 'Learning Digital Twins', subtitle: 'A live model of every student.', chapter: 'Sense', durationMs: 15000, shots: [1500, 5000, 11500, 14500] },
   { id: 4, label: 'Minh Anh', title: 'Collaborative Agent Intelligence', subtitle: 'Knowledge-grounded reasoning, with evidence.', chapter: 'Diagnose', durationMs: 25000, shots: [1500, 4000, 6500, 11000, 17000, 24000] },

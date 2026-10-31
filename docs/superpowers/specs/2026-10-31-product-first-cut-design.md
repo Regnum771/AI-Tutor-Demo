@@ -23,11 +23,11 @@ The current 3:30 cut spends about 70% of its time on abstract explainer canvases
 
 ## 2. Scene list
 
-T = teacher window (1920×1080), P = phone window (390×844), F = stock footage. Total 150 s.
+T = teacher window (1920×1080), P = phone window (390×844), F = stock footage. Total 159 s (Sc1 was lengthened to 24 s for the narration).
 
 | # | Scene | Dur. | Window | Chapter | Title / subtitle (lower third, optional) |
 |---|---|---|---|---|---|
-| 1 | Problem | 15 s | F2 → T | — | *Fragmented Data* / *Heterogeneous information. Limited learning intelligence.* |
+| 1 | Problem | 24 s | F2 under T | — | *Fragmented Data* / *Heterogeneous information. Limited learning intelligence.* |
 | 2 | Beyond | 10 s | F3 → T | Sense | *Multimodal Foundation Models* / *Every source. One conversation.* |
 | 3 | Classroom | 15 s | T | Sense | *Learning Digital Twins* / *A live model of every student.* |
 | 4 | Minh Anh | 25 s | T | Diagnose | *Collaborative Agent Intelligence* / *Knowledge-grounded reasoning, with evidence.* |
@@ -42,7 +42,7 @@ Footage map: F1 `lecture hall.mp4`, F2 `teacher_stressed.mp4`, F3 `teacher_morni
 
 ### 2.1 Beats and cues (scene time, ms)
 
-**Sc1 Problem.** The popups sit on a transparent layer over the `teacher_stressed.mp4` footage, which plays for the whole scene. Every popup is in English, with a header in its app's colour (`src/scenario/clutter.ts`). From 300 to 3050, six popups appear in an orderly 3 × 2 grid. From 3700 to about 7800, 31 more pile up in a seeded shuffle (no app twice in a row), faster and faster, tilted, each in its own cell of a jittered 6 × 6 grid, until they cover the screen. At 7700 an ink veil dims everything. From 8000 to 13000, the five questions (`TEACHER_QUESTIONS`) appear as open "?" chips. The scene holds to 15000.
+**Sc1 Problem.** The popups sit on a transparent layer over the `teacher_stressed.mp4` footage, which plays for the whole scene. Every popup is in English, with a header in its app's colour (`src/scenario/clutter.ts`). Timed to the narration: from 500 to 4750, six popups appear in an orderly 3 × 2 grid. From 6300 to about 11750, 33 more (including two teaching-assistant notes) pile up in a seeded shuffle (no app twice in a row), faster and faster, tilted, each in its own cell of a jittered 6 × 6 grid, until they cover the screen. At 16200 an ink veil dims everything. From 16500 to 20500, the five questions (`TEACHER_QUESTIONS`) appear as open "?" chips. The scene holds to 24000 (Sc1 grew from 15 s to 24 s for the narration, so the cut is now 159 s).
 
 **Sc2 Beyond.** The chat's opening screen, with the empty composer:
 - 500–2500: the greeting "Good afternoon, Lam." types in.

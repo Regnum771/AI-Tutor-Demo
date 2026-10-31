@@ -1,16 +1,16 @@
 # Beyond AI Tutoring · Demo Surface Layer
 
-Scripted, deterministic interfaces for the 2:30 "Beyond AI Tutoring" product-first cut. Everything on screen is **illustrative demo data** about fictional students; there is no backend or AI.
+Scripted, deterministic interfaces for the 2:39 "Beyond AI Tutoring" product-first cut. Everything on screen is **illustrative demo data** about fictional students; there is no backend or AI.
 
 Spec: `docs/superpowers/specs/2026-10-31-product-first-cut-design.md`
 
 ## Scenes
 
-Total 2:30 (150 s). T = teacher window (1920x1080), P = phone window (390x844), F = stock footage added in the editor.
+Total 2:39 (159 s). T = teacher window (1920x1080), P = phone window (390x844), F = stock footage added in the editor.
 
 | # | Scene | Duration | Window | Chapter |
 |---|---|---|---|---|
-| 1 | Problem | 0:15 | F2 then T | none |
+| 1 | Problem | 0:24 | F2 under T | none |
 | 2 | Beyond | 0:10 | F3 then T | Sense |
 | 3 | Classroom | 0:15 | T | Sense |
 | 4 | Minh Anh | 0:25 | T | Diagnose |
@@ -85,7 +85,7 @@ The teaser is cut in the editor from the same recordings; it needs no extra buil
 
 | Take from | Length |
 |---|---|
-| Sc1 Problem, questions beat (8-13 s) | 5 s |
+| Sc1 Problem, questions beat (16.5-21.5 s) | 5 s |
 | Fill: Sc2 greeting and attention rows (0-6 s) | 6 s |
 | Sc3 Classroom, tiles colouring (2-9 s) | 7 s |
 | Sc4 Minh Anh, question to answer (4.6-18.6 s) | 14 s |
