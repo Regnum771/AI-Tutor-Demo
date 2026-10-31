@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
-      input: { dashboard: page('dashboard'), student: page('student'), controller: page('controller'), chat: page('chat') },
+      input: { dashboard: page('dashboard'), student: page('student'), controller: page('controller'), teacher: page('teacher') },
     },
   },
   test: { environment: 'node', include: ['src/**/*.test.ts', 'src/**/*.test.tsx'] },

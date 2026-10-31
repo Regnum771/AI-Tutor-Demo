@@ -1,3 +1,4 @@
+import { Blocks } from './Blocks';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { STUDENTS, type Student } from '../scenario/classroom';
 import { MINH_ANH } from '../scenario/minhAnh';
@@ -336,7 +337,7 @@ function AssistantMsg({ msg, isLast, panelShowing, onShowContext, onFollowUp }: 
       <div className="pt-1"><Asterisk size={20} /></div>
       <div>
         <div className="chat-prose text-[15.5px] leading-[1.65] text-egg-ink/90">
-          {msg.kind === 'fallback' ? FALLBACK : msg.kind === 'brief' ? studentBrief(STUDENTS[msg.index]) : msg.kind === 'answer' ? topic!.answer : topic!.approved}
+          <Blocks blocks={msg.kind === 'fallback' ? FALLBACK : msg.kind === 'brief' ? studentBrief(STUDENTS[msg.index]) : msg.kind === 'answer' ? topic!.answer : topic!.approved} shown={Infinity} />
         </div>
         {msg.kind === 'answer' && (
           <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px] text-egg-mute">
