@@ -170,3 +170,9 @@ describe('Sc10 Simulate & Adapt', () => {
     expect(render(10, CUES.sc10Update + 200)).toContain('Updated pathway delivered');
   });
 });
+
+describe('completeness', () => {
+  it('every scene has a dashboard view', () => {
+    expect(SCENES.filter((s) => !SCENE_VIEWS[s.id]).map((s) => s.id)).toEqual([]);
+  });
+});
