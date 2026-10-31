@@ -133,3 +133,16 @@ describe('Sc6 Collaborate', () => {
     expect(s).toContain('TAS ✓');
   });
 });
+
+describe('Sc7 Orchestrate', () => {
+  it('runs the six operations and reaches DELIVERED at the cue', () => {
+    const mid = render(7, 10500);
+    expect(mid).toContain('Intervention Orchestration Engine');
+    expect(mid).toContain('Activity generation &amp; assembly');
+    expect(mid).toContain('Worked examples');
+    const end = render(7, 24000);
+    expect(end).toContain('MONITORING');
+    expect(end).toContain('Mastery check score');
+    expect(end).toContain('Delivered to Minh Anh&#x27;s student app');
+  });
+});
