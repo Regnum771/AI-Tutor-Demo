@@ -843,7 +843,7 @@ git commit -m "feat(live): canned practice bank for the 12 concepts"
 - Test: `src/live/plans.test.ts`
 
 **Interfaces:**
-- Consumes: Task 1 types and clock; `BANK_CONCEPTS` (Task 3); `buildRoster`, `CLASS_EVIDENCE` (Task 2).
+- Consumes: Task 1 types and clock; `BANK_CONCEPTS` (Task 3); `buildRoster`, `classEvidence(students)` (Task 2; class-level evidence is derived from the profiles).
 - Produces:
   - `POLICY = { maxSessions: 4, maxMinutes: 45, followUpMaxSessions: 3, maxCheckIns: 5 }`
   - `planProblems(plan: Plan, state: Pick<DemoState, 'clock' | 'students'>): string[]`
@@ -978,7 +978,7 @@ export const withinFollowUpPolicy = (plan: Plan, state: PlanContext): boolean =>
 - [ ] **Step 4: Write `src/live/seed.ts`**
 
 ```ts
-import { buildRoster, CLASS_EVIDENCE } from '../scenario/roster';
+import { buildRoster, classEvidence } from '../scenario/roster';
 import { STORY_START } from './clock';
 import type { DemoState, PhoneState } from './types';
 
@@ -989,11 +989,12 @@ export const IDLE_PHONE: PhoneState = {
 
 /** The demo as a visitor first sees it: 15:00, no conversations, no plans, idle phone. */
 export function seedState(epoch = 0): DemoState {
+  const students = buildRoster();
   return {
     epoch,
     clock: STORY_START,
-    students: buildRoster(),
-    classEvidence: CLASS_EVIDENCE.map((e) => ({ ...e })),
+    students,
+    classEvidence: classEvidence(students),
     plans: [],
     conversations: [],
     phone: { ...IDLE_PHONE, done: [] },

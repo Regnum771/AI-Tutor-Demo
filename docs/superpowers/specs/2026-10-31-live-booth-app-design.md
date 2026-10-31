@@ -59,7 +59,8 @@ Shared by server and client (types plus pure reducers).
 
 - A seeded, deterministic generator expands today's `STUDENTS` into full fictional profiles. The profiles must reproduce the existing Classroom figures (55 students; 12 need support, 5 of them high risk; average mastery 0.68). The "43 running interventions" KPI stays a constant in live mode.
 - Minh Anh keeps her hand-written data: `MASTERY_INITIAL`, `ERRORS_INITIAL` and her Quiz 2 items, so the live story matches the video.
-- 4–6 other students get hand-written quirks so the Q&A has interesting answers, for example: quietly disengaging (attends, but has stopped submitting); strong on quizzes but silent in discussion; a TA note about a family situation; a sudden improvement after office hours.
+- About 8 other students get hand-written quirks so the Q&A has interesting answers, for example: quietly disengaging (attends, but has stopped submitting); strong on quizzes but silent in discussion; a TA note about a family situation; a sudden improvement after office hours.
+- Class-level evidence (Quiz 2 average, Q4 converse count, tutorial attendance, De Morgan gap) is computed from the student profiles, so class and student figures always agree. The live figures may differ from the video's scripted copy (for example "58% wrong on Q4").
 
 ### 2.4 Sync and API
 
