@@ -1,5 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
+import { fmt } from '../live/clock';
+import { useLive } from '../live/LiveContext';
+import { classKpis } from '../live/mastery';
+import type { AssistantMsg as LiveAssistant, DemoState } from '../live/types';
 import { STUDENTS, type Student } from '../scenario/classroom';
+import { MINH_ANH } from '../scenario/minhAnh';
+import { LiveText } from './LiveText';
 import { Blocks } from './Blocks';
 import { Classroom, needSupportAt } from './Classroom';
 import { ADAPT, FALLBACK, QUESTION_SHORT, studentBrief, TOPICS, type Block, type ContextId } from './conversations';
@@ -46,8 +52,22 @@ const blocksOf = (m: FrameMsg): Block[] => {
     case 'approved': return TOPICS[m.topic!].approved;
     case 'adapt': return ADAPT;
     case 'brief': return studentBrief(STUDENTS[m.index!]);
+    case 'live': return liveBlocks(m.live!);
     default: return FALLBACK;
   }
+};
+
+/** Live answers: offline ones reuse the canned topic copy; agent ones render text with evidence chips. */
+const liveBlocks = (m: LiveAssistant): Block[] =>
+  m.canned === 'fallback' ? FALLBACK
+    : m.canned ? TOPICS[m.canned].answer
+    : m.blocks.map((b) => ({ kind: b.kind, body: <LiveText block={b} /> }));
+
+/** The opening screen's three figures, from live state. */
+const liveFigures = (s: DemoState): string[] => {
+  const ma = s.students[MINH_ANH.index];
+  const k = classKpis(s.students);
+  return [`${ma.quiz.q1}→${ma.quiz.q2}`, `${k.needSupport}/55`, String(k.escalated)];
 };
 
 /** Stateless: everything on screen is a function of `frame`. With no `actions`, buttons render but do nothing. */
@@ -55,8 +75,15 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
   const { view, panel } = frame;
   const empty = view === 'chat' && frame.messages.length === 0 && frame.thinking === null;
   const title = view === 'classroom' ? 'Classroom' : frame.title ?? 'New conversation';
-  const hasAnswer = frame.messages.some((m) => m.role === 'assistant' && m.topic);
-  const lastAnswer = [...frame.messages].reverse().find((m) => m.role === 'assistant' && m.kind === 'answer');
+  const live = useLive();
+  const isAnswer = (m: FrameMsg) => m.role === 'assistant' && (m.kind === 'answer' || (m.kind === 'live' && m.live?.source !== 'system'));
+  const hasAnswer = frame.messages.some((m) => m.role === 'assistant' && (m.topic || m.live?.panel));
+  const lastAnswer = [...frame.messages].reverse().find(isAnswer);
+  const openContext = (m?: FrameMsg) => {
+    if (m?.live?.panel) live?.showPanel(m.live.panel);
+    else actions?.showPanel(m?.topic ?? null);
+  };
+  const badge = live ? classKpis(live.state.students).needSupport : needSupportAt(frame.classroom.adapt);
   const composerValue = composer?.value ?? frame.composer;
   const send = () => composer && actions?.send(composer.value);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -86,20 +113,26 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
 
   return (
     <div className="flex h-full bg-egg-bg font-sans text-egg-ink antialiased">
-      <Sidebar badge={needSupportAt(frame.classroom.adapt)} view={view} active={view === 'chat' ? panel?.id ?? null : null} actions={actions} />
+      <Sidebar badge={badge} view={view} active={view === 'chat' ? panel?.id ?? null : null} actions={actions} />
 
       <main className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-[60px] shrink-0 items-center gap-4 border-b border-egg-line px-8">
           {/* Instrument Serif has no Vietnamese glyphs, so student-name titles use the sans face. */}
           <h1 className={`truncate leading-none ${frame.sansTitle && view === 'chat' ? 'text-[19px] font-semibold' : 'font-serif text-[24px]'}`}>{title}</h1>
-          <span className="ml-auto rounded-full border border-egg-line px-3 py-1 text-[12px] text-egg-mute">Discrete Mathematics · DM-2026</span>
+          {live && <span className="ml-auto font-mono text-[12px] tabular-nums text-egg-mute">{fmt(live.state.clock)}</span>}
+          <span className={`${live ? '' : 'ml-auto '}rounded-full border border-egg-line px-3 py-1 text-[12px] text-egg-mute`}>Discrete Mathematics · DM-2026</span>
           {actions && view === 'chat' && panel === null && hasAnswer && (
             <button
               type="button"
-              onClick={() => actions.showPanel(lastAnswer?.topic ?? null)}
+              onClick={() => openContext(lastAnswer)}
               className="rounded-full bg-egg-ink px-3.5 py-1.5 text-[12.5px] font-semibold text-egg-card"
             >
               Show context
+            </button>
+          )}
+          {live && (
+            <button type="button" onClick={() => void live.post('reset')} className="rounded-full border border-egg-line px-3 py-1 text-[12px] text-egg-mute hover:border-egg-ink hover:text-egg-ink">
+              Reset demo
             </button>
           )}
         </header>
@@ -133,7 +166,8 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
                       key={i}
                       msg={m}
                       isLast={m === lastAnswer && frame.thinking === null}
-                      panelShowing={panel?.id === m.topic}
+                      panelShowing={live ? panel !== null : panel?.id === m.topic}
+                      onContext={openContext}
                       actions={actions}
                     />
                   ),
@@ -157,9 +191,11 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
 }
 
 function Sidebar({ badge, view, active, actions }: { badge: number; view: View; active: ContextId | null; actions?: TeacherActions }) {
+  const live = useLive();
   const nav = (v: View, label: string) => (
     <button
       type="button"
+      aria-current={view === v ? 'page' : undefined}
       onClick={() => actions?.setView(v)}
       className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[14px] ${view === v ? 'bg-side-hi font-semibold shadow-[0_0_0_1px_rgb(var(--side-ring))]' : 'text-side-mute hover:text-side-ink'}`}
     >
@@ -167,6 +203,8 @@ function Sidebar({ badge, view, active, actions }: { badge: number; view: View; 
       {v === 'classroom' && <span className="rounded-full bg-egg-accent px-2 text-[11px] font-semibold text-egg-ink">{badge}</span>}
     </button>
   );
+  const item = (on: boolean) =>
+    `w-full truncate rounded-lg px-3 py-2 text-left text-[13.5px] ${on ? 'bg-side-hi font-semibold text-side-ink shadow-[0_0_0_1px_rgb(var(--side-ring))]' : 'text-side-mute hover:bg-side-hi/60 hover:text-side-ink'}`;
   return (
     <nav className="flex w-[264px] shrink-0 flex-col border-r border-side-edge bg-side-bg px-5 py-5 text-side-ink">
       <div className="flex items-center gap-2">
@@ -183,17 +221,27 @@ function Sidebar({ badge, view, active, actions }: { badge: number; view: View; 
 
       <div className="mt-7"><Eyebrow className="text-side-mute">Today</Eyebrow></div>
       <ul className="mt-2 space-y-0.5">
-        {ORDER.map((t) => (
-          <li key={t}>
-            <button
-              type="button"
-              onClick={() => actions?.open(t)}
-              className={`w-full truncate rounded-lg px-3 py-2 text-left text-[13.5px] ${active === t ? 'bg-side-hi font-semibold text-side-ink shadow-[0_0_0_1px_rgb(var(--side-ring))]' : 'text-side-mute hover:bg-side-hi/60 hover:text-side-ink'}`}
-            >
-              {TOPICS[t].title}
-            </button>
-          </li>
-        ))}
+        {live ? (
+          live.state.conversations.length ? (
+            live.state.conversations.map((c) => (
+              <li key={c.id}>
+                <button type="button" aria-current={live.activeId === c.id ? 'page' : undefined} onClick={() => live.openConversation(c.id)} className={item(live.activeId === c.id)}>
+                  {c.title}
+                </button>
+              </li>
+            ))
+          ) : (
+            <li className="px-3 py-2 text-[13px] text-side-mute">No conversations yet</li>
+          )
+        ) : (
+          ORDER.map((t) => (
+            <li key={t}>
+              <button type="button" onClick={() => actions?.open(t)} className={item(active === t)}>
+                {TOPICS[t].title}
+              </button>
+            </li>
+          ))
+        )}
       </ul>
       <div className="mt-6"><Eyebrow className="text-side-mute">This week</Eyebrow></div>
       <ul className="mt-2 space-y-0.5 text-[13.5px] text-side-mute">
@@ -230,10 +278,11 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
   const line1 = comma < 0 ? typed : typed.slice(0, comma + 1);
   const line2 = comma < 0 ? '' : typed.slice(comma + 1).trim();
   const rows = frame.greeting.rows;
+  const live = useLive();
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto flex max-w-[760px] flex-col px-8 pt-[97px]">
-        <Eyebrow>Saturday, 31 October</Eyebrow>
+        <Eyebrow>{live ? `Saturday, 31 October · ${fmt(live.state.clock)}` : 'Saturday, 31 October'}</Eyebrow>
         <h2 className="mt-3 font-serif text-[84px] leading-[0.92] tracking-[-0.01em]">
           {line1}<br /><span className="italic">{line2}</span>
         </h2>
@@ -256,7 +305,7 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
                   <Mark size={13} className="text-egg-ink" />{row.what}
                 </span>
               </span>
-              <span className="font-serif text-[40px] leading-none text-egg-accent-ink">{figureOf(i, rows[i])}</span>
+              <span className="font-serif text-[40px] leading-none text-egg-accent-ink">{live ? liveFigures(live.state)[i] : figureOf(i, rows[i])}</span>
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-egg-ink text-egg-card">
                 <Arrow size={15} dir="right" />
               </span>
@@ -308,31 +357,42 @@ function TeacherMsg({ msg }: { msg: FrameMsg }) {
   );
 }
 
-function AssistantMsg({ msg, isLast, panelShowing, actions }: { msg: FrameMsg; isLast: boolean; panelShowing: boolean; actions?: TeacherActions }) {
+function AssistantMsg({ msg, isLast, panelShowing, onContext, actions }: {
+  msg: FrameMsg; isLast: boolean; panelShowing: boolean; onContext(m: FrameMsg): void; actions?: TeacherActions;
+}) {
   const blocks = blocksOf(msg);
   const done = msg.shown >= blocks.length;
+  const live = msg.live;
   const topic = msg.topic ? TOPICS[msg.topic] : null;
+  const isAnswer = msg.kind === 'answer' || (live !== undefined && live.source !== 'system');
+  const hasContext = live ? live.panel !== null : msg.topic !== undefined;
+  const followUps = live ? live.followUps : topic?.followUps ?? [];
   return (
     <div className="mb-9 grid grid-cols-[28px_1fr] gap-3" style={rise(msg.appear, 6)}>
       <div className="pt-1"><Mark size={20} /></div>
       <div>
-        {msg.stamp && <div className="mb-1 font-mono text-[11px] text-egg-mute">{msg.stamp}</div>}
+        {(msg.stamp || live?.source === 'offline') && (
+          <div className="mb-1 flex items-center gap-2 font-mono text-[11px] text-egg-mute">
+            {msg.stamp}
+            {live?.source === 'offline' && <span className="rounded-full border border-egg-line px-2 py-px uppercase tracking-wide">Offline answer</span>}
+          </div>
+        )}
         <div className="chat-prose text-[15.5px] leading-[1.65] text-egg-ink/90">
           <Blocks blocks={blocks} shown={msg.shown} />
         </div>
-        {msg.kind === 'answer' && done && (
+        {isAnswer && done && (
           <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px] text-egg-mute">
             <span className="rounded-full bg-egg-paper px-2.5 py-1">Student Analysis Agent ⇄ Teaching Assistance Agent</span>
-            {!panelShowing && (
-              <button type="button" onClick={() => actions?.showPanel(msg.topic!)} className="rounded-full border border-egg-ink/25 px-2.5 py-1 font-semibold text-egg-ink hover:border-egg-ink">
+            {!panelShowing && hasContext && (
+              <button type="button" onClick={() => onContext(msg)} className="rounded-full border border-egg-ink/25 px-2.5 py-1 font-semibold text-egg-ink hover:border-egg-ink">
                 Open context →
               </button>
             )}
           </div>
         )}
-        {isLast && done && topic && (
+        {isLast && done && followUps.length > 0 && (
           <div className="mt-5 flex flex-wrap gap-2">
-            {topic.followUps.map((f) => (
+            {followUps.map((f) => (
               <button key={f} type="button" onClick={() => actions?.send(f)} className="rounded-full border border-egg-line bg-egg-card px-3.5 py-1.5 text-[13px] text-egg-ink hover:border-egg-accent">
                 {f}
               </button>

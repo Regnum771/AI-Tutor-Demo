@@ -1,5 +1,6 @@
 import { seedState } from './seed';
 import type { DemoState, LivePanel, Plan, PlanKind } from './types';
+import type { LiveCtx } from './LiveContext';
 
 type PlanBase = Omit<Plan, 'id' | 'status' | 'conversationId'>;
 
@@ -58,3 +59,8 @@ export function stateWithPlan(kind: PlanKind = 'pathway', over: Partial<Plan> = 
   });
   return s;
 }
+
+/** A live context over `state` whose actions do nothing (tests). */
+export const ctxFor = (state: DemoState, activeId: string | null = 'c1'): LiveCtx => ({
+  state, activeId, post: async () => ({ ok: true }), openConversation: () => {}, showPanel: () => {}, toast: () => {},
+});
