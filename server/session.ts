@@ -11,7 +11,8 @@ type AskResult = { ok: true; conversationId: string; done: Promise<void> } | { o
 export class DemoSession {
   state: DemoState = seedState();
   private listeners = new Set<(s: DemoState) => void>();
-  private abort: AbortController | null = null;
+  /** Agent runs in flight (an adapt can start while an ask is still running). */
+  private runs = new Set<AbortController>();
   private counters = { c: 0, p: 0 };
 
   constructor(private client: MessagesClient | null) {}
@@ -48,7 +49,7 @@ export class DemoSession {
   private background<T>(convId: string, work: (deps: Deps) => Promise<T>, finish: (st: DemoState, out: T) => void): Promise<void> {
     const epoch = this.state.epoch;
     const abort = new AbortController();
-    this.abort = abort;
+    this.runs.add(abort);
     return work({
       client: this.client,
       newPlanId: () => this.newId('p'),
@@ -57,10 +58,21 @@ export class DemoSession {
     })
       .then((out) => this.update(epoch, (st) => {
         finish(st, out);
-        st.busy = false;
+        st.busy = this.runs.size > 1;
       }))
-      .catch(() => { /* aborted by a reset */ })
-      .finally(() => { if (this.abort === abort) this.abort = null; });
+      .catch((e) => {
+        if (abort.signal.aborted) return; // reset: its result is dropped on purpose
+        console.warn('[beyond] agent run failed:', e instanceof Error ? e.message : e);
+        this.update(epoch, (st) => {
+          const c = st.conversations.find((x) => x.id === convId);
+          if (c) {
+            c.pending = null;
+            c.msgs.push(R.systemMsg('Something went wrong on my side. Please ask again.'));
+          }
+          st.busy = this.runs.size > 1;
+        });
+      })
+      .finally(() => { this.runs.delete(abort); });
   }
 
   /** Records the question and starts the agents; `done` settles when the answer is in (the HTTP route does not wait). */
@@ -137,8 +149,8 @@ export class DemoSession {
 
   /** Back to the seed for the next visitor; a run in flight is aborted and its result dropped. */
   reset(): void {
-    this.abort?.abort();
-    this.abort = null;
+    for (const run of this.runs) run.abort();
+    this.runs.clear();
     this.set(seedState(this.state.epoch + 1));
   }
 }
