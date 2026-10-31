@@ -1,7 +1,18 @@
 import '../fonts';
-import '@fontsource/instrument-serif/400.css';
-import '@fontsource/instrument-serif/400-italic.css';
 import { createRoot } from 'react-dom/client';
+import { PlaybackProvider } from '../engine/PlaybackProvider';
 import { LiveTeacher } from './LiveTeacher';
+import { TeacherApp } from './TeacherApp';
 
-createRoot(document.getElementById('root')!).render(<LiveTeacher />);
+/** `?scene=N` → scripted (Director-synced, recordable); no scene → the live clickable draft. */
+const scripted = new URLSearchParams(window.location.search).has('scene');
+
+createRoot(document.getElementById('root')!).render(
+  scripted ? (
+    <PlaybackProvider app="teacher" fallbackScene={1}>
+      <TeacherApp />
+    </PlaybackProvider>
+  ) : (
+    <LiveTeacher />
+  ),
+);

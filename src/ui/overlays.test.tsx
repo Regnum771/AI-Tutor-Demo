@@ -4,8 +4,8 @@ import { Overlays, FOOTER_LABEL } from './Overlays';
 import { sceneById } from '../scenario/scenes';
 import { DEFAULT_TOGGLES } from '../engine/playback';
 
-const render = (t: number, over: Partial<typeof DEFAULT_TOGGLES> = {}, slate = false, variant: 'dashboard' | 'phone' = 'dashboard') =>
-  renderToStaticMarkup(<Overlays scene={sceneById(3)} t={t} slate={slate} toggles={{ ...DEFAULT_TOGGLES, ...over }} variant={variant} />);
+const render = (t: number, over: Partial<typeof DEFAULT_TOGGLES> = {}, slate = false, variant: 'teacher' | 'phone' = 'teacher', sceneId = 3) =>
+  renderToStaticMarkup(<Overlays scene={sceneById(sceneId)} t={t} slate={slate} toggles={{ ...DEFAULT_TOGGLES, ...over }} variant={variant} />);
 
 describe('Overlays', () => {
   it('shows the lower-third title shortly after scene start, then hides it', () => {
@@ -27,5 +27,11 @@ describe('Overlays', () => {
   it('renders the slate marker only when slate is true', () => {
     expect(render(0, {}, true)).toContain('data-slate');
     expect(render(0)).not.toContain('data-slate');
+  });
+  it('shows the chapter label on the teacher variant only when on and non-empty', () => {
+    expect(render(0, {}, false, 'teacher', 4)).toContain('Diagnose');
+    expect(render(0, { chapter: false }, false, 'teacher', 4)).not.toContain('Diagnose');
+    expect(render(0, {}, false, 'teacher', 1)).not.toContain('uppercase');
+    expect(render(0, {}, false, 'phone', 4)).not.toContain('Diagnose');
   });
 });
