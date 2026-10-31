@@ -19,13 +19,13 @@ async function main() {
   const server = await createServer({ server: { port: PORT, strictPort: true }, logLevel: 'error' });
   await server.listen();
   const browser = await chromium.launch();
-  const dash = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 2 });
+  const teacher = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 2 });
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 });
   await mkdir(OUT, { recursive: true });
 
   const jobs: { page: Page; app: 'teacher' | 'student'; scene: number; t: number }[] = [];
   for (const s of SCENES) {
-    for (const t of s.shots) jobs.push({ page: dash, app: 'teacher', scene: s.id, t });
+    for (const t of s.shots) jobs.push({ page: teacher, app: 'teacher', scene: s.id, t });
     for (const t of STUDENT_SHOTS[s.id] ?? []) jobs.push({ page: phone, app: 'student', scene: s.id, t });
   }
 
