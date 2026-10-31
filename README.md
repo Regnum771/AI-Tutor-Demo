@@ -1,6 +1,6 @@
 # Beyond AI Tutoring · Demo Surface Layer
 
-Scripted, deterministic interfaces for the 2:39 "Beyond AI Tutoring" product-first cut. Everything on screen is **illustrative demo data** about fictional students; there is no backend or AI.
+Scripted, deterministic interfaces for the 2:39 "Beyond AI Tutoring" product-first cut. Everything on screen is **illustrative demo data** about fictional students. The video surface is scripted, with no backend or AI; the [live booth mode](#live-booth-demo) below uses real agents.
 
 Spec: `docs/superpowers/specs/2026-10-31-product-first-cut-design.md`
 
@@ -47,9 +47,17 @@ A live version of the demo for visitors to use: two real Claude agents answer th
 3. Open the Director (`http://localhost:5173/controller.html`): **Open live teacher**, and let visitors scan the QR code with a phone on the same Wi-Fi (or open `student.html?live` in a narrow window).
 4. Press **Reset demo** (Director or teacher header) between visitors.
 
-Settings: `BEYOND_MODEL` (default `claude-sonnet-5-5`), `BEYOND_EFFORT` (`low` · `medium` · `high`, default `medium`), `BEYOND_PORT`, `BEYOND_HOST` (the laptop address for the phone, if the printed one is wrong).
+Settings: `BEYOND_MODEL` (default `claude-sonnet-5-5`), `BEYOND_EFFORT` (`low` · `medium` · `high`, default `medium`), `BEYOND_HOST` (the laptop address for the phone, if the printed one is wrong).
 
-Check the API path end to end with `npm run test:live` (needs the key; costs one real question).
+Check the API path end to end with `npm run test:live` (needs the key; costs one real question and one mastery-check update).
+
+`/api` exists only under `npm run booth`, not under `vite preview` or a static build.
+
+The Classroom tile shows logical equivalence, so a plan that never practises it moves the student's meters but not the tile.
+
+### Network
+
+Run the booth on a private hotspot if you can: venue Wi-Fi often blocks devices from seeing each other (client isolation). Windows Firewall may prompt for Node on first run; allow it on Private networks. Anyone on that network can reach the booth, including **Reset demo** and questions that spend the API key, so set a spend limit in the Anthropic Console.
 
 ### Booth checklist
 
@@ -62,6 +70,7 @@ Check the API path end to end with `npm run test:live` (needs the key; costs one
 - [ ] **Export** shows "Not part of this demo".
 - [ ] Stop the server, set `BEYOND_OFFLINE=1`, restart: the Minh Anh story still works with "Offline answer" tags.
 - [ ] **Reset demo** returns both screens to the start.
+- [ ] Rehearse touch and scrolling on the real phone.
 
 ## Standalone frames
 
@@ -69,8 +78,8 @@ Any window can render without the Director:
 
 - `teacher.html?scene=4&t=17000`: hold one frame
 - `student.html?scene=7&autoplay`: play a scene once
-- `teacher.html` with no `?scene`: the **live clickable draft** (type, approve, open the Classroom) for rehearsing the flow
-- Flags: `titles=0`, `footer=0`, `cursor=0`, `chapter=0` (hides the chapter label), `tc=1` (timecode burn-in), `theme=sage` (sage accents and mark; also works on the live draft), `scale=N` (force canvas scale)
+- `teacher.html` with no `?scene`: the **live booth teacher**, which needs the booth server (`npm run booth`)
+- Flags: `titles=0`, `footer=0`, `cursor=0`, `chapter=0` (hides the chapter label), `tc=1` (timecode burn-in), `theme=sage` (sage accents and mark; also works on the live teacher), `scale=N` (force canvas scale)
 
 ## Recording
 
@@ -128,7 +137,7 @@ npx playwright install chromium   # once
 npm run contact-sheet -- --verify # renders every key frame to contact-sheet/ and checks determinism
 ```
 
-The contact sheet writes the teacher window at 2x and the phone at 3x for each scene's listed shots (42 frames), then renders each twice and compares.
+The contact sheet writes the teacher window at 2x and the phone at 3x for each scene's listed shots (43 frames), then renders each twice and compares.
 
 ## Tests
 
