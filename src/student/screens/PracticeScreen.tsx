@@ -69,7 +69,7 @@ function Guided({ t }: { t: number }) {
         const o = fade(t, SC9.guidedSteps[i]);
         return (
           <div key={s.expr} className="mt-3 rounded-2xl border border-egg-line bg-egg-card p-4" style={{ opacity: o, transform: `translateY(${(1 - o) * 10}px)` }}>
-            <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-egg-mute">Step {i + 1} · {s.why}</div>
+            <div className="font-mono text-[12px] text-egg-mute">Step {i + 1} · {s.why}</div>
             <div className="mt-1 font-mono text-[20px]">≡ {s.expr}</div>
           </div>
         );

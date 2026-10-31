@@ -37,6 +37,9 @@ describe('student screens', () => {
   it('guided phase reveals steps ending in p ∧ ¬q', () => {
     expect(html(<PracticeScreen t={SC9.guidedSteps[2] + 900} />)).toContain('p ∧ ¬q');
   });
+  it('guided step labels keep the case of p and q', () => {
+    expect(html(<PracticeScreen t={SC9.guidedSteps[2] + 900} />)).not.toMatch(/uppercase[^>]*>Step \d/);
+  });
   it('progress counts implication mastery up to 52%', () => {
     expect(html(<ProgressScreen local={5000} />)).toContain('52%');
   });
