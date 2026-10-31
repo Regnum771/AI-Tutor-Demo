@@ -3485,10 +3485,12 @@ export function ArchitectureView({ t, mode }: { t: number; mode: 'reveal' | 'clo
         </ArchBox>
       ))}
 
-      <div className="absolute left-0 right-0 text-center" style={{ top: 48, opacity: logo }}>
-        <div className="font-display font-extrabold tracking-[0.18em] text-ink" style={{ fontSize: 64 }}>BEYOND AI TUTORING</div>
-        <div className="mt-2 font-display font-semibold text-dim" style={{ fontSize: 24 }}>{tagline}</div>
-      </div>
+      {logo > 0 && (
+        <div className="absolute left-0 right-0 text-center" style={{ top: 48, opacity: logo }}>
+          <div className="font-display font-extrabold tracking-[0.18em] text-ink" style={{ fontSize: 64 }}>BEYOND AI TUTORING</div>
+          <div className="mt-2 font-display font-semibold text-dim" style={{ fontSize: 24 }}>{tagline}</div>
+        </div>
+      )}
 
       {mode === 'reveal' && <div className="absolute inset-0 bg-deep" style={{ opacity: prog(t, 12000, 800) }} />}
     </Camera>
