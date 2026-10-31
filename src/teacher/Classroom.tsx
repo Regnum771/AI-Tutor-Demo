@@ -4,6 +4,8 @@ import { COMPLEX, GROUPS, HEATMAP, SCALE_STUDENTS, STUDENTS, TOPICS, groupOf, ty
 import { conceptById } from '../scenario/knowledgeGraph';
 import { egg } from '../ui/theme';
 import { MASTERY_INITIAL, MASTERY_POST, MINH_ANH, TWIN_FOCUS } from '../scenario/minhAnh';
+import { DEMO_ONLY, useLive } from '../live/LiveContext';
+import { liveStudents } from '../live/mastery';
 import type { FrameClassroom } from './frame';
 import type { TeacherActions } from './TeacherScreen';
 import { Avatar, Button, Eyebrow, LevelChip, Mark, Meter, type Level } from './parts';
@@ -31,14 +33,14 @@ export const adaptedBand = (s: Student, a: number): Band => {
   return bandOf(s);
 };
 export const adaptedMastery = (s: Student, a: number): number => {
-  if (s.index === MINH_ANH.index) return lerp(MASTERY_INITIAL.equivalence, MASTERY_POST.equivalence, a);
+  if (s.index === MINH_ANH.index) return lerp(s.mastery, MASTERY_POST.equivalence, a);
   if (toSupport.has(s.index)) return lerp(s.mastery, 0.55, a);
   if (toOnTrack.has(s.index)) return lerp(s.mastery, 0.6, a);
   return s.mastery;
 };
 /** Students not on track (the "need support" headline), unmultiplied. */
-export const needSupportAt = (a: number) => STUDENTS.filter((s) => adaptedBand(s, a) !== 'onTrack').length;
-const highRiskAt = (a: number) => STUDENTS.filter((s) => ['highRisk', 'personal'].includes(adaptedBand(s, a))).length;
+export const needSupportAt = (a: number, list: Student[] = STUDENTS) => list.filter((s) => adaptedBand(s, a) !== 'onTrack').length;
+const highRiskAt = (a: number, list: Student[] = STUDENTS) => list.filter((s) => ['highRisk', 'personal'].includes(adaptedBand(s, a))).length;
 
 const BAND: Record<Band, { label: string; cell: string; mark: string }> = {
   onTrack: { label: 'On track', cell: 'border-egg-line bg-egg-card text-egg-ink', mark: '' },
@@ -74,12 +76,17 @@ interface ClassroomProps {
 
 export function Classroom({ cls, studentApproved = false, actions }: ClassroomProps) {
   const [filter, setFilter] = useState<Filter>('all');
+  const live = useLive();
+  const students = live ? liveStudents(live.state) : STUDENTS;
+  const approved = live
+    ? live.state.plans.some((p) => p.studentIds.includes(MINH_ANH.id) && ['sent', 'done', 'autoApproved'].includes(p.status))
+    : studentApproved;
   const a = cls.adapt;
   const k = cls.kpi;
-  const avg = STUDENTS.reduce((sum, s) => sum + adaptedMastery(s, a), 0) / STUDENTS.length;
-  const count = (b: Band) => STUDENTS.filter((s) => adaptedBand(s, a) === b).length;
+  const avg = students.reduce((sum, s) => sum + adaptedMastery(s, a), 0) / students.length;
+  const count = (b: Band) => students.filter((s) => adaptedBand(s, a) === b).length;
   const pick = (i: number) => actions?.select(cls.selected === i ? null : i);
-  const needSupport = Math.round(needSupportAt(a) * k);
+  const needSupport = Math.round(needSupportAt(a, students) * k);
   const scripted = !actions;
   const rows = scripted ? RUNNING.slice(0, SCRIPTED_ROWS) : RUNNING;
   const tileH = scripted ? 'h-[70px]' : 'h-[78px]';
@@ -95,7 +102,7 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
             </h2>
           </div>
           <div className="ml-auto flex gap-2 pb-1">
-            <Button>Export</Button>
+            <Button onClick={live ? () => live.toast(DEMO_ONLY) : undefined}>Export</Button>
             <Button kind="primary" onClick={() => actions?.askClass()}><Mark size={13} className="text-egg-ink" /> Ask about the class</Button>
           </div>
         </div>
@@ -104,7 +111,7 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
           {[
             { label: 'Students', value: String(Math.round(55 * k)) },
             { label: 'Need support', value: String(needSupport), accent: true },
-            { label: 'High risk', value: String(Math.round(highRiskAt(a) * k)), note: `${COMPLEX.length} escalated to you` },
+            { label: 'High risk', value: String(Math.round(highRiskAt(a, students) * k)), note: `${COMPLEX.length} escalated to you` },
             { label: 'Running', value: String(Math.round(RUNNING_TOTAL * k)), note: 'interventions, 0 overdue' },
             { label: 'Avg. mastery', value: (avg * k).toFixed(2) },
           ].map((kpi, i) => (
@@ -125,16 +132,17 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
                   key={f}
                   type="button"
                   onClick={() => setFilter(f)}
+                  aria-current={filter === f ? 'true' : undefined}
                   className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] ${filter === f ? 'bg-egg-ink text-egg-card' : 'text-egg-mute hover:text-egg-ink'}`}
                 >
                   {f !== 'all' && <span className={`h-2.5 w-2.5 rounded-full border ${BAND[f].cell}`} />}
-                  {f === 'all' ? `All ${STUDENTS.length}` : `${BAND[f].label} ${count(f)}`}
+                  {f === 'all' ? `All ${students.length}` : `${BAND[f].label} ${count(f)}`}
                 </button>
               ))}
               <span className="ml-auto text-[12px] text-egg-mute">number = mastery · gap below 0.50</span>
             </div>
             <div className="mt-4 grid grid-cols-11 gap-2">
-              {STUDENTS.map((s, i) => {
+              {students.map((s, i) => {
                 if (i >= cls.tiles) return <div key={s.id} className={`${tileH} rounded-xl border border-dashed border-egg-line bg-transparent`} />;
                 const isMinh = s.index === MINH_ANH.index;
                 const b = adaptedBand(s, a);
@@ -163,7 +171,7 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
 
           <aside className={scripted ? 'space-y-5' : 'space-y-8'}>
             {cls.selected !== null ? (
-              <StudentCard s={STUDENTS[cls.selected]} adapt={a} appear={cls.selectAppear} actions={actions} />
+              <StudentCard s={students[cls.selected]} adapt={a} appear={cls.selectAppear} actions={actions} />
             ) : (
               cls.kpi > 0 && (
                 <section>
@@ -173,8 +181,8 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
                   </div>
                   <ul className="divide-y divide-egg-line">
                     {rows.map((row) => {
-                      const r = row.index === MINH_ANH.index && studentApproved ? { ...row, state: 'Running' } : row;
-                      const s = STUDENTS[r.index];
+                      const r = row.index === MINH_ANH.index && approved ? { ...row, state: 'Running' } : row;
+                      const s = students[r.index];
                       return (
                         <li key={r.index}>
                           <button type="button" onClick={() => pick(r.index)} className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-egg-card/60">
@@ -242,6 +250,7 @@ function Heatmap({ compact }: { compact: boolean }) {
 }
 
 function StudentCard({ s, adapt, appear, actions }: { s: Student; adapt: number; appear: number; actions?: TeacherActions }) {
+  const profile = useLive()?.state.students[s.index];
   const b = adaptedBand(s, adapt);
   const isMinhAnh = s.index === MINH_ANH.index;
   return (
@@ -255,7 +264,9 @@ function StudentCard({ s, adapt, appear, actions }: { s: Student; adapt: number;
         {b === 'onTrack' ? <span className="rounded-full border border-egg-line px-2.5 py-0.5 text-[11.5px] text-egg-mute">On track</span> : <LevelChip level={b} />}
       </div>
       <div className="mt-4 border-t border-egg-line pt-3">
-        {isMinhAnh ? (
+        {profile ? (
+          TWIN_FOCUS.map((c) => <Meter key={c} label={conceptById(c).label} value={profile.mastery[c]} />)
+        ) : isMinhAnh ? (
           TWIN_FOCUS.map((c) => <Meter key={c} label={conceptById(c).label} value={lerp(MASTERY_INITIAL[c], MASTERY_POST[c], adapt)} />)
         ) : (
           <Meter label="Overall mastery" value={s.mastery} />
