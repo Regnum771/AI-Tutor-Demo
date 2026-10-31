@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { lerp } from '../engine/anim';
 import { COMPLEX, EFFECTIVENESS, GROUPS, HEATMAP, STUDENTS, TOPICS as CLASS_TOPICS } from '../scenario/classroom';
 import { conceptById } from '../scenario/knowledgeGraph';
@@ -7,7 +6,8 @@ import { EXPECTED_OUTCOME, PATHWAY_INITIAL, PATHWAY_PROPOSED, PATHWAY_UPDATED } 
 import { EVIDENCE_ITEMS } from '../scenario/sources';
 import type { ContextId } from './conversations';
 import type { FramePanel } from './frame';
-import { Avatar, Button, Eyebrow, LevelChip, Mark, Meter } from './parts';
+import { Avatar, Button, Eyebrow, LevelChip, Mark, Meter, Section } from './parts';
+import { LivePanelBody } from './LivePanel';
 import type { TeacherActions } from './TeacherScreen';
 import { egg } from '../ui/theme';
 
@@ -30,9 +30,15 @@ export function ContextPanel({ panel, approved, actions }: PanelProps) {
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="px-6 pb-8 pt-5" style={{ transform: `translateY(${-panel.scroll}px)` }}>
-          {id === 'student' && <StudentContext panel={panel} approved={approved} actions={actions} />}
-          {id === 'class' && <ClassContext panel={panel} approved={approved} actions={actions} />}
-          {id === 'attention' && <AttentionContext panel={panel} approved={approved} actions={actions} />}
+          {panel.live ? (
+            <LivePanelBody live={panel.live} bars={panel.bars} />
+          ) : (
+            <>
+              {id === 'student' && <StudentContext panel={panel} approved={approved} actions={actions} />}
+              {id === 'class' && <ClassContext panel={panel} approved={approved} actions={actions} />}
+              {id === 'attention' && <AttentionContext panel={panel} approved={approved} actions={actions} />}
+            </>
+          )}
         </div>
       </div>
       {!actions && (
@@ -42,18 +48,6 @@ export function ContextPanel({ panel, approved, actions }: PanelProps) {
         </div>
       )}
     </aside>
-  );
-}
-
-function Section({ title, children, aside }: { title: string; children: ReactNode; aside?: ReactNode }) {
-  return (
-    <section className="mt-7">
-      <div className="mb-2 flex items-baseline justify-between border-b border-egg-ink/80 pb-1.5">
-        <h3 className="font-serif text-[22px] leading-none text-egg-ink">{title}</h3>
-        {aside && <span className="text-[12px] text-egg-mute">{aside}</span>}
-      </div>
-      {children}
-    </section>
   );
 }
 

@@ -115,3 +115,16 @@ export function Button({ children, kind = 'ghost', onClick }: { children: ReactN
     </button>
   );
 }
+
+/** A ruled panel section with a serif title and an optional note on the right. */
+export function Section({ title, children, aside }: { title: string; children: ReactNode; aside?: ReactNode }) {
+  return (
+    <section className="mt-7">
+      <div className="mb-2 flex items-baseline justify-between border-b border-egg-ink/80 pb-1.5">
+        <h3 className="font-serif text-[22px] leading-none text-egg-ink">{title}</h3>
+        {aside && <span className="text-[12px] text-egg-mute">{aside}</span>}
+      </div>
+      {children}
+    </section>
+  );
+}
