@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { STUDENTS, type Student } from '../scenario/classroom';
 import { Blocks } from './Blocks';
 import { Classroom } from './Classroom';
@@ -21,6 +21,9 @@ export interface TeacherActions {
 }
 
 interface ComposerOverride { value: string; onChange(v: string): void }
+
+/** Layout effect in the browser (runs before paint); plain effect under SSR so renderToStaticMarkup stays warning-free. */
+const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 const TEACHER = 'Nguyễn Thanh Lam';
 const SOURCES = ['LMS', 'Zalo', 'WhatsApp', 'Email', 'Assessments', 'Attendance', 'Records', 'Materials'];
@@ -59,9 +62,27 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
   const threadRef = useRef<HTMLDivElement>(null);
   const last = frame.messages[frame.messages.length - 1];
   const scrollKey = `${frame.messages.length}:${last?.shown}:${frame.thinking?.shown}`;
-  useEffect(() => {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const scripted = !actions;
+  const pin = () => {
     if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
-  }, [scrollKey]);
+  };
+  // Scripted: pinned to the bottom on every render, so it is a pure function of the frame. Live: only when the key
+  // changes, so the user can scroll up.
+  useIsoLayoutEffect(() => {
+    if (scripted) pin();
+  });
+  useIsoLayoutEffect(() => {
+    if (!scripted) pin();
+  }, [scripted, scrollKey]);
+  // Late layout shifts (font swap, block reveals) re-pin the scripted thread.
+  useIsoLayoutEffect(() => {
+    const el = contentRef.current;
+    if (!scripted || !el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(pin);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [scripted, view, empty]);
 
   return (
     <div className="flex h-full bg-egg-bg font-sans text-egg-ink antialiased">
@@ -91,7 +112,7 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
         ) : (
           <>
             <div ref={threadRef} className="min-h-0 flex-1 overflow-y-auto">
-              <div className="mx-auto max-w-[760px] px-8 pb-10 pt-8">
+              <div ref={contentRef} className="mx-auto max-w-[760px] px-8 pb-10 pt-8">
                 {frame.messages.map((m, i) =>
                   m.role === 'teacher' ? (
                     <TeacherMsg key={i} msg={m} />
