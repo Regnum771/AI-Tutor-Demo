@@ -1,8 +1,10 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium, type Page } from 'playwright';
 import { createServer } from 'vite';
+import { Q1, SC9 } from '../src/scenario/practice';
 import { SCENES } from '../src/scenario/scenes';
 import { STUDENT_SHOTS } from '../src/student/frame';
+import { OPTION_STEP, OPTION_TOP } from '../src/student/screens/PracticeScreen';
 import { scriptFor, TEACHER_SCENES } from '../src/teacher/script';
 
 const OUT = 'contact-sheet';
@@ -36,6 +38,26 @@ async function checkClicks(page: Page): Promise<string[]> {
   return failures;
 }
 
+/** Each scripted practice tap must sit on the centre of its option (within 2px). */
+async function checkTaps(page: Page): Promise<string[]> {
+  const vp = page.viewportSize();
+  if (!vp || vp.width !== 390 || vp.height !== 844) throw new Error('tap check needs a 390x844 viewport (Stage is 1:1)');
+  await page.goto(`http://localhost:${PORT}/student.html?scene=7&t=${SC9.pickWrong}`);
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(250);
+  const centres = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-option]')].map((e) => { const r = e.getBoundingClientRect(); return r.top + r.height / 2; }),
+  );
+  const failures: string[] = [];
+  for (const i of [Q1.chosenWrong, Q1.correct]) {
+    const want = OPTION_TOP + i * OPTION_STEP;
+    const got = centres[i];
+    if (got === undefined || Math.abs(got - want) > 2) failures.push(`Sc7 tap on option ${i} at y=${want}, option centre is ${got === undefined ? 'missing' : got.toFixed(1)}`);
+    else console.log(`tap ok Sc7 option ${i} y=${want}`);
+  }
+  return failures;
+}
+
 async function main() {
   const server = await createServer({ server: { port: PORT, strictPort: true }, logLevel: 'error' });
   await server.listen();
@@ -62,19 +84,19 @@ async function main() {
     console.log(name);
   }
 
-  const clickFailures = verify ? await checkClicks(teacher) : [];
+  const clickFailures = verify ? [...(await checkClicks(teacher)), ...(await checkTaps(phone))] : [];
 
   await browser.close();
   await server.close();
   if (clickFailures.length) {
-    console.error(`Cursor clicks that miss their target:\n${clickFailures.join('\n')}`);
+    console.error(`Scripted clicks or taps that miss their target:\n${clickFailures.join('\n')}`);
     process.exit(1);
   }
   if (mismatches.length) {
     console.error(`Non-deterministic frames:\n${mismatches.join('\n')}`);
     process.exit(1);
   }
-  console.log(`${jobs.length} frames written to ${OUT}/${verify ? ' · all deterministic · all clicks hit a button' : ''}`);
+  console.log(`${jobs.length} frames written to ${OUT}/${verify ? ' · all deterministic · all clicks and taps on target' : ''}`);
 }
 
 main().catch((e) => {
