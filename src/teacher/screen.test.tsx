@@ -3,6 +3,8 @@ import { renderToStaticMarkup as html } from 'react-dom/server';
 import { PAST, teacherFrame, type TeacherEvent } from './frame';
 import { TeacherScreen } from './TeacherScreen';
 import { Classroom } from './Classroom';
+import { conceptById } from '../scenario/knowledgeGraph';
+import { MASTERY_POST, MINH_ANH, TWIN_FOCUS } from '../scenario/minhAnh';
 
 const render = (events: TeacherEvent[], t = 0) => html(<TeacherScreen frame={teacherFrame(events, t)} />);
 
@@ -67,5 +69,15 @@ describe('TeacherScreen', () => {
     const chat = teacherFrame([{ at: PAST, type: 'send', text: 'hi' }], 0);
     expect(html(<TeacherScreen frame={chat} />)).not.toContain(FOOT);
     expect(html(<TeacherScreen frame={chat} actions={noop} />)).toContain(FOOT);
+  });
+  it('Minh Anh card meters follow adapt to the post-update mastery shown in the chat panel', () => {
+    const ev: TeacherEvent[] = [
+      { at: PAST, type: 'view', view: 'classroom' }, { at: PAST, type: 'classroomReveal' },
+      { at: PAST, type: 'select', index: MINH_ANH.index },
+    ];
+    const card = (adapt: boolean) => html(<TeacherScreen frame={teacherFrame(adapt ? [...ev, { at: PAST, type: 'adaptClass' }] : ev, 0)} />);
+    expect(card(false)).toContain('Implication: 0.31 mastery');
+    const after = card(true);
+    for (const c of TWIN_FOCUS) expect(after).toContain(`${conceptById(c).label}: ${MASTERY_POST[c].toFixed(2)} mastery`);
   });
 });

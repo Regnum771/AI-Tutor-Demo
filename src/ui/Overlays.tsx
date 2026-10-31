@@ -22,15 +22,16 @@ export function Overlays({ scene, t, slate, toggles, variant }: OverlaysProps) {
       {titleOpacity > 0 && (
         <div
           style={{
-            position: 'absolute', left: 0, bottom: 48, padding: '24px 120px 24px 64px', zIndex: 60, maxWidth: 1300,
+            position: 'absolute', left: 0, bottom: 0, padding: '64px 96px 76px 64px', zIndex: 60, maxWidth: 1300,
             opacity: titleOpacity, transform: `translateY(${(1 - titleOpacity) * 16}px)`,
-            background: 'linear-gradient(90deg, rgba(242,237,228,0.97) 60%, rgba(242,237,228,0))',
+            // Opaque eggshell plate (soft 40px top fade) so nothing underneath ghosts through the title.
+            background: 'linear-gradient(180deg, rgba(242,237,228,0) 0, #F2EDE4 40px)',
           }}
         >
           <div style={{ width: 64, height: 4, background: '#FF5B1F', marginBottom: 14 }} />
           <div className="font-serif" style={{ fontSize: 64, lineHeight: 1.05, color: '#1A1714' }}>{scene.title}</div>
           {scene.subtitle && (
-            <div className="font-sans font-medium" style={{ fontSize: 26, marginTop: 10, color: '#6B6359' }}>{scene.subtitle}</div>
+            <div className="font-sans font-medium [text-wrap:balance]" style={{ fontSize: 26, marginTop: 10, color: '#6B6359' }}>{scene.subtitle}</div>
           )}
         </div>
       )}

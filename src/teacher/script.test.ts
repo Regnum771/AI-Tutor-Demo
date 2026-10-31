@@ -63,7 +63,9 @@ describe('teacher scene scripts', () => {
     expect(persistent(7, 20000)).toEqual(persistent(6, 15000));
   });
   it('Sc8 posts the adapt message, blends the twin, then updates the Classroom', () => {
-    expect(frame(8, 0).tracker).toBe(0);
+    expect(frame(8, 0).tracker).toBe(1);
+    expect(frame(8, 0).ticks).toEqual([true, true, true, true, true]);
+    expect(frame(8, 200).tracker).toBe(1);
     expect(frame(8, 1500).messages.at(-1)).toMatchObject({ kind: 'adapt', stamp: '20:41' });
     expect(frame(8, 5000).panel).toMatchObject({ twin: 1, followUp: true });
     expect(frame(8, 8100).view).toBe('classroom');

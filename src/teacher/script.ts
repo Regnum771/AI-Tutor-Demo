@@ -91,7 +91,6 @@ const OWN: Partial<Record<number, TeacherScript>> = {
   },
   8: {
     events: [
-      { at: 0, type: 'tracker', on: false },
       { at: 1000, type: 'assistant', kind: 'adapt', blockMs: 900, stamp: '20:41' },
       { at: 3000, type: 'adaptTwin' },
       { at: 8000, type: 'view', view: 'classroom' },
@@ -100,7 +99,6 @@ const OWN: Partial<Record<number, TeacherScript>> = {
     cursor: [
       { t: 6000, x: 900, y: 820 },
       { t: 8000, x: 70, y: 192, click: true },
-      { t: 9000, x: 520, y: 900 },
     ],
   },
 };

@@ -15,7 +15,7 @@ export function StudentApp() {
   return (
     <Stage width={390} height={844} background="#F8FAFC">
       {f.screen === 'lock' && <LockScreen t={t} notification={f.notification} clock={f.clock} tapAt={scene.id === 7 ? SC9.tap : undefined} />}
-      {f.screen === 'plan' && <PlanScreen local={f.local} variant={f.variant} />}
+      {f.screen === 'plan' && <PlanScreen local={f.local} variant={f.variant} clock={f.clock} />}
       {f.screen === 'practice' && <PracticeScreen t={f.local} />}
       {f.screen === 'progress' && <ProgressScreen local={f.local} />}
       {f.screen !== 'lock' && <StatusBar clock={f.clock} />}

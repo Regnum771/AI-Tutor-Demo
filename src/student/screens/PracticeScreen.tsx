@@ -12,7 +12,7 @@ function Question({ t }: { t: number }) {
   const right = t >= SC9.pickRight;
   return (
     <>
-      <div className="mt-6 font-display text-[21px] font-bold leading-snug text-slate-900">{Q1.prompt}</div>
+      <div className="mt-6 font-display text-[21px] font-bold leading-snug text-slate-900 [text-wrap:balance]">{Q1.prompt}</div>
       <div className="mt-4 space-y-2.5">
         {Q1.options.map((o, i) => {
           const state = right && i === Q1.correct ? 'right' : wrong && !right && i === Q1.chosenWrong ? 'wrong' : 'idle';
@@ -61,7 +61,7 @@ function Guided({ t }: { t: number }) {
   const last = SC9.guidedSteps[SC9.guidedSteps.length - 1];
   return (
     <>
-      <div className="mt-6 font-display text-[21px] font-bold leading-snug text-slate-900">{GUIDED.prompt}</div>
+      <div className="mt-6 font-display text-[21px] font-bold leading-snug text-slate-900 [text-wrap:balance]">{GUIDED.prompt}</div>
       <div className="mt-3 rounded-2xl bg-white p-4 font-mono text-[20px] text-slate-900 shadow-sm">¬(p → q)</div>
       {GUIDED.steps.map((s, i) => {
         const o = fade(t, SC9.guidedSteps[i]);

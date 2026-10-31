@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup as html } from 'react-dom/server';
 import { LockScreen } from './screens/LockScreen';
-import { PlanScreen } from './screens/PlanScreen';
+import { greetingFor, PlanScreen } from './screens/PlanScreen';
 import { PracticeScreen } from './screens/PracticeScreen';
 import { ProgressScreen } from './screens/ProgressScreen';
 import { SC9 } from '../scenario/practice';
@@ -27,5 +27,10 @@ describe('student screens', () => {
   });
   it('progress counts implication mastery up to 52%', () => {
     expect(html(<ProgressScreen local={5000} />)).toContain('52%');
+  });
+  it('greeting follows the displayed clock', () => {
+    expect(greetingFor('09:15')).toBe('Good morning');
+    expect(greetingFor('17:00')).toBe('Good afternoon');
+    expect(html(<PlanScreen local={5000} variant="updated" clock="20:42" />)).toContain('Good evening');
   });
 });

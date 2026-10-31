@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { lerp } from '../engine/anim';
 import { COMPLEX, GROUPS, HEATMAP, SCALE_STUDENTS, STUDENTS, TOPICS, type Student } from '../scenario/classroom';
 import { conceptById } from '../scenario/knowledgeGraph';
-import { MASTERY_INITIAL, MINH_ANH, TWIN_FOCUS } from '../scenario/minhAnh';
+import { MASTERY_INITIAL, MASTERY_POST, MINH_ANH, TWIN_FOCUS } from '../scenario/minhAnh';
 import type { FrameClassroom } from './frame';
 import type { TeacherActions } from './TeacherScreen';
 import { Asterisk, Avatar, Button, Eyebrow, LevelChip, Meter, type Level } from './parts';
@@ -51,6 +51,9 @@ const BANDS: Band[] = ['highRisk', 'personal', 'support', 'onTrack'];
 /** Every student on a routine, adaptive or teacher-led track. */
 const RUNNING_TOTAL = STUDENTS.filter((s) => s.track !== 'none').length;
 
+/** Scripted frames cap the Interventions list so the Classroom fits the canvas with room for the overlays. */
+const SCRIPTED_ROWS = 4;
+
 const TRACK_LABEL: Record<Student['track'], string> = {
   routine: 'Routine practice', adaptive: 'Adaptive pathway', complex: 'Paused · teacher check-in', none: 'No intervention',
 };
@@ -74,10 +77,13 @@ export function Classroom({ cls, actions }: ClassroomProps) {
   const count = (b: Band) => STUDENTS.filter((s) => adaptedBand(s, a) === b).length;
   const pick = (i: number) => actions?.select(cls.selected === i ? null : i);
   const needSupport = Math.round(needSupportAt(a) * k);
+  const scripted = !actions;
+  const rows = scripted ? RUNNING.slice(0, SCRIPTED_ROWS) : RUNNING;
+  const tileH = scripted ? 'h-[70px]' : 'h-[78px]';
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <div className="px-8 pb-10 pt-6">
+      <div className={scripted ? 'px-8 pb-6 pt-4' : 'px-8 pb-10 pt-6'}>
         <div className="flex items-end gap-6">
           <div>
             <Eyebrow>Discrete Mathematics · DM-2026 · Week 6</Eyebrow>
@@ -91,7 +97,7 @@ export function Classroom({ cls, actions }: ClassroomProps) {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-5 border-y-2 border-egg-ink">
+        <div className={`${scripted ? 'mt-4' : 'mt-6'} grid grid-cols-5 border-y-2 border-egg-ink`}>
           {[
             { label: 'Students', value: String(Math.round(55 * k)) },
             { label: 'Need support', value: String(needSupport), accent: true },
@@ -99,15 +105,15 @@ export function Classroom({ cls, actions }: ClassroomProps) {
             { label: 'Running', value: String(Math.round(RUNNING_TOTAL * k)), note: 'interventions, 0 overdue' },
             { label: 'Avg. mastery', value: (avg * k).toFixed(2) },
           ].map((kpi, i) => (
-            <div key={kpi.label} className={`py-4 ${i ? 'border-l border-egg-line pl-5' : ''}`}>
+            <div key={kpi.label} className={`${scripted ? 'py-3' : 'py-4'} ${i ? 'border-l border-egg-line pl-5' : ''}`}>
               <Eyebrow>{kpi.label}</Eyebrow>
               <div className={`mt-1 font-serif text-[52px] leading-none ${kpi.accent ? 'text-egg-orange' : ''}`}>{kpi.value}</div>
-              {'note' in kpi && <div className="mt-1 text-[12px] text-egg-mute">{kpi.note}</div>}
+              {'note' in kpi && <div className="mt-1 text-[12px] text-egg-mute" style={{ opacity: k }}>{kpi.note}</div>}
             </div>
           ))}
         </div>
 
-        <div className="mt-7 grid grid-cols-[1fr_440px] gap-8">
+        <div className={`${scripted ? 'mt-5' : 'mt-7'} grid grid-cols-[1fr_440px] gap-8`}>
           <section>
             <div className="flex items-center gap-2 border-b border-egg-ink/80 pb-2">
               <h3 className="mr-3 font-serif text-[26px] leading-none">Students</h3>
@@ -126,7 +132,7 @@ export function Classroom({ cls, actions }: ClassroomProps) {
             </div>
             <div className="mt-4 grid grid-cols-11 gap-2">
               {STUDENTS.map((s, i) => {
-                if (i >= cls.tiles) return <div key={s.id} className="h-[78px] rounded-xl border border-dashed border-egg-line bg-transparent" />;
+                if (i >= cls.tiles) return <div key={s.id} className={`${tileH} rounded-xl border border-dashed border-egg-line bg-transparent`} />;
                 const isMinh = s.index === MINH_ANH.index;
                 const b = adaptedBand(s, a);
                 const dim = filter !== 'all' && filter !== b;
@@ -138,7 +144,7 @@ export function Classroom({ cls, actions }: ClassroomProps) {
                     type="button"
                     onClick={() => pick(s.index)}
                     title={`${s.name} · ${BAND[b].label} · mastery ${mastery.toFixed(2)}`}
-                    className={`flex h-[78px] flex-col justify-between rounded-xl border p-2 text-left ${BAND[b].cell} ${dim ? 'opacity-20' : ''} ${cls.selected === s.index ? 'outline outline-2 outline-offset-2 outline-egg-ink' : ''}`}
+                    className={`flex ${tileH} flex-col justify-between rounded-xl border p-2 text-left ${BAND[b].cell} ${dim ? 'opacity-20' : ''} ${cls.selected === s.index ? 'outline outline-2 outline-offset-2 outline-egg-ink' : ''}`}
                     style={glow ? { boxShadow: `0 0 0 ${2 + 6 * cls.pulse}px rgba(255,91,31,${0.35 + 0.4 * cls.pulse})` } : undefined}
                   >
                     <div className="flex items-start justify-between">
@@ -152,7 +158,7 @@ export function Classroom({ cls, actions }: ClassroomProps) {
             </div>
           </section>
 
-          <aside className="space-y-8">
+          <aside className={scripted ? 'space-y-5' : 'space-y-8'}>
             {cls.selected !== null ? (
               <StudentCard s={STUDENTS[cls.selected]} adapt={a} appear={cls.selectAppear} actions={actions} />
             ) : (
@@ -163,7 +169,7 @@ export function Classroom({ cls, actions }: ClassroomProps) {
                     <span className="text-[12px] text-egg-mute">agents running · you approve</span>
                   </div>
                   <ul className="divide-y divide-egg-line">
-                    {RUNNING.map((r) => {
+                    {rows.map((r) => {
                       const s = STUDENTS[r.index];
                       return (
                         <li key={r.index}>
@@ -181,10 +187,11 @@ export function Classroom({ cls, actions }: ClassroomProps) {
                       );
                     })}
                   </ul>
+                  {rows.length < RUNNING.length && <div className="border-t border-egg-line pt-1.5 text-[12px] text-egg-mute">+{RUNNING.length - rows.length} more running</div>}
                 </section>
               )
             )}
-            {cls.kpi > 0 && <Heatmap />}
+            {cls.kpi > 0 && <Heatmap compact={scripted} />}
           </aside>
         </div>
       </div>
@@ -193,7 +200,7 @@ export function Classroom({ cls, actions }: ClassroomProps) {
 }
 
 /** Topic × group mastery. One hue: the more orange, the bigger the gap. Values are always printed. */
-function Heatmap() {
+function Heatmap({ compact }: { compact: boolean }) {
   const tint = (v: number) => Math.max(0, Math.min(1, (0.9 - v) / 0.5)) * 100;
   return (
     <section>
@@ -216,7 +223,7 @@ function Heatmap() {
                 <td
                   key={c}
                   title={`${t} · ${GROUPS[c]}: ${v.toFixed(2)} mastery`}
-                  className={`h-8 rounded-md text-center font-mono tabular-nums text-egg-ink ${v < 0.5 ? 'font-bold' : ''}`}
+                  className={`${compact ? 'h-7' : 'h-8'} rounded-md text-center font-mono tabular-nums text-egg-ink ${v < 0.5 ? 'font-bold' : ''}`}
                   style={{ background: `color-mix(in oklab, #FF5B1F ${tint(v)}%, #FFFDF8)` }}
                 >
                   {v.toFixed(2)}
@@ -245,7 +252,7 @@ function StudentCard({ s, adapt, appear, actions }: { s: Student; adapt: number;
       </div>
       <div className="mt-4 border-t border-egg-line pt-3">
         {isMinhAnh ? (
-          TWIN_FOCUS.map((c) => <Meter key={c} label={conceptById(c).label} value={MASTERY_INITIAL[c]} />)
+          TWIN_FOCUS.map((c) => <Meter key={c} label={conceptById(c).label} value={lerp(MASTERY_INITIAL[c], MASTERY_POST[c], adapt)} />)
         ) : (
           <Meter label="Overall mastery" value={s.mastery} />
         )}

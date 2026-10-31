@@ -2,12 +2,18 @@ import { fade } from '../../engine/anim';
 import { PATHWAY_INITIAL, PATHWAY_UPDATED, PLAN_OBJECTIVES, PLAN_OBJECTIVES_UPDATED } from '../../scenario/orchestration';
 import { C } from '../../ui/tokens';
 
-export function PlanScreen({ local, variant }: { local: number; variant: 'initial' | 'updated' }) {
+/** Greeting derived from the displayed clock (HH:MM): morning before 12:00, afternoon before 18:00, evening after. */
+export const greetingFor = (clock: string): string => {
+  const h = Number(clock.split(':')[0]);
+  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+};
+
+export function PlanScreen({ local, variant, clock = '17:00' }: { local: number; variant: 'initial' | 'updated'; clock?: string }) {
   const items = variant === 'initial' ? PATHWAY_INITIAL : PATHWAY_UPDATED;
   const objectives = variant === 'initial' ? PLAN_OBJECTIVES : PLAN_OBJECTIVES_UPDATED;
   return (
     <div className="absolute inset-0 bg-slate-50 px-5 pt-14 font-sans">
-      <div className="text-[15px] text-slate-500">Good afternoon,</div>
+      <div className="text-[15px] text-slate-500">{greetingFor(clock)},</div>
       <div className="text-[26px] font-bold text-slate-900">Minh Anh</div>
       {variant === 'updated' && (
         <div className="mt-3 rounded-2xl px-4 py-2 text-[14px] font-semibold" style={{ background: '#EDE9FE', color: '#6D28D9', opacity: fade(local, 100) }}>
@@ -35,7 +41,7 @@ export function PlanScreen({ local, variant }: { local: number; variant: 'initia
               <div className="text-[16px] font-semibold text-slate-900">{it.title}</div>
               <div className="text-[13px] text-slate-500">{it.when} · {it.mins} min</div>
             </div>
-            {i === (variant === 'initial' ? 2 : 0) && <span className="ml-auto rounded-full px-2 py-0.5 text-[12px] font-semibold" style={{ background: '#EEF2FF', color: C.royal }}>Up next</span>}
+            {i === (variant === 'initial' ? 2 : 0) && <span className="ml-auto whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-semibold" style={{ background: '#EEF2FF', color: C.royal }}>Up next</span>}
           </div>
         );
       })}

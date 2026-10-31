@@ -13,7 +13,7 @@ export function Closing({ t }: { t: number }) {
         <Asterisk size={84} />
       </div>
       <div className="mt-4 font-mono text-[18px] uppercase tracking-[0.3em] text-egg-mute" style={{ opacity: mark }}>AI Tutoring</div>
-      <div className="mt-10 max-w-[1300px] text-center font-serif text-[40px] italic leading-tight" style={{ opacity: line }}>{TAGLINE}</div>
+      <div className="mt-10 max-w-[1300px] text-center font-serif [text-wrap:balance] text-[40px] italic leading-tight" style={{ opacity: line }}>{TAGLINE}</div>
     </div>
   );
 }
