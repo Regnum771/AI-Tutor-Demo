@@ -9,6 +9,7 @@ import { Sc06Collaborate } from './Sc06Collaborate';
 import { Sc07Orchestrate } from './Sc07Orchestrate';
 import { Sc08Govern } from './Sc08Govern';
 import { Sc09Experience } from './Sc09Experience';
+import { Sc10Adapt } from './Sc10Adapt';
 import { Sc11Scale } from './Sc11Scale';
 import { Sc12Closing } from './Sc12Closing';
 
@@ -22,6 +23,7 @@ export const SCENE_VIEWS: Partial<Record<number, ComponentType<SceneProps>>> = {
   7: Sc07Orchestrate,
   8: Sc08Govern,
   9: Sc09Experience,
+  10: Sc10Adapt,
   11: Sc11Scale,
   12: Sc12Closing,
 };

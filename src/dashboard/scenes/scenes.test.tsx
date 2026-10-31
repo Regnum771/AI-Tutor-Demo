@@ -150,3 +150,23 @@ describe('Sc7 Orchestrate', () => {
     expect(render(7, CUES.sc7Delivered + 200)).toContain('Delivered to Minh Anh&#x27;s student app');
   });
 });
+
+describe('Sc10 Simulate & Adapt', () => {
+  it('shows twin deltas and the labelled simulation', () => {
+    const s = render(10, 13500);
+    expect(s).toContain('Exercise accuracy');
+    expect(s).toContain('78%');
+    expect(s).toContain('Simulated projection · illustrative');
+    expect(s).toContain('B selected');
+  });
+  it('reassesses with both agents and delivers the updated pathway', () => {
+    expect(render(10, 19500)).toContain('REASSESSMENT');
+    const end = render(10, 28500);
+    expect(end).toContain('Targeted Application Practice');
+    expect(end).toContain('Updated pathway delivered');
+  });
+  it('announces the updated pathway only at the shared cue', () => {
+    expect(render(10, CUES.sc10Update - 200)).not.toContain('Updated pathway delivered');
+    expect(render(10, CUES.sc10Update + 200)).toContain('Updated pathway delivered');
+  });
+});
