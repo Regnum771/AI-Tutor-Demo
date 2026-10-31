@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { lerp } from '../engine/anim';
-import { COMPLEX, GROUPS, HEATMAP, SCALE_STUDENTS, STUDENTS, TOPICS, type Student } from '../scenario/classroom';
+import { COMPLEX, GROUPS, HEATMAP, SCALE_STUDENTS, STUDENTS, TOPICS, groupOf, type Student } from '../scenario/classroom';
 import { conceptById } from '../scenario/knowledgeGraph';
 import { egg } from '../ui/theme';
 import { MASTERY_INITIAL, MASTERY_POST, MINH_ANH, TWIN_FOCUS } from '../scenario/minhAnh';
@@ -13,8 +13,6 @@ type Filter = 'all' | Band;
 
 /** One status per student: escalated students read as "needs you" rather than high risk. */
 const bandOf = (s: Student): Band => (COMPLEX.includes(s.index) ? 'personal' : s.status);
-/** Group assignment (Minh Anh sits in G4, matching the student panel). */
-export const groupOf = (i: number) => GROUPS[(i + 2) % GROUPS.length];
 const shortName = (s: Student) => (s.index === MINH_ANH.index ? MINH_ANH.short : s.name.split(' ').slice(-1)[0]);
 
 /** Students who move band once the adapted pathway lands (adapt >= 0.5), derived from the data so counts always agree. */

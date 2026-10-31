@@ -1,0 +1,48 @@
+import { STUDENTS, type Status, type Student } from '../scenario/classroom';
+import type { DemoState, Mastery, StudentProfile } from './types';
+
+export const TARGET = 0.9;
+export const GAIN_FIRST_TRY = 0.3;
+export const GAIN_AFTER_HINT = 0.15;
+
+const round2 = (v: number) => Math.round(v * 100) / 100;
+
+/** A correct answer moves the item's concept part of the way toward TARGET; a wrong one leaves it. */
+export function afterAnswer(value: number, correct: boolean, hinted: boolean): number {
+  if (!correct) return value;
+  return round2(value + (TARGET - value) * (hinted ? GAIN_AFTER_HINT : GAIN_FIRST_TRY));
+}
+
+/** Week 6 is logical equivalence: the Classroom's per-student figure. */
+export const topicMastery = (m: Mastery): number => m.equivalence;
+
+/** The bands the roster was built with: high risk < 0.42 ≤ support < 0.60 ≤ on track. */
+export function statusFor(m: Mastery): Status {
+  const v = topicMastery(m);
+  return v < 0.42 ? 'highRisk' : v < 0.6 ? 'support' : 'onTrack';
+}
+
+export interface ClassKpis {
+  students: number;
+  needSupport: number;
+  highRisk: number;
+  escalated: number;
+  avgMastery: number;
+}
+
+export function classKpis(students: StudentProfile[]): ClassKpis {
+  const sum = students.reduce((a, s) => a + topicMastery(s.mastery), 0);
+  return {
+    students: students.length,
+    needSupport: students.filter((s) => s.status !== 'onTrack').length,
+    highRisk: students.filter((s) => s.status === 'highRisk').length,
+    escalated: students.filter((s) => s.escalated).length,
+    avgMastery: round2(sum / students.length),
+  };
+}
+
+/** Live profiles in the Classroom's `Student` shape (tracks stay as scripted). */
+export const liveStudents = (state: DemoState): Student[] =>
+  state.students.map((p) => ({
+    index: p.index, id: p.id, name: p.name, status: p.status, mastery: topicMastery(p.mastery), track: STUDENTS[p.index].track,
+  }));

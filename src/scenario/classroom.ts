@@ -54,6 +54,8 @@ export const EFFECTIVENESS = [
 
 export const TOPICS = ['Propositions', 'Logical operators', 'Implication', 'Logical equivalence', 'Predicates', 'Proof methods'];
 export const GROUPS = ['G1', 'G2', 'G3', 'G4', 'G5'];
+/** Tutorial group per student index (Minh Anh, index 16, sits in G4). */
+export const groupOf = (i: number) => GROUPS[(i + 2) % GROUPS.length];
 /** HEATMAP[topic][group] = average mastery. */
 export const HEATMAP: number[][] = [
   [0.88, 0.85, 0.82, 0.86, 0.8],
