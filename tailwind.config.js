@@ -9,11 +9,17 @@ export default {
         ink: '#F4F7FF', dim: '#9AA8C7',
         cyan: '#22D3EE', royal: '#3B6CF6', twin: '#A78BFA', sas: '#60A5FA', tas: '#34D399',
         gold: '#F5B942', gap: '#F87171', mastered: '#4ADE80',
+        // Teacher chat (light editorial theme)
+        egg: {
+          bg: '#F2EDE4', paper: '#F8F4EC', card: '#FFFDF8', line: '#DCD3C5', ink: '#1A1714',
+          mute: '#6B6359', faint: '#9C9285', orange: '#FF5B1F', tint: '#FFE5D6',
+        },
       },
       fontFamily: {
         display: ['Manrope', 'Inter', 'sans-serif'],
         sans: ['Inter', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
+        serif: ['"Instrument Serif"', 'Georgia', 'serif'],
       },
     },
   },
