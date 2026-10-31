@@ -4112,7 +4112,7 @@ describe('Sc4 Represent', () => {
 describe('Sc9 Experience (dashboard companion)', () => {
   it('streams evidence from the student device into the twin', () => {
     const s = render(9, 17000);
-    expect(s).toContain("Live evidence · Minh Anh's device");
+    expect(s).toContain('Live evidence · Minh Anh&#x27;s device');
     expect(s).toContain('Answer ¬p ∨ q · correct');
     expect(s).toContain('0.52');
   });
@@ -4793,7 +4793,7 @@ describe('Sc7 Orchestrate', () => {
     const end = render(7, 24000);
     expect(end).toContain('MONITORING');
     expect(end).toContain('Mastery check score');
-    expect(end).toContain("Delivered to Minh Anh's student app");
+    expect(end).toContain('Delivered to Minh Anh&#x27;s student app');
   });
 });
 ```
