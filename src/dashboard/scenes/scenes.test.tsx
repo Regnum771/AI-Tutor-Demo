@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { SCENE_VIEWS } from './index';
-import { SCENES, sceneById } from '../../scenario/scenes';
+import { CUES, SCENES, sceneById } from '../../scenario/scenes';
 
 const render = (id: number, t: number) => {
   const View = SCENE_VIEWS[id];
@@ -144,5 +144,9 @@ describe('Sc7 Orchestrate', () => {
     expect(end).toContain('MONITORING');
     expect(end).toContain('Mastery check score');
     expect(end).toContain('Delivered to Minh Anh&#x27;s student app');
+  });
+  it('shows delivery only once the shared cue is reached', () => {
+    expect(render(7, CUES.sc7Delivered - 200)).not.toContain('Delivered to Minh Anh&#x27;s student app');
+    expect(render(7, CUES.sc7Delivered + 200)).toContain('Delivered to Minh Anh&#x27;s student app');
   });
 });

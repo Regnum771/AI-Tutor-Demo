@@ -13,7 +13,7 @@ import { PipelineStatus } from '../../ui/PipelineStatus';
 import { C } from '../../ui/tokens';
 import type { SceneProps } from './types';
 
-const OP_T = [4000, 6500, 9500, 12500, 15500, 19000];
+const OP_T = [4000, 6500, 9500, 12500, 15500, 21500];
 const STATUS_T = [4000, 7500, 13500, 16500, CUES.sc7Delivered, 21500];
 const INPUT_COLORS = [C.sas, C.tas, C.twin, C.royal, C.dim, C.gold];
 const inputY = (i: number) => 230 + i * 105;
@@ -43,7 +43,9 @@ function Visual({ t, op }: { t: number; op: number }) {
       return (
         <>
           {list(PATHWAY_INITIAL.map((p) => `${p.when} · ${p.title}`), OP_T[4] + 200, (s) => s)}
-          <div className="mt-4 font-display text-[20px] font-bold" style={{ color: C.engine, opacity: fade(t, CUES.sc7Delivered) }}>📱 Delivered to Minh Anh's student app</div>
+          {t >= CUES.sc7Delivered && (
+            <div className="mt-4 font-display text-[20px] font-bold" style={{ color: C.engine, opacity: fade(t, CUES.sc7Delivered) }}>📱 Delivered to Minh Anh's student app</div>
+          )}
         </>
       );
     default:
