@@ -94,17 +94,31 @@ const MINH_ANH_EVIDENCE: Evidence[] = [
   { id: 's17-zalo-1', kind: 'message', source: 'Zalo', text: `“${MESSAGES[0].vi}” (${MESSAGES[0].evidence})`, when: 'Week 6', concept: 'implication' },
   { id: 's17-zalo-2', kind: 'message', source: 'Zalo', text: `“${MESSAGES[3].vi}” (${MESSAGES[3].evidence})`, when: 'Week 6', concept: 'truthTables' },
   { id: 's17-lms', kind: 'activity', source: 'LMS activity log', text: 'Truth-table lab and implication worksheet still open · last login 6 days ago', when: 'Week 6' },
-  { id: 's17-attendance', kind: 'attendance', source: 'Attendance', text: 'Absent from tutorial 5', when: 'Week 5' },
+  { id: 's17-attendance', kind: 'attendance', source: 'Attendance', text: 'Attended 5 of 6 tutorials · absent from tutorial 5', when: 'Week 5' },
   { id: 's17-records', kind: 'record', source: 'Academic records', text: 'Intro to Logic: C+ (68%)', when: 'Last year' },
 ];
 
-export const CLASS_EVIDENCE: Evidence[] = [
-  { id: 'class-quiz2-q4', kind: 'quiz', source: 'Quiz 2 responses', text: 'Q4 (p → q ≡ ?): 58% of the class incorrect', when: 'Week 6', concept: 'implication' },
-  { id: 'class-quiz2-q7', kind: 'quiz', source: 'Quiz 2 responses', text: "Q7 (De Morgan's law): 44% of the class incorrect", when: 'Week 6', concept: 'deMorgan' },
-  { id: 'class-quiz2-avg', kind: 'quiz', source: 'LMS gradebook', text: 'Quiz 2 class average 61%', when: 'Week 6' },
-  { id: 'class-attendance', kind: 'attendance', source: 'Attendance', text: 'Week 6 tutorials: 47 of 55 present', when: 'Week 6' },
-  { id: 'class-assignment3', kind: 'activity', source: 'LMS gradebook', text: 'Assignment 3: 41 of 55 submitted', when: 'Week 6' },
-];
+const pct = (n: number, of: number) => Math.round((n / of) * 100);
+const entry = (s: StudentProfile, slug: string) => s.evidence.find((e) => e.id === `${s.id}-${slug}`)?.text ?? '';
+/** Tutorials attended, read from the student's own attendance entry. */
+export const attendedOf = (s: StudentProfile): number => Number(/Attended (\d) of 6/.exec(entry(s, 'attendance'))?.[1] ?? 0);
+/** Whether the student's own Quiz 2 Q4 entry records the converse mistake. */
+export const choseConverse = (s: StudentProfile): boolean => /converse/i.test(entry(s, 'quiz2-q4'));
+
+/** Class-level evidence computed from the profiles, so class figures and student records always agree. */
+export function classEvidence(students: StudentProfile[]): Evidence[] {
+  const n = students.length;
+  const avg = Math.round(students.reduce((a, s) => a + s.quiz.q2, 0) / n);
+  const converse = students.filter(choseConverse).length;
+  const visits = students.reduce((a, s) => a + attendedOf(s), 0);
+  const deMorgan = students.filter((s) => s.mastery.deMorgan < 0.5).length;
+  return [
+    { id: 'class-quiz2-q4', kind: 'quiz', source: 'Quiz 2 responses', text: `Q4 (p → q ≡ ?): ${converse} of ${n} chose the converse q → p (${pct(converse, n)}%)`, when: 'Week 6', concept: 'implication' },
+    { id: 'class-quiz2-avg', kind: 'quiz', source: 'LMS gradebook', text: `Quiz 2 class average ${avg}%`, when: 'Week 6' },
+    { id: 'class-attendance', kind: 'attendance', source: 'Attendance', text: `Tutorials so far: ${visits} of ${n * 6} attendances (${pct(visits, n * 6)}%)`, when: 'Week 6' },
+    { id: 'class-demorgan', kind: 'record', source: 'Learning twins', text: `De Morgan's laws: ${deMorgan} of ${n} students below 0.50 mastery`, when: 'Week 6', concept: 'deMorgan' },
+  ];
+}
 
 /** The 55 fictional students as full profiles. Deterministic; reproduces the scripted Classroom figures. */
 export function buildRoster(): StudentProfile[] {
