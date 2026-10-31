@@ -7,7 +7,7 @@ export function PlanScreen({ local, variant }: { local: number; variant: 'initia
   const objectives = variant === 'initial' ? PLAN_OBJECTIVES : PLAN_OBJECTIVES_UPDATED;
   return (
     <div className="absolute inset-0 bg-slate-50 px-5 pt-14 font-sans">
-      <div className="text-[15px] text-slate-500">Good morning,</div>
+      <div className="text-[15px] text-slate-500">Good afternoon,</div>
       <div className="text-[26px] font-bold text-slate-900">Minh Anh</div>
       {variant === 'updated' && (
         <div className="mt-3 rounded-2xl px-4 py-2 text-[14px] font-semibold" style={{ background: '#EDE9FE', color: '#6D28D9', opacity: fade(local, 100) }}>

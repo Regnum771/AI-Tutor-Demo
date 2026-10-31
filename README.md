@@ -28,7 +28,13 @@ Any window can render without the controller:
 
 1. Start `npm run dev`.
 2. Launch a dedicated Chrome instance at 2× so a 1920×1080 window captures as 3840×2160:
-   `chrome.exe --user-data-dir=%TEMP%eyond-rec --force-device-scale-factor=2 --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling --disable-features=CalculateNativeWinOcclusion http://localhost:5173/controller.html`
+   `chrome.exe --user-data-dir=%TEMP%\beyond-rec --force-device-scale-factor=2 --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling --disable-features=CalculateNativeWinOcclusion http://localhost:5173/controller.html`
+
+   PowerShell variant (in PowerShell, `%TEMP%` does not expand and `chrome.exe` is usually not on PATH):
+
+   ```powershell
+   & "C:\Program Files\Google\Chrome\Application\chrome.exe" --user-data-dir="$env:TEMP\beyond-rec" --force-device-scale-factor=2 --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling --disable-features=CalculateNativeWinOcclusion http://localhost:5173/controller.html
+   ```
    The separate profile (`--user-data-dir`) is needed so the flags apply even if Chrome is already running. The background flags stop Chrome from pausing covered windows, which would freeze a capture or stall Play all.
 3. In the Director, click **Open dashboard window** and **Open student window**.
 4. Make the dashboard fullscreen (F11) on a 4K display, or accept letterboxing. Capture the phone window cropped to its canvas (390×844 CSS px, 780×1688 at 2×).

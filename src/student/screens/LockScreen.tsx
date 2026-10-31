@@ -6,7 +6,7 @@ export function LockScreen({ t, notification, tapAt }: { t: number; notification
   return (
     <div className="absolute inset-0 flex flex-col items-center font-sans" style={{ background: 'linear-gradient(180deg, #0B1A3A 0%, #3B6CF6 140%)' }}>
       <div className="mt-24 font-display text-[18px] font-semibold text-white/80">Saturday, 31 October</div>
-      <div className="font-display text-[84px] font-bold leading-none text-white">08:58</div>
+      <div className="font-display text-[84px] font-bold leading-none text-white">14:58</div>
       {notification > 0 && (
         <div className="absolute left-3 right-3 rounded-3xl p-4" style={{ top: 250, opacity: notification, transform: `translateY(${(1 - notification) * -40}px) scale(${pressed ? 0.97 : 1})`, background: 'rgba(255,255,255,0.94)' }}>
           <div className="flex items-center gap-2 text-[13px] text-slate-500">

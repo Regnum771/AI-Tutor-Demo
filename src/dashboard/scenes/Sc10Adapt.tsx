@@ -74,7 +74,7 @@ export function Sc10Adapt({ t }: SceneProps) {
           />
           {toTas && t < JOINT_T && <MessageCard card={toTas.card} style={{ position: 'absolute', left: 1380, top: 470, opacity: fade(t, toTas.arrived) }} />}
           {toSas && t < JOINT_T && <MessageCard card={toSas.card} style={{ position: 'absolute', left: 60, top: 470, opacity: fade(t, toSas.arrived) }} />}
-          <JointDecision t={t} steps={JOINT_DECISION_2} at={JOINT_T} signAt={SIGN_T} exitAt={23000} />
+          <JointDecision t={t} steps={JOINT_DECISION_2} at={JOINT_T} signAt={SIGN_T} exitAt={23400} />
           {pipe && (
             <div className="absolute rounded-2xl border-2 p-5" style={{ left: 300, top: 790, width: 1320, borderColor: C.engine, background: C.panel, opacity: fade(t, PIPE_T[0]) }}>
               <div className="font-display text-[20px] font-bold text-ink">Orchestration engine · re-run · {JOINT_DECISION_2.join(' → ')}</div>

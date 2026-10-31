@@ -19,7 +19,7 @@ export function ProgressScreen({ local }: { local: number }) {
         </svg>
         <div>
           <div className="text-[13px] uppercase tracking-wider text-slate-500">{PROGRESS.concept} mastery</div>
-          <div className="text-[15px] text-slate-700">up from {PROGRESS.from}% this morning</div>
+          <div className="text-[15px] text-slate-700">up from {PROGRESS.from}% this week</div>
           <div className="mt-2 text-[15px] font-semibold text-slate-900">Accuracy today {PROGRESS.accuracyToday}%</div>
         </div>
       </div>
