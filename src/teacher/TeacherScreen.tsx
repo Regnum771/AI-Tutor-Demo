@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { STUDENTS, type Student } from '../scenario/classroom';
 import { Blocks } from './Blocks';
 import { Classroom } from './Classroom';
-import { ADAPT, FALLBACK, studentBrief, TOPICS, type Block, type ContextId } from './conversations';
+import { ADAPT, FALLBACK, QUESTION_SHORT, studentBrief, TOPICS, type Block, type ContextId } from './conversations';
 import { ContextPanel } from './ContextPanel';
 import { GREETING, type FrameMsg, type TeacherFrame, type View } from './frame';
 import { Arrow, Asterisk, Avatar, Eyebrow } from './parts';
@@ -103,7 +103,19 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
             </button>
           )}
         </header>
-        {/* Tracker slot (Task 5). */}
+        {frame.tracker > 0 && (
+          <div className="flex h-[44px] shrink-0 items-center gap-6 border-b border-egg-line px-8" style={{ opacity: frame.tracker }}>
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-egg-mute">Five questions</span>
+            {QUESTION_SHORT.map((q, i) => (
+              <span key={q} className="flex items-center gap-2 text-[13.5px]">
+                <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full border ${frame.ticks[i] ? 'border-egg-orange bg-egg-orange text-egg-ink' : 'border-egg-ink/40'}`}>
+                  {frame.ticks[i] && <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden><path d="M2 5.2 4.2 7.4 8 2.8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                </span>
+                <span className={frame.ticks[i] ? 'text-egg-ink' : 'text-egg-mute'}>{q}</span>
+              </span>
+            ))}
+          </div>
+        )}
 
         {view === 'classroom' ? (
           <Classroom cls={frame.classroom} actions={actions} />
