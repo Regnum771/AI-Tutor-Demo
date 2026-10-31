@@ -43,6 +43,11 @@ describe('student screens', () => {
   it('progress counts implication mastery up to 52%', () => {
     expect(html(<ProgressScreen local={5000} />)).toContain('52%');
   });
+  it('progress screen: serif title and serif percentage', () => {
+    const p = html(<ProgressScreen local={5000} />);
+    expect(p).toMatch(/font-serif[^>]*>Your progress</);
+    expect(p).toMatch(/<text[^>]*font-serif[^>]*>52%</);
+  });
   it('greeting follows the displayed clock', () => {
     expect(greetingFor('09:15')).toBe('Good morning');
     expect(greetingFor('17:00')).toBe('Good afternoon');

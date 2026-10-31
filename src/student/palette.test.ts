@@ -3,8 +3,6 @@ import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const ROOT = join(process.cwd(), 'src/student');
-/** Screens not restyled yet. Each restyle task removes its file; the last one deletes this set. */
-const PENDING = new Set(['screens/ProgressScreen.tsx']);
 /** Inline hex is allowed only for egg tokens (keep in sync with tailwind.config.js). */
 const EGG_HEX = new Set([
   '#F2EDE4', '#F8F4EC', '#FFFDF8', '#DCD3C5', '#1A1714', '#6B6359', '#9C9285', '#FF5B1F', '#FFE5D6',
@@ -23,7 +21,6 @@ function sources(dir: string): string[] {
 describe('phone palette', () => {
   for (const file of sources(ROOT)) {
     const rel = relative(ROOT, file).replace(/\\/g, '/');
-    if (PENDING.has(rel)) continue;
     it(`${rel} uses only egg colours`, () => {
       const src = readFileSync(file, 'utf8');
       for (const re of BANNED) expect(src, `${rel} matches ${re}`).not.toMatch(re);
