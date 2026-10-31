@@ -5704,7 +5704,7 @@ A live version of the demo for visitors to use: two real Claude agents answer th
 3. Open the Director (`http://localhost:5173/controller.html`): **Open live teacher**, and let visitors scan the QR code with a phone on the same Wi-Fi (or open `student.html?live` in a narrow window).
 4. Press **Reset demo** (Director or teacher header) between visitors.
 
-Settings: `BEYOND_MODEL` (default `claude-sonnet-5-5`), `BEYOND_EFFORT` (`low` · `medium` · `high`, default `medium`), `BEYOND_PORT`.
+Settings: `BEYOND_MODEL` (default `claude-sonnet-5-5`), `BEYOND_EFFORT` (`low` · `medium` · `high`, default `medium`), `BEYOND_PORT`, `BEYOND_HOST` (the laptop address for the phone, if the printed one is wrong).
 
 Check the API path end to end with `npm run test:live` (needs the key; costs one real question).
 
