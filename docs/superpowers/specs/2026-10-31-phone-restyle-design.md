@@ -21,14 +21,14 @@ Make the student phone app (`student.html`, `src/student/`, 390×844) look like 
 
 The phone uses the existing `egg` Tailwind tokens: bg `#F2EDE4`, paper `#F8F4EC`, card `#FFFDF8`, line `#DCD3C5`, ink `#1A1714`, mute `#6B6359`, faint `#9C9285`, orange `#FF5B1F`, tint `#FFE5D6`.
 
-New tokens, added to both `tailwind.config.js` (`egg.*`) and `src/ui/tokens.ts`, with identical hex values:
+New tokens, added to the `egg` block in `tailwind.config.js`. The egg theme lives only in Tailwind, as in the teacher app; `src/ui/tokens.ts` holds only the old dark palette and does not change. `sage` and `brick` are nested objects, `{ DEFAULT, tint }`, so the classes are `bg-egg-sage`, `bg-egg-sage-tint`, and so on:
 
 | Token | Hex | Use |
 |---|---|---|
 | `sage` | `#4F7A5A` | "Correct!" text and border, done ticks, the "Nice work" line |
-| `sageTint` | `#E4EDE3` | Right-answer fill, done-tick circle fill |
+| `sage.tint` | `#E4EDE3` | Right-answer fill, done-tick circle fill |
 | `brick` | `#B5452F` | "Not quite" text and border |
-| `brickTint` | `#F6E1DA` | Wrong-answer fill |
+| `brick.tint` | `#F6E1DA` | Wrong-answer fill |
 
 All blue, purple and slate colours leave `src/student/`. That covers `C.royal`, `C.twin`, `#0B1A3A`, `#3B6CF6`, the purple hint box, the purple "Plan updated" pill, the purple progress ring and the purple "Evidence synced" pill. Tailwind `slate-*`, `green-*`, `red-*`, `purple-*`, `bg-white` and `text-white` classes are also removed.
 
@@ -71,7 +71,7 @@ All blue, purple and slate colours leave `src/student/`. That covers `C.royal`, 
 - **Section label:** "Learning pathway · today" or "Next steps · tomorrow", via `Eyebrow`.
 - **Pathway:** a ruled list with hairline `line` dividers, not white cards.
   - Each row shows a marker, then the title (ink) and "`{when} · {mins} min`" (mute).
-  - The marker is a numbered circle (ink outline, ink numeral), or a sage tick on a `sageTint` circle for done items (initial variant, `i < 2`).
+  - The marker is a numbered circle (ink outline, ink numeral), or a sage tick on a `sage-tint` circle for done items (initial variant, `i < 2`).
   - The current row (index 2 initial, index 0 updated) has a 2px orange bar on its left edge and an orange "Up next" pill with ink text, kept on one line (`whitespace-nowrap`).
   - Row fade-in timing is unchanged (`300 + i*250` with translateY).
 
@@ -82,8 +82,8 @@ All blue, purple and slate colours leave `src/student/`. That covers `C.royal`, 
   - The progress bar becomes orange on an `egg.line` track, at the same 40% and 75% values.
 - **Options:**
   - Idle options are `card` fill with an `egg.line` border.
-  - Wrong is `brickTint` fill with a `brick` border and "Not quite" in brick.
-  - Right is `sageTint` fill with a `sage` border and "Correct!" in sage.
+  - Wrong is `brick-tint` fill with a `brick` border and "Not quite" in brick.
+  - Right is `sage-tint` fill with a `sage` border and "Correct!" in sage.
   - Both labels keep their exact text.
   - Option text stays mono 18px ink.
 - **Hint box:**
@@ -94,7 +94,7 @@ All blue, purple and slate colours leave `src/student/`. That covers `C.royal`, 
 - **Guided steps:**
   - The "¬(p → q)" box and each step card use `card` fill with an `egg.line` border.
   - "Step i · why" is a mute eyebrow and "≡ expr" is mono ink.
-  - The closing "Nice work · 3 / 3 steps with fading support" line is sage on `sageTint`.
+  - The closing "Nice work · 3 / 3 steps with fading support" line is sage on `sage-tint`.
   - Timings are unchanged.
 
 ### Progress screen (`ProgressScreen.tsx`)
@@ -125,7 +125,9 @@ All blue, purple and slate colours leave `src/student/`. That covers `C.royal`, 
 
 ## Geometry constraint
 
-The practice TouchDots are drawn at fixed y-positions: `OPTION_TOP = 236`, `OPTION_STEP = 60`. Every option must therefore keep its exact outer box and spacing.
+The practice TouchDots are drawn at fixed y-positions from `OPTION_TOP` and `OPTION_STEP`. Every option must therefore keep its exact outer box and spacing: 55px tall, 10px apart.
+
+Measured in the browser today, the option centres are at y = 215, 280, 345, 410. The current constants (236 / 60) put the taps 21px and 16px off-centre. The restyle fixes that by setting `OPTION_TOP = 215` and `OPTION_STEP = 65`. A browser check confirms each option's centre is within 2px of `OPTION_TOP + i * OPTION_STEP`.
 
 If the border goes from 2px to 1px, the vertical padding must grow by 1px on each side (`py-3` becomes `py-[13px]`) so the outer height stays the same.
 
