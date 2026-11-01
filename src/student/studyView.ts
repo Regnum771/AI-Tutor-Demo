@@ -1,10 +1,12 @@
+import { fmt } from '../live/clock';
 import { studentById } from '../live/reducer';
 import { cardsToday } from '../live/study/cards';
-import { cloMastery, forecast } from '../live/study/estimate';
+import { cloMastery } from '../live/study/estimate';
 import { todayList, type TodayRow } from '../live/study/today';
-import type { DemoState, PassBand, ReplanSignal } from '../live/types';
+import type { DemoState, ReplanSignal, StudyRecord } from '../live/types';
 import type { Card } from '../scenario/cards';
-import { ASSESSMENTS, CLOS, EXAM_DAY, fullDate, nextAssessment, shortDate, weekOf, type Assessment, type CloId } from '../scenario/course';
+import { ASSESSMENTS, CLOS, EXAM_DAY, fullDate, isAssignment, nextAssessment, nextAssignment, nextLecture, nextTest, shortDate, weekOf, type Assessment, type CloId } from '../scenario/course';
+import type { SubjectGrade } from '../scenario/grades';
 import { conceptById } from '../scenario/knowledgeGraph';
 import { MINH_ANH } from '../scenario/minhAnh';
 
@@ -13,9 +15,16 @@ export interface TodayView {
   date: string;
   examIn: string;
   examDay: boolean;
-  band: PassBand;
-  /** Out of 10. An estimate. */
-  forecast: number;
+  /** "GPA 2.30 of 4". */
+  gpa: string;
+  /** This course's marks so far, oldest first: "Quiz 1 75% · Quiz 2 42%". Percentages. */
+  marks: string;
+  /** "Lecture 7 · Equivalence laws · Tue 3 Nov"; null after the last lecture. */
+  nextLecture: string | null;
+  /** The next quiz or the exam: "Quiz 3 · Thu 12 Nov · in 12 days · CLO2, CLO3". */
+  nextAssessment: string | null;
+  /** "Assignment 2 · due Fri 6 Nov", then its mark once its day has passed: "Assignment 2 · 61%". */
+  assignment: string | null;
   reason: string | null;
   offline: boolean;
   /** Agent steps while a plan is being written with none on the phone yet. */
@@ -42,12 +51,14 @@ export interface SemesterView {
   weeks: SemesterWeek[];
   leftOut: string[];
   changes: { date: string; why: string; reason: string }[];
+  /** Previous subjects, 10-point grades with letters. */
+  previous: SubjectGrade[];
 }
 
 const WHY: Partial<Record<ReplanSignal, string>> = {
   markSwing: 'A mark moved sharply',
   disengaged: 'Practice dropped off',
-  bandChange: 'Your exam outlook changed',
+  bandChange: 'Your progress changed',
   teacherPlan: 'Your lecturer sent a plan',
 };
 
@@ -55,6 +66,29 @@ const countdown = (a: Assessment, today: number) => {
   const n = a.day - today;
   return n === 0 ? `${a.title} today` : n === 1 ? `${a.title} tomorrow` : `${a.title} in ${n} days`;
 };
+
+const inDays = (day: number, today: number) => {
+  const n = day - today;
+  return n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`;
+};
+
+/** Quiz 1 and Quiz 2 from the seed, then the record's marks, oldest first. */
+const marksLine = (q: { q1: number; q2: number }, rec: StudyRecord): string =>
+  [
+    `Quiz 1 ${q.q1}%`,
+    `Quiz 2 ${q.q2}%`,
+    ...[...rec.marks].sort((a, b) => a.day - b.day).map((m) => `${ASSESSMENTS.find((a) => a.id === m.assessment)?.title ?? m.assessment} ${m.mark}%`),
+  ].join(' · ');
+
+/** The assignment due next; once none is due, the last one with its mark. */
+function assignmentLine(today: number, rec: StudyRecord): string | null {
+  const due = nextAssignment(today);
+  if (due) return `${due.title} · due ${shortDate(due.day)}`;
+  const last = ASSESSMENTS.filter((a) => isAssignment(a) && a.day < today).at(-1);
+  if (!last) return null;
+  const mark = rec.marks.find((m) => m.assessment === last.id)?.mark;
+  return mark === undefined ? `${last.title} · ${shortDate(last.day)}` : `${last.title} · ${mark}%`;
+}
 
 const recordOf = (state: DemoState) => {
   const id = state.phone.studentId;
@@ -77,13 +111,18 @@ export function todayView(state: DemoState): TodayView | null {
   if (!r) return null;
   const { budget, done, rows } = todayList(state, r.id);
   const exam = ASSESSMENTS.find((a) => a.day === EXAM_DAY)!;
+  const test = nextTest(state.day);
+  const lecture = nextLecture(state.day, fmt(state.clock));
   return {
     name: r.student.short,
     date: fullDate(state.day),
     examIn: countdown(exam, state.day),
     examDay: state.day >= EXAM_DAY,
-    band: forecast(r.student, r.rec).band,
-    forecast: forecast(r.student, r.rec).value,
+    gpa: `GPA ${r.student.gpa.toFixed(2)} of 4`,
+    marks: marksLine(r.student.quiz, r.rec),
+    nextLecture: lecture && `Lecture ${lecture.n} · ${lecture.title} · ${shortDate(lecture.day)}`,
+    nextAssessment: test && `${test.title} · ${shortDate(test.day)} · ${inDays(test.day, state.day)} · ${test.clos.join(', ')}`,
+    assignment: assignmentLine(state.day, r.rec),
     reason: r.rec.plan?.reason ?? null,
     offline: r.rec.plan?.source === 'offline',
     planning: r.rec.planning && !r.rec.plan ? r.rec.planning.steps : null,
@@ -149,5 +188,5 @@ export function semesterView(state: DemoState): SemesterView | null {
     const why = WHY[c.signal];
     return why ? [{ date: shortDate(c.day), why, reason: c.reason }] : [];
   });
-  return { weeks, leftOut: plan?.leftOut ?? [], changes };
+  return { weeks, leftOut: plan?.leftOut ?? [], changes, previous: r.student.history };
 }

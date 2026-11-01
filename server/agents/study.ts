@@ -41,7 +41,7 @@ Rules:
 - Do not fill every minute if less will do. A plan the student can keep to beats a full one.
 - left_out names what you are deliberately dropping when time cannot cover everything. Leave it empty otherwise. Be honest: never imply everything fits when it does not.
 
-Write reason as one short sentence to the student, in plain English, without figures. Use the student's name if you use a name at all; do not assume anyone's pronouns.
+Write reason as one short sentence to the student, in plain English, without figures and without mentioning the forecast, a band or the chance of passing. Use the student's name if you use a name at all; do not assume anyone's pronouns.
 
 Always finish with propose_study_plan.`;
 

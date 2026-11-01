@@ -6,6 +6,11 @@ import { PracticeScreen } from './screens/PracticeScreen';
 import { ProgressScreen } from './screens/ProgressScreen';
 import { SC9 } from '../scenario/practice';
 import { ThemeScope } from '../ui/theme';
+import { seedState } from '../live/seed';
+import { ensureRecord } from '../live/study/record';
+import type { DemoState } from '../live/types';
+import { SemesterScreen, TodayScreen } from './screens/StudyScreens';
+import { semesterView, todayView } from './studyView';
 
 describe('student screens', () => {
   it('plan screen: serif course title, sans name, one Up next', () => {
@@ -62,5 +67,27 @@ describe('student screens', () => {
     expect(greetingFor('09:15')).toBe('Good morning');
     expect(greetingFor('17:00')).toBe('Good afternoon');
     expect(html(<PlanScreen local={5000} variant="updated" clock="20:42" />)).toContain('Good evening');
+  });
+});
+
+describe('study screens', () => {
+  const ready = (): DemoState => {
+    const s = seedState();
+    const rec = ensureRecord(s, 's17');
+    rec.reported = { weekday: 30, weekend: 60 };
+    rec.plan = { createdDay: 40, reason: 'Implication first.', leftOut: [], source: 'agents', days: [{ day: 40, minutes: 20, clo: 'CLO1', concepts: ['implication'] }] };
+    s.phone = { ...s.phone, studentId: 's17', screen: 'today' };
+    return s;
+  };
+  it('Today shows GPA, marks, the next lecture, assessment and assignment, and never a band or forecast', () => {
+    const out = html(<TodayScreen view={todayView(ready())!} onRow={() => {}} onNextDay={() => {}} onNextWeek={() => {}} />);
+    for (const text of ['GPA 2.30 of 4', 'Quiz 1 75% · Quiz 2 42%', 'Lecture 7 · Equivalence laws · Tue 3 Nov', 'Quiz 3 · Thu 12 Nov · in 12 days · CLO2, CLO3', 'Assignment 2 · due Fri 6 Nov']) expect(out).toContain(text);
+    for (const text of ['Likely', 'At risk', 'Unlikely', 'out of 10']) expect(out).not.toContain(text);
+  });
+  it('Semester lists previous subjects with grade and letter', () => {
+    const out = html(<SemesterScreen view={semesterView(ready())!} />);
+    expect(out).toContain('Previous subjects');
+    expect(out).toContain('Introduction to Logic · Semester 2 · 2025');
+    expect(out).toContain('6.8 · C+');
   });
 });

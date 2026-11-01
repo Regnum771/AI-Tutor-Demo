@@ -31,10 +31,34 @@ describe('study views', () => {
     expect(list).toHaveLength(55);
     expect(list[0]).toMatchObject({ id: 's17', name: 'Nguyễn Minh Anh' });
   });
-  it('builds Today: countdown, estimate, reason and rows', () => {
+  it('builds Today: countdown, facts, reason and rows, with no band or forecast', () => {
     const v = todayView(ready())!;
-    expect(v).toMatchObject({ name: 'Minh Anh', examIn: 'Final exam in 24 days', band: 'At risk', reason: 'Implication first.', offline: false, planning: null, examDay: false });
+    expect(v).toMatchObject({
+      name: 'Minh Anh', examIn: 'Final exam in 24 days', gpa: 'GPA 2.30 of 4', marks: 'Quiz 1 75% · Quiz 2 42%',
+      nextLecture: 'Lecture 7 · Equivalence laws · Tue 3 Nov', nextAssessment: 'Quiz 3 · Thu 12 Nov · in 12 days · CLO2, CLO3',
+      assignment: 'Assignment 2 · due Fri 6 Nov', reason: 'Implication first.', offline: false, planning: null, examDay: false,
+    });
+    expect(v).not.toHaveProperty('band');
+    expect(v).not.toHaveProperty('forecast');
     expect(v.rows.map(rowLabel)).toEqual(['4 flip cards', 'Practise implication']);
+  });
+  it('adds marks as they come, the assignment’s mark after its day, and the lecture by the clock', () => {
+    const s = ready();
+    s.day = 47;
+    s.study.s17.marks.push({ assessment: 'a2', mark: 61, day: 46 });
+    expect(todayView(s)).toMatchObject({ marks: 'Quiz 1 75% · Quiz 2 42% · Assignment 2 61%', assignment: 'Assignment 2 · 61%', nextAssessment: 'Quiz 3 · Thu 12 Nov · in 5 days · CLO2, CLO3' });
+    s.day = 43;
+    s.clock = 7 * 60 + 30;
+    expect(todayView(s)?.nextLecture).toBe('Lecture 7 · Equivalence laws · Tue 3 Nov');
+    s.clock = 9 * 60;
+    expect(todayView(s)?.nextLecture).toBe('Lecture 8 · Logic in real problems · Tue 10 Nov');
+  });
+  it('lists previous subjects, and tells a band change only as progress', () => {
+    const s = ready();
+    s.study.s17.replans.push({ day: 45, signal: 'bandChange', reason: 'Your progress changed, so the plan did too.' });
+    const v = semesterView(s)!;
+    expect(v.previous).toEqual(s.students[16].history);
+    expect(v.changes[0]).toEqual({ date: 'Thu 5 Nov', why: 'Your progress changed', reason: 'Your progress changed, so the plan did too.' });
   });
   it('shows the agent’s lines while the first plan is written', () => {
     const s = ready();

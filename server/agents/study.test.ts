@@ -103,6 +103,9 @@ describe('study plan checks', () => {
 });
 
 describe('offline planner', () => {
+  it('tells a band change only as progress', () => {
+    expect(cannedStudyPlan(ready(), 's17', 'bandChange').reason).toBe('Your progress changed, so the plan did too.');
+  });
   it('never schedules a concept before its lecture, and holds CLO3 until Lecture 8', () => {
     for (const day of [40, 43, 49, 50]) {
       const s = ready();
@@ -216,6 +219,7 @@ describe('the prompt', () => {
     expect(STUDY_SYSTEM).toContain('exactly one entry for every day');
     expect(STUDY_SYSTEM).toContain('left_out');
     expect(STUDY_SYSTEM).toContain("do not assume anyone's pronouns");
+    expect(STUDY_SYSTEM).toContain('without mentioning the forecast, a band or the chance of passing');
   });
   it('gives the agent the calendar, the estimate and the reason for the plan', () => {
     const s = ready();

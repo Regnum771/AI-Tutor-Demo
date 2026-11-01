@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { PASS } from '../../live/study/estimate';
 import type { TodayRow } from '../../live/study/today';
 import type { CardRating, StudyDay } from '../../live/types';
 import type { Card } from '../../scenario/cards';
@@ -18,6 +17,10 @@ const ROW = 'flex w-full items-center gap-3 border-b border-egg-line py-3.5 text
 
 const TABS: { id: StudyTab; label: string }[] = [
   { id: 'today', label: 'Today' }, { id: 'choosePractice', label: 'Practise' }, { id: 'cards', label: 'Cards' }, { id: 'semester', label: 'Semester' },
+];
+
+const FACTS: [label: string, key: 'nextLecture' | 'nextAssessment' | 'assignment'][] = [
+  ['Next lecture', 'nextLecture'], ['Next assessment', 'nextAssessment'], ['Assignment', 'assignment'],
 ];
 
 export function TabBar({ active, onTab }: { active: StudyTab; onTab(tab: StudyTab): void }) {
@@ -93,8 +96,16 @@ export function TodayScreen({ view, onRow, onNextDay, onNextWeek }: { view: Toda
       <div className="text-[26px] font-bold">{view.name}</div>
       <div className="mt-4 rounded-3xl bg-egg-ink p-5 text-egg-card">
         <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-egg-card/60">{view.examIn}</div>
-        <div className="mt-2 font-serif text-[34px] leading-none">{view.band}</div>
-        <div className="mt-1.5 text-[13px] text-egg-card/75">{`Your forecast: ${view.forecast.toFixed(1)} out of 10, and ${PASS.toFixed(1)} is a pass. It is an estimate, not a result.`}</div>
+        <div className="mt-2 font-serif text-[30px] leading-none">{view.gpa}</div>
+        <div className="mt-1.5 text-[13px] text-egg-card/75">{view.marks}</div>
+        <dl className="mt-4 space-y-2.5">
+          {FACTS.map(([label, key]) => view[key] && (
+            <div key={key}>
+              <dt className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-egg-card/60">{label}</dt>
+              <dd className="text-[14px]">{view[key]}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
       {view.planning && (
         <div className="mt-4 rounded-2xl bg-egg-tint p-4">
@@ -210,6 +221,17 @@ export function SemesterScreen({ view }: { view: SemesterView }) {
             <div key={i} className="mt-2 rounded-2xl bg-egg-tint p-3 text-[14px] leading-snug">
               <div className="font-semibold">{`${c.date} · ${c.why}`}</div>
               <div className="text-egg-mute">{c.reason}</div>
+            </div>
+          ))}
+        </section>
+      )}
+      {view.previous.length > 0 && (
+        <section className="mt-5">
+          <Eyebrow>Previous subjects</Eyebrow>
+          {view.previous.map((h) => (
+            <div key={h.subject} className="mt-1 flex justify-between gap-3 text-[14px]">
+              <span>{`${h.subject} · ${h.term}`}</span>
+              <span className="shrink-0 font-mono">{`${h.grade.toFixed(1)} · ${h.letter}`}</span>
             </div>
           ))}
         </section>

@@ -11,7 +11,7 @@ const REASON: Record<ReplanSignal, (focus: string, exam: string) => string> = {
   setup: (focus, exam) => `This plan works back from the exam on ${exam}, with the most time on ${focus}.`,
   markSwing: (focus) => `Your latest mark changed the picture, so more time now goes to ${focus}.`,
   disengaged: (focus) => `The last few days were quieter, so this plan is lighter and stays on ${focus}.`,
-  bandChange: (focus) => `Your exam outlook changed, so more time now goes to ${focus}.`,
+  bandChange: () => 'Your progress changed, so the plan did too.',
   teacherPlan: (focus) => `Your lecturer sent you a plan, so your own study now fits around it, with the rest on ${focus}.`,
 };
 
