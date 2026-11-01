@@ -136,6 +136,7 @@ describe('prompts carry the eval fixes', () => {
   it('SAS answers exam questions from the outlook, as an estimate', () => {
     expect(SAS_SYSTEM).toContain('get_exam_outlook');
     expect(SAS_SYSTEM).toContain('an estimate');
+    expect(SAS_SYSTEM).toContain('find_students with mistake converse');
   });
   it('SAS keeps plain facts plan-free and knows the plan limits', () => {
     expect(SAS_SYSTEM).toContain('A factual lookup (a score, a count, a list) never sets needs_plan.');

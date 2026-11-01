@@ -7,6 +7,7 @@ import { fullDate } from '../../src/scenario/course';
 import { GROUPS } from '../../src/scenario/classroom';
 import { CONCEPTS, conceptById, type ConceptId } from '../../src/scenario/knowledgeGraph';
 import { TWIN_FOCUS } from '../../src/scenario/minhAnh';
+import { choseConverse } from '../../src/scenario/roster';
 
 export const CONCEPT_IDS: ConceptId[] = CONCEPTS.map((c) => c.id);
 
@@ -23,11 +24,12 @@ const EVIDENCE_KINDS: EvidenceKind[] = ['quiz', 'activity', 'attendance', 'messa
 
 export const READ_TOOLS: Anthropic.Beta.BetaTool[] = [
   tool('get_class_overview', 'Class KPIs, average mastery per concept, Week 6 topic mastery per tutorial group, the escalation list and class-level evidence (with ids you can cite).', {}),
-  tool('find_students', 'List students matching filters (use "" or -1 to leave a filter out). Returns id, name, group, status, escalation and topic mastery, plus the filtered concept value. "examRisk" means students with a study plan whose exam estimate is At risk or Unlikely.', {
+  tool('find_students', 'List students matching filters (use "" or -1 to leave a filter out). Returns id, name, group, status, escalation and topic mastery, plus the filtered concept value. "examRisk" means students with a study plan whose exam estimate is At risk or Unlikely. mistake "converse" names the students whose own Quiz 2 Q4 response chose the converse q → p.', {
     status: { type: 'string', enum: ['', 'onTrack', 'support', 'highRisk', 'escalated', 'examRisk'] },
     concept: { type: 'string', enum: ['', ...CONCEPT_IDS] },
     below: { type: 'number', description: 'With concept: only students below this mastery (0–1). -1 for no limit.' },
     name: { type: 'string', description: 'Part of a name (accents optional), or "".' },
+    mistake: { type: 'string', enum: ['', 'converse'], description: 'converse: only students whose Quiz 2 Q4 answer chose the converse q → p.' },
   }),
   tool('get_student', "One student's learning twin: mastery per concept, status, quiz scores, practice per week, gaps (focus concepts below 0.50) and plans.", {
     student_id: { type: 'string' },
@@ -82,6 +84,7 @@ function find(state: DemoState, input: Record<string, unknown>) {
   const concept = CONCEPT_IDS.find((c) => c === input.concept);
   const below = Number(input.below ?? -1);
   if (concept && below >= 0) list = list.filter((s) => s.mastery[concept] < below);
+  if (input.mistake === 'converse') list = list.filter(choseConverse);
   return list.map((s) => ({
     id: s.id, name: s.name, group: s.group, status: s.status, escalated: s.escalated, topicMastery: topicMastery(s.mastery),
     ...(concept ? { [concept]: s.mastery[concept] } : {}),

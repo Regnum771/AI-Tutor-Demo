@@ -96,6 +96,14 @@ describe('exam outlook', () => {
     });
     expect(READ_TOOLS.find((t) => t.name === 'get_exam_outlook')!.description).toContain('marks');
   });
+  it('names the students whose own Quiz 2 Q4 answer chose the converse', () => {
+    const named = find({ mistake: 'converse' });
+    const figure = Number(/(\d+) of \d+ chose the converse/.exec(state.classEvidence.find((e) => e.id === 'class-quiz2-q4')!.text)![1]);
+    expect(named).toHaveLength(figure);
+    expect(named.map((s) => s.id)).toContain('s17');
+    for (const s of named) expect(state.students.find((x) => x.id === s.id)!.evidence.find((e) => e.id === `${s.id}-quiz2-q4`)!.text).toMatch(/converse/i);
+    expect(find({ mistake: '' }).length).toBe(state.students.length);
+  });
   it('finds students who may not pass, among those with a plan', () => {
     const state = seedState();
     expect(readTool(state, 'find_students', { status: 'examRisk', concept: '', below: -1, name: '' })).toEqual([]);
