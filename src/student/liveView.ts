@@ -83,13 +83,14 @@ export function progressView(state: DemoState): ProgressView | null {
   if (!plan) return null;
   const student = studentById(state, plan.studentIds[0])!;
   const target = targetOf(plan);
-  const practice = student.evidence.filter((e) => e.kind === 'practice' && e.planId === plan.id && e.result !== 'skipped');
-  const correct = practice.filter((e) => e.result === 'correct').length;
+  // One 'correct' row per question, carrying the try it came on.
+  const questions = student.evidence.filter((e) => e.kind === 'practice' && e.planId === plan.id && e.result === 'correct');
+  const firstTry = questions.filter((e) => e.tries === 1).length;
   return {
     concept: conceptById(target).label,
     from: Math.round((plan.baseline?.[target] ?? student.mastery[target]) * 100),
     to: Math.round(student.mastery[target] * 100),
-    accuracy: practice.length ? Math.round((correct / practice.length) * 100) : 0,
+    accuracy: questions.length ? Math.round((firstTry / questions.length) * 100) : 0,
     items: plan.sessions.map((s) => ({ title: s.title, when: s.time })),
     done: plan.sessions.length,
     remaining: state.phone.updated ? 'Next steps are ready for tomorrow' : null,

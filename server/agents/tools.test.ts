@@ -98,6 +98,18 @@ describe('exam outlook', () => {
     expect(READ_TOOLS.find((t) => t.name === 'get_exam_outlook')!.description).toContain('practisedLast7Days');
     expect(READ_TOOLS.find((t) => t.name === 'get_exam_outlook')!.description).toContain('marks');
   });
+  it('reports average tries per question in the last 7 days', () => {
+    const state = seedState();
+    expect(readTool(state, 'get_exam_outlook', { student_id: 's17' })).toMatchObject({ averageTries: null });
+    expect(readTool(state, 'get_student', { student_id: 's17' })).toMatchObject({ averageTries: null });
+    const rec = ensureRecord(state, 's17');
+    const base = { itemId: 'implication-1', day: 40, correct: true, firstTry: false };
+    rec.attempts.push({ ...base, tries: 1 }, { ...base, tries: 2 });
+    expect(readTool(state, 'get_exam_outlook', { student_id: 's17' })).toMatchObject({ averageTries: 1.5 });
+    expect(readTool(state, 'get_student', { student_id: 's17' })).toMatchObject({ averageTries: 1.5 });
+    expect(READ_TOOLS.find((t) => t.name === 'get_exam_outlook')!.description).toContain('averageTries');
+    expect(READ_TOOLS.find((t) => t.name === 'get_student')!.description).toContain('averageTries');
+  });
   it('names the students whose own Quiz 2 Q4 answer chose the converse', () => {
     const named = find({ mistake: 'converse' });
     const figure = Number(/(\d+) of \d+ chose the converse/.exec(state.classEvidence.find((e) => e.id === 'class-quiz2-q4')!.text)![1]);

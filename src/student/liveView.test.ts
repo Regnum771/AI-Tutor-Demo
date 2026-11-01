@@ -28,25 +28,25 @@ describe('phone views', () => {
     expect(p).toMatchObject({ concept: 'Logical equivalence', from: 35, accuracy: 100, done: 2, remaining: null, backLabel: 'Back to plan' });
     expect(p.to).toBeGreaterThan(60);
   });
-  it('accuracy leaves out the rows Skip wrote', () => {
+  it('accuracy counts questions right on try 1, and leaves out the rows Skip wrote', () => {
     let s = ok(phoneOpen(ok(phoneSkip(ok(phoneShowPlan(sent())))), 1));
     const [first, ...rest] = sessionItems('equivalence', true);
     const wrong = first.correct === 0 ? 1 : 0;
     s = ok(phoneNext(ok(phoneAnswer(ok(phoneAnswer(s, wrong)), first.correct))));
     s = ok(phoneNext(ok(phoneAnswer(s, rest[0].correct))));
     s = ok(phoneAnswer(s, rest[1].correct));
-    // Four answers, three of them correct: the skipped rows do not count.
-    expect(progressView(s)?.accuracy).toBe(75);
+    // Three questions, two right on try 1: the skipped rows do not count.
+    expect(progressView(s)?.accuracy).toBe(67);
   });
-  it('accuracy counts only this plan’s session answers, wrong ones as wrong, and leaves self-practice out', () => {
+  it('accuracy counts only this plan’s questions and leaves self-practice out', () => {
     const base = sent();
     base.plans[0].sessions.forEach((x) => { x.concept = 'deMorgan'; });
     base.students.find((x) => x.id === 's17')!.evidence.push(
       { id: 's17-practice-self', kind: 'practice', source: 'Beyond practice', when: '09:00', concept: 'deMorgan', text: 'De Morgan: “a correct negation?” · correct first try' },
     );
     const s = ok(playOut(ok(phoneOpen(ok(phoneSkip(ok(phoneShowPlan(base)))), 1)), true));
-    // Three wrong, three right, in this plan's session: half. The self-practice row and the skipped rows do not count.
-    expect(progressView(s)?.accuracy).toBe(50);
+    // Three questions, none right on try 1. The self-practice row and the skipped rows do not count.
+    expect(progressView(s)?.accuracy).toBe(0);
   });
   it('the review lists each question with its tries in order, the answer and the hint for each wrong choice', () => {
     let s = ok(phoneOpen(sent(), 0));

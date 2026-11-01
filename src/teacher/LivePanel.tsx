@@ -183,6 +183,7 @@ function RoadToExam({ s, state }: { s: StudentProfile; state: DemoState }) {
         </div>
       </div>
       {stopped && <div className="mt-3 text-[13.5px] font-semibold text-egg-accent-ink">{`Stopped practising: ${stopped.done} of ${stopped.planned} min in the last 7 days.`}</div>}
+      {o.averageTries !== null && <div className="mt-3 text-[13.5px] text-egg-ink">{`${o.averageTries.toFixed(1)} tries per question this week`}</div>}
       {latest && <div className="mt-3 text-[13.5px] text-egg-ink">{`${latest.title}: ${latest.mark}`}</div>}
       {o.lastChange && <div className="mt-3 text-[13.5px] text-egg-ink">{`${o.lastChange.date}: ${o.lastChange.reason}`}</div>}
     </Section>

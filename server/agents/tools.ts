@@ -4,6 +4,7 @@ import { classKpis, topicMastery } from '../../src/live/mastery';
 import type { DemoState, EvidenceKind, StudentProfile } from '../../src/live/types';
 import { examOutlook, examRisk } from '../../src/live/study/outlook';
 import { forecast } from '../../src/live/study/estimate';
+import { averageTries } from '../../src/live/study/record';
 import { fullDate, LECTURES, lectureLabel, shortDate } from '../../src/scenario/course';
 import { GROUPS } from '../../src/scenario/classroom';
 import { CONCEPTS, conceptById, type ConceptId } from '../../src/scenario/knowledgeGraph';
@@ -34,7 +35,7 @@ export const READ_TOOLS: Anthropic.Beta.BetaTool[] = [
     name: { type: 'string', description: 'Part of a name (accents optional), or "".' },
     mistake: { type: 'string', enum: ['', 'converse'], description: 'converse: only students whose Quiz 2 Q4 answer chose the converse q → p.' },
   }),
-  tool('get_student', "One student's learning twin: mastery per concept, status, quiz scores (percent), practice per week, gaps (focus concepts below 0.50) and plans. Also gpa (4-point scale), history (previous subjects, 10-point grades with letters) and forecast (out of 10 now, with its band; an estimate). Mastery is 0 to 1.", {
+  tool('get_student', "One student's learning twin: mastery per concept, status, quiz scores (percent), practice per week, averageTries (mean tries per question answered in the last 7 days, null with none), gaps (focus concepts below 0.50) and plans. Also gpa (4-point scale), history (previous subjects, 10-point grades with letters) and forecast (out of 10 now, with its band; an estimate). Mastery is 0 to 1.", {
     student_id: { type: 'string' },
   }),
   tool('get_evidence', "A student's evidence entries (quiz items, LMS activity, attendance, messages, TA notes, records, practice). Cite entries by id.", {
@@ -44,7 +45,7 @@ export const READ_TOOLS: Anthropic.Beta.BetaTool[] = [
   tool('compare_students', 'Mastery per concept for several students side by side.', {
     student_ids: { type: 'array', items: { type: 'string' } },
   }),
-  tool('get_exam_outlook', "A student's road to the final exam: forecast out of 10 now (pass 4.0), the forecast if the current plan is kept, and the band (all estimates), mastery per learning outcome (CLO), minutes planned and done against the current plan, practisedLast7Days (minutes done and planned over the last 7 days; little or nothing done means the student has stopped practising), assessment marks so far (for example Quiz 3), the next assessment, and the last change to the study plan with its reason. setUp is false until the student has set up on the phone.", {
+  tool('get_exam_outlook', "A student's road to the final exam: forecast out of 10 now (pass 4.0), the forecast if the current plan is kept, and the band (all estimates), mastery per learning outcome (CLO), minutes planned and done against the current plan, practisedLast7Days (minutes done and planned over the last 7 days; little or nothing done means the student has stopped practising), averageTries (mean tries per question answered in the last 7 days, null with none), assessment marks so far (for example Quiz 3), the next assessment, and the last change to the study plan with its reason. setUp is false until the student has set up on the phone.", {
     student_id: { type: 'string' },
   }),
   tool('get_class_questions', 'What students have been asking on Zalo, email, WhatsApp and the LMS forum, grouped into FAQ entries: the question, what confuses them, the concept, how many students and messages, when they ask relative to the lectures, and the evidence ids of the messages (cite these).', {}),
@@ -104,6 +105,7 @@ function twin(state: DemoState, s: StudentProfile) {
   return {
     id: s.id, name: s.name, group: s.group, status: s.status, escalated: s.escalated, mastery: s.mastery,
     quiz: s.quiz, practicePerWeek: s.practicePerWeek,
+    averageTries: averageTries(state.study[s.id], state.day),
     gpa: s.gpa,
     history: s.history,
     forecast: forecast(s, state.study[s.id]),
