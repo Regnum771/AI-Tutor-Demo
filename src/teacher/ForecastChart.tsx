@@ -3,13 +3,14 @@ import { EXAM_DAY } from '../scenario/course';
 import { egg } from '../ui/theme';
 
 export interface ChartPoint { day: number; value: number }
-export interface ChartMarker { day: number; label: string }
+/** Assessments label the bottom edge; interventions label the top edge, so the two never collide. */
+export interface ChartMarker { day: number; label: string; row: 'assessment' | 'intervention' }
 
 const W = 760;
 const H = 220;
 const LEFT = 28;
 const RIGHT = 70;
-const TOP = 12;
+const TOP = 24;
 const BOTTOM = 30;
 const x = (day: number) => LEFT + (day / EXAM_DAY) * (W - LEFT - RIGHT);
 const y = (v: number) => TOP + (1 - v / 10) * (H - TOP - BOTTOM);
@@ -30,10 +31,10 @@ export function ForecastChart({ points, projection, markers }: { points: ChartPo
           <text x={W - RIGHT + 6} y={y(v) + 4} fontSize="11" fill={egg('mute')}>{label}</text>
         </g>
       ))}
-      {markers.map((m) => (
-        <g key={`${m.day}-${m.label}`}>
-          <line x1={x(m.day)} x2={x(m.day)} y1={TOP} y2={y(0)} stroke={egg('line')} />
-          <text x={x(m.day)} y={H - BOTTOM + 14} fontSize="10" textAnchor="middle" fill={egg('mute')}>{m.label}</text>
+      {markers.map((m, i) => (
+        <g key={i}>
+          <line x1={x(m.day)} x2={x(m.day)} y1={m.row === 'intervention' ? TOP - 6 : TOP} y2={y(0)} stroke={egg('line')} strokeDasharray={m.row === 'intervention' ? '3 3' : undefined} />
+          <text data-marker-row={m.row} x={x(m.day)} y={m.row === 'intervention' ? TOP - 10 : H - BOTTOM + 14} fontSize="10" textAnchor="middle" fill={egg(m.row === 'intervention' ? 'accent-ink' : 'mute')}>{m.label}</text>
         </g>
       ))}
       {points.length > 1 && (

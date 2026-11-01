@@ -27,11 +27,13 @@ export function StudentProfile({ studentId, entryId, onClose, onAsk, onOpenChat 
   const hi = useRef<HTMLElement | null>(null);
   useEffect(() => { if (s) setTab(tabFor(s, entryId)); }, [studentId, entryId]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { hi.current?.scrollIntoView?.({ block: 'center' }); }, [tab, entryId]);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeRef.current(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, []);
   if (!live || !s) return null;
 
   const state = live.state;
@@ -40,11 +42,13 @@ export function StudentProfile({ studentId, entryId, onClose, onAsk, onOpenChat 
   const lit = (id: string) => id === entryId;
   const keep = (id: string) => (id === entryId ? (el: HTMLElement | null) => { hi.current = el; } : undefined);
   const markers: ChartMarker[] = [
-    ...ASSESSMENTS.map((a) => ({ day: a.day, label: SHORT[a.id] ?? a.title })),
+    ...ASSESSMENTS.map((a) => ({ day: a.day, label: SHORT[a.id] ?? a.title, row: 'assessment' as const })),
     ...state.plans
       .filter((p) => p.studentIds.includes(s.id) && ['sent', 'autoApproved', 'done', 'approved'].includes(p.status) && p.kind !== 'classActivity')
-      .map((p) => ({ day: p.date, label: p.kind === 'pathway' ? 'Pathway' : 'Check-in' })),
+      .map((p) => ({ day: p.date, label: p.kind === 'pathway' ? 'Pathway' : 'Check-in', row: 'intervention' as const })),
   ];
+  const series = forecastSeries(s, rec);
+  const points = rec ? [...series.filter((p) => p.day !== state.day), { day: state.day, value: now.value }] : series;
   const empty = (text: string) => <div className="py-6 text-[14px] text-egg-mute">{text}</div>;
 
   const body = (() => {
@@ -139,7 +143,7 @@ export function StudentProfile({ studentId, entryId, onClose, onAsk, onOpenChat 
         <div className="min-h-0 flex-1 overflow-y-auto px-7 pb-7">
           <div className="mt-5">
             <Eyebrow>Forecast out of 10 · an estimate</Eyebrow>
-            <ForecastChart points={forecastSeries(s, rec)} projection={rec?.plan ? { day: EXAM_DAY, value: projection(s, rec, state.day) } : null} markers={markers} />
+            <ForecastChart points={points} projection={rec?.plan ? { day: EXAM_DAY, value: projection(s, rec, state.day) } : null} markers={markers} />
           </div>
           <div className="mt-5 flex gap-1 border-b border-egg-ink/80">
             {PROFILE_TABS.map((t) => (
