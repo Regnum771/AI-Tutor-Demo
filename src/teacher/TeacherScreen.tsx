@@ -10,6 +10,7 @@ import { STUDENTS, type Student } from '../scenario/classroom';
 import { MINH_ANH } from '../scenario/minhAnh';
 import { LiveText } from './LiveText';
 import { Blocks } from './Blocks';
+import { Calendar } from './CalendarTab';
 import { Classroom, needSupportAt } from './Classroom';
 import { ADAPT, FALLBACK, QUESTION_SHORT, studentBrief, TOPICS, type Block, type ContextId } from './conversations';
 import { ContextPanel } from './ContextPanel';
@@ -100,7 +101,7 @@ export function liveTodayRows(s: DemoState): AttentionRow[] {
 export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFrame; actions?: TeacherActions; composer?: ComposerOverride }) {
   const { view, panel } = frame;
   const empty = view === 'chat' && frame.messages.length === 0 && frame.thinking === null;
-  const title = view === 'classroom' ? 'Classroom' : frame.title ?? 'New conversation';
+  const title = view === 'classroom' ? 'Classroom' : view === 'calendar' ? 'Calendar' : frame.title ?? 'New conversation';
   const live = useLive();
   const isAnswer = (m: FrameMsg) => m.role === 'assistant' && (m.kind === 'answer' || (m.kind === 'live' && m.live?.source !== 'system'));
   const hasAnswer = frame.messages.some((m) => m.role === 'assistant' && (m.topic || m.live?.panel));
@@ -180,6 +181,8 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
 
         {view === 'classroom' ? (
           <Classroom cls={frame.classroom} studentApproved={frame.approved.includes('student')} actions={actions} />
+        ) : view === 'calendar' ? (
+          <Calendar />
         ) : empty ? (
           <EmptyState frame={frame} actions={actions} composer={<Composer value={composerValue} onChange={composer?.onChange} readOnly={!composer} disabled={composer?.disabled} onSend={send} big />} />
         ) : (
@@ -245,6 +248,7 @@ function Sidebar({ badge, view, active, actions }: { badge: number; view: View; 
       <div className="mt-5 space-y-0.5">
         {nav('chat', 'Chat')}
         {nav('classroom', 'Classroom')}
+        {live && nav('calendar', 'Calendar')}
       </div>
 
       <div className="mt-7"><Eyebrow className="text-side-mute">Today</Eyebrow></div>
