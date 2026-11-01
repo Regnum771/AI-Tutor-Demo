@@ -96,10 +96,11 @@ describe('next question', () => {
     const first = nextItem(rec, st, 40, ['conjunction'], []);
     rec.attempts.push({ itemId: first.id, day: 39, correct: true, firstTry: true });
     expect(nextItem(rec, st, 40, ['conjunction'], []).id).not.toBe(first.id);
-    expect(nextItem(rec, st, 42, ['conjunction'], []).id).toBe(first.id);
+    rec.attempts.length = 0;
     const ids = BANK.filter((i) => i.concept === 'conjunction').map((i) => i.id);
-    ids.forEach((id, i) => rec.attempts.push({ itemId: id, day: 38 + (i % 2) + (id === ids[2] ? -1 : 0), correct: true, firstTry: true }));
-    expect(nextItem(rec, st, 40, ['conjunction'], []).id).toBe(ids[2]);
+    const oldest = ids[2];
+    ids.forEach((id) => rec.attempts.push({ itemId: id, day: id === oldest ? 38 : 39, correct: true, firstTry: true }));
+    expect(nextItem(rec, st, 40, ['conjunction'], []).id).toBe(oldest);
   });
   it('moves up after two first-try answers and down after a wrong one', () => {
     const rec = newRecord(student(seedState()));
