@@ -118,6 +118,14 @@ describe('phone flow', () => {
   });
 });
 
+describe('the story stops at the exam', () => {
+  it('opening a session dated past the exam day lands on the exam day', () => {
+    const s = ok(approvePlan(stateWithPlan(), 'p1'));
+    s.plans[0].date = 67;
+    expect(ok(phoneOpen(s, 0)).day).toBe(64);
+  });
+});
+
 describe('dates', () => {
   it('a follow-up keeps its own baseline, and opening it moves the story to its date', () => {
     const first = ok(approvePlan(stateWithPlan(), 'p1'));

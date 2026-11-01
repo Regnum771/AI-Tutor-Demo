@@ -1,3 +1,4 @@
+import { EXAM_DAY } from '../scenario/course';
 import { conceptById } from '../scenario/knowledgeGraph';
 import { itemById, sessionItems, type BankItem } from '../scenario/practiceBank';
 import { fmt, parseTime, TONIGHT } from './clock';
@@ -5,7 +6,7 @@ import { afterAnswer, statusFor } from './mastery';
 import { IDLE_PHONE } from './seed';
 import { noteAttempt } from './study/record';
 import { nextItem, SELF_SESSION } from './study/select';
-import type { AssistantMsg, DemoState, Plan, StudentProfile } from './types';
+import type { AssistantMsg, DemoState, Evidence, Plan, StudentProfile } from './types';
 
 export type Result = { ok: true; state: DemoState; finishedCheck?: boolean } | { ok: false; error: string };
 
@@ -115,7 +116,7 @@ export function phoneShowPlan(state: DemoState): Result {
 /** Opening a session moves the story to it: forward to its date, then forward to its time. */
 function moveClockTo(s: DemoState, plan: Plan, time: string) {
   if (plan.date > s.day) {
-    s.day = plan.date;
+    s.day = Math.min(EXAM_DAY, plan.date);
     s.clock = 0;
   }
   const t = parseTime(time);
@@ -133,11 +134,11 @@ export function phoneOpen(state: DemoState, index: number): Result {
   return done(s);
 }
 
-function record(s: DemoState, student: StudentProfile, item: BankItem, outcome: string) {
+function record(s: DemoState, student: StudentProfile, item: BankItem, outcome: string, mark: Pick<Evidence, 'result' | 'planId'>) {
   const n = student.evidence.filter((e) => e.kind === 'practice').length + 1;
   student.evidence.push({
     id: `${student.id}-practice-${n}`, kind: 'practice', source: 'Beyond practice', when: fmt(s.clock), concept: item.concept,
-    text: `${conceptById(item.concept).label}: “${item.prompt}” · ${outcome}`,
+    text: `${conceptById(item.concept).label}: “${item.prompt}” · ${outcome}`, ...mark,
   });
 }
 
@@ -155,7 +156,7 @@ export function phoneAnswer(state: DemoState, option: number): Result {
   if (rec) noteAttempt(rec, item, s.day, correct, correct && !s.phone.hinted, !s.phone.self);
   student.mastery[item.concept] = afterAnswer(student.mastery[item.concept], correct, s.phone.hinted);
   student.status = statusFor(student.mastery);
-  record(s, student, item, correct ? (s.phone.hinted ? 'correct after a hint' : 'correct first try') : `chose ${item.options[option]}`);
+  record(s, student, item, correct ? (s.phone.hinted ? 'correct after a hint' : 'correct first try') : `chose ${item.options[option]}`, { result: correct ? 'correct' : 'wrong', planId: s.phone.self ? undefined : s.phone.planId ?? undefined });
   s.phone = { ...s.phone, result: correct ? 'right' : 'wrong', lastOption: option, hinted: s.phone.hinted || !correct };
   return done(s);
 }
@@ -201,7 +202,7 @@ export function phoneSkip(state: DemoState): Result {
     if (i >= checkIndex || s.phone.done.includes(i) || !session.concept) return;
     for (const item of sessionItems(session.concept, false)) {
       student.mastery[item.concept] = afterAnswer(student.mastery[item.concept], true, true);
-      record(s, student, item, 'correct after a hint (skipped ahead)');
+      record(s, student, item, 'correct after a hint (skipped ahead)', { result: 'skipped', planId: plan.id });
     }
     s.phone.done = [...s.phone.done, i];
   });

@@ -15,6 +15,9 @@ export interface Evidence {
   /** Story-time label, e.g. "Week 6" or "17:04". */
   when: string;
   concept?: ConceptId;
+  /** Live practice only: how the answer went, and the teacher plan it belonged to (none for self-practice). Scripted screens never read these. */
+  result?: 'correct' | 'wrong' | 'skipped';
+  planId?: string;
 }
 
 export interface StudentProfile {
@@ -53,7 +56,7 @@ export interface Plan {
   title: string;
   /** pathway: one id; classActivity: the affected students; checkIns: one per session. */
   studentIds: string[];
-  /** "Today", "Tomorrow" or a weekday. Only "Today" sessions must fall after the story clock. */
+  /** The label the plan was drafted with: "Today", "Tomorrow" or a weekday. It does not move with the story; read `date` for the day. */
   day: string;
   /** The day number `day` resolved to when the plan was drafted. */
   date: number;

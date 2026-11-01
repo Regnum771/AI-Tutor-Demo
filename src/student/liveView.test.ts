@@ -38,6 +38,20 @@ describe('phone views', () => {
     // Four answers, three of them correct: the skipped rows do not count.
     expect(progressView(s)?.accuracy).toBe(75);
   });
+  it('accuracy counts only this plan’s session answers, wrong ones as wrong, and leaves self-practice out', () => {
+    const base = sent();
+    base.plans[0].sessions.forEach((x) => { x.concept = 'deMorgan'; });
+    base.students.find((x) => x.id === 's17')!.evidence.push(
+      { id: 's17-practice-self', kind: 'practice', source: 'Beyond practice', when: '09:00', concept: 'deMorgan', text: 'De Morgan: “a correct negation?” · correct first try' },
+    );
+    let s = ok(phoneOpen(ok(phoneSkip(ok(phoneShowPlan(base)))), 1));
+    for (const item of sessionItems('deMorgan', true)) {
+      const wrong = item.correct === 0 ? 1 : 0;
+      s = ok(phoneNext(ok(phoneAnswer(ok(phoneAnswer(s, wrong)), item.correct))));
+    }
+    // Three wrong, three right, in this plan's session: half. The self-practice row and the skipped rows do not count.
+    expect(progressView(s)?.accuracy).toBe(50);
+  });
   it('offers Skip to tonight only on a plan for today', () => {
     const s = sent();
     s.plans[0].day = 'Tomorrow';
