@@ -57,3 +57,10 @@ export function assessmentMarks(state: DemoState, id: string): { studentId: stri
     })
     .sort((a, b) => a.mark - b.mark);
 }
+
+/** A session's calendar text: the title, then the students' short names when 1 or 2 take part ("N students" from 3), and no name the title already carries. */
+export function sessionLabel(title: string, students: { name: string; short: string }[]): string {
+  const named = students.filter((s) => !title.includes(s.name) && !title.includes(s.short));
+  if (named.length === 0) return title;
+  return `${title} · ${students.length >= 3 ? `${students.length} students` : named.map((s) => s.short).join(', ')}`;
+}

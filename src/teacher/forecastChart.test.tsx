@@ -32,15 +32,29 @@ describe('forecast chart', () => {
 });
 
 describe('the profile chart', () => {
-  it('marks each disengaged replan as Stopped on the intervention row', () => {
+  const profile = (idle: number[], replan = false) => {
     const s = seedState();
-    ensureRecord(s, 's17').replans.push({ day: 43, signal: 'disengaged', reason: 'Lighter.' }, { day: 50, signal: 'markSwing', reason: 'More.' });
-    const out = html(
+    const rec = ensureRecord(s, 's17');
+    rec.reported = { weekday: 30, weekend: 60 };
+    for (const d of idle) rec.days[d] = { planned: 30, done: 0, check: null };
+    if (replan) rec.replans.push({ day: 43, signal: 'disengaged', reason: 'Lighter.' });
+    return html(
       <LiveProvider value={ctxFor(s, null)}>
         <StudentProfile studentId="s17" entryId={null} onClose={() => {}} onAsk={() => {}} onOpenChat={() => {}} />
       </LiveProvider>,
     );
+  };
+  const stoppedX = (out: string) => out.match(/data-marker-row="intervention"[^>]* x="([\d.]+)"[^>]*>Stopped</)?.[1] ?? out.match(/x="([\d.]+)"[^>]*data-marker-row="intervention"[^>]*>Stopped</)?.[1];
+  it('puts one Stopped marker on the intervention row, on the day the current stretch began', () => {
+    const out = profile([37, 38, 39]);
     expect(out).toMatch(/data-marker-row="intervention"[^>]*>Stopped</);
     expect(out.match(/>Stopped</g)).toHaveLength(1);
+    const earlier = profile([36, 37, 38, 39]);
+    expect(stoppedX(out)).toBeDefined();
+    expect(stoppedX(earlier)).toBeDefined();
+    expect(Number(stoppedX(earlier))).toBeLessThan(Number(stoppedX(out)));
+  });
+  it('has no Stopped marker while the student is practising, replan or not', () => {
+    expect(profile([], true)).not.toContain('>Stopped<');
   });
 });

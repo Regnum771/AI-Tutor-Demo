@@ -34,6 +34,12 @@ describe('study plan checks', () => {
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.value).toMatchObject({ createdDay: 40, source: 'agents', leftOut: [] });
   });
+  it('rejects a reason that mentions the forecast, a band or the chance of passing', () => {
+    const s = ready();
+    for (const reason of ['You are unlikely to pass, so work harder.', 'Your forecast is low.', 'You are at risk.', 'Your chance of passing is small.']) {
+      expect(check(s, studyInput(s, 's17', { reason }))).toMatchObject({ ok: false, error: expect.stringContaining('must not mention the forecast') });
+    }
+  });
   it('rejects a day over capacity', () => {
     const s = ready();
     const d = days(s);
@@ -118,6 +124,11 @@ describe('offline planner', () => {
   const clean = (s: DemoState) => studyPlanProblems(s, 's17', cannedStudyPlan(s, 's17', 'setup'));
   const total = (p: StudyPlan) => p.days.reduce((a, d) => a + d.minutes, 0);
   const capacity = (s: DemoState) => studyDays(s.day).reduce((a, d) => a + capacityLeft(s, 's17', d), 0);
+  it('never gives a reason the agent’s own check would reject', () => {
+    for (const signal of ['setup', 'markSwing', 'disengaged', 'bandChange', 'teacherPlan'] as const) {
+      expect(studyPlanProblems(ready(), 's17', cannedStudyPlan(ready(), 's17', signal)).filter((p) => p.includes('must not mention'))).toEqual([]);
+    }
+  });
   it('always passes the agent’s own checks', () => {
     expect(clean(ready())).toEqual([]);
     expect(clean(lowTime())).toEqual([]);

@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { stateWithPlan } from '../live/fixtures';
 import type { DemoSource } from '../live/source';
+import type { DemoState } from '../live/types';
 import { ensureRecord } from '../live/study/record';
 import { lectureQuestions } from './calendar';
 import { LiveTeacherView } from './LiveTeacher';
@@ -30,9 +31,9 @@ const story = () => {
   for (const d of [37, 38, 39]) rec.days[d] = { planned: 30, done: 0, check: null };
   return s;
 };
-async function mount() {
+async function mount(initial: DemoState = story()) {
   const calls: string[] = [];
-  const source: DemoSource = { state: story(), post: async (path) => { calls.push(path); return { ok: true, conversationId: 'c1' }; } };
+  const source: DemoSource = { state: initial, post: async (path) => { calls.push(path); return { ok: true, conversationId: 'c1' }; } };
   host = document.createElement('div');
   document.body.appendChild(host);
   root = createRoot(host);
@@ -86,5 +87,21 @@ describe('teacher calendar', () => {
     await click(event(m.el, 'session-p1-15:30'));
     expect(m.el.textContent).toContain('Quiz 2 fell from');
     expect(m.el.textContent).not.toContain('‹ Prev week');
+  });
+  it('labels a class activity "N students" instead of a long list, and a check-in does not repeat the name', async () => {
+    const s = stateWithPlan('classActivity', { status: 'sent', studentIds: ['s1', 's2', 's3', 's4', 's5', 's6'] });
+    const m = await mount(s);
+    await click(button(m.el, 'Calendar'));
+    await click(button(m.el, 'Next week ›'));
+    const label = event(m.el, 'session-p1-10:00').textContent;
+    expect(label).toContain('6 students');
+    expect(label).not.toContain(s.students[0].short + ',');
+    host!.remove();
+    const c = stateWithPlan('checkIns', { status: 'sent', sessions: [{ time: '14:00', title: 'Check-in · Nguyễn Minh Anh', minutes: 15, concept: null, isMasteryCheck: false, studentId: 's17' }], studentIds: ['s17'] });
+    act(() => root?.unmount());
+    const m2 = await mount(c);
+    await click(button(m2.el, 'Calendar'));
+    await click(button(m2.el, 'Next week ›'));
+    expect(event(m2.el, 'session-p1-14:00').textContent).toBe('14:00Check-in · Nguyễn Minh Anh');
   });
 });

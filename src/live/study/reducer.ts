@@ -140,9 +140,10 @@ export function advance(state: DemoState, days: number, check: StudyDay['check']
   return done(s, detectSignal(rec, s.day, band, swing?.mark ?? null, swing?.previous ?? null));
 }
 
-/** A new week: forgetting for every student with a record, then the phone student's plan re-picked from the lectures. Mutates `s`. */
+/** A new week: forgetting for every student who has set up, then the phone student's plan re-picked from the lectures. Mutates `s`. */
 function weekTurn(s: DemoState, phoneId: string): void {
   for (const [id, rec] of Object.entries(s.study)) {
+    if (!rec.reported) continue;
     const st = studentById(s, id)!;
     forget(st, rec, s.day);
     st.status = statusFor(st.mastery);

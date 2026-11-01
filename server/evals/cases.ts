@@ -450,7 +450,7 @@ export const CASES: Case[] = [
     t.check('Sense', 'the forecast fell', o.forecast < start, `${start} -> ${o.forecast}`);
     const a = await t.ask('Is Minh Anh keeping up with revision?', null, 'Diagnose');
     t.check('Diagnose', 'used the exam outlook', a.steps.some((s) => s.includes('road to the exam')), a.steps.join(' | '));
-    t.check('Diagnose', 'reports the missed minutes', new RegExp(`\b${o.practisedLast7Days.planned}\b`).test(a.answer), `expected ${o.practisedLast7Days.planned} in: ${a.answer}`);
+    t.check('Diagnose', 'reports the missed minutes', new RegExp(`\\b${o.practisedLast7Days.planned}\\b`).test(a.answer), `expected ${o.practisedLast7Days.planned} in: ${a.answer}`);
     t.check('Diagnose', 'says the forecast fell', /fell|dropped|lower|down|declin|slipp/i.test(a.answer), a.answer);
     t.noPronouns('Diagnose', a.answer);
   } },

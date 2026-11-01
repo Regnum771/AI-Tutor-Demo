@@ -89,7 +89,7 @@ export function liveTodayRows(s: DemoState): AttentionRow[] {
     const p = rec ? stoppedPractising(rec, s.day) : null;
     if (p) {
       rows.push({
-        topic: 'attention', who: `Stopped practising · ${p.done} of ${p.planned} min this week`, what: st.short,
+        topic: 'attention', who: st.short, what: 'Stopped practising',
         figure: `${p.done}/${p.planned}`, prompt: `${st.short} has stopped practising. What should I do?`,
       });
     }

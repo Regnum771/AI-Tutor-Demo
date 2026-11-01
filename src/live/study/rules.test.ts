@@ -459,11 +459,18 @@ describe('forgetting', () => {
   it('takes 0.02 a week off each concept not practised in the last 7 days, down to 0.25', () => {
     const { s, rec } = setup();
     const st = student(s);
-    Object.assign(st.mastery, { applications: 0.26, equivLaws: 0.2 });
+    Object.assign(st.mastery, { expressions: 0.26, equivLaws: 0.2 });
     rec.attempts.push({ itemId: item('implication').id, day: 38, correct: true, firstTry: true });
     rec.attempts.push({ itemId: item('biconditional').id, day: 34, correct: true, firstTry: true });
     forget(st, rec, 42);
-    expect(st.mastery).toMatchObject({ implication: 0.31, biconditional: 0.33, negation: 0.68, propositions: 0.83, applications: 0.25, equivLaws: 0.2 });
+    expect(st.mastery).toMatchObject({ implication: 0.31, biconditional: 0.33, negation: 0.68, propositions: 0.83, expressions: 0.25, equivLaws: 0.2 });
+  });
+  it('leaves concepts alone until they have been lectured', () => {
+    const { s, rec } = setup();
+    const st = student(s);
+    Object.assign(st.mastery, { applications: 0.5 });
+    forget(st, rec, 42);
+    expect(st.mastery.applications).toBe(0.5);
   });
 });
 

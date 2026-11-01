@@ -380,12 +380,14 @@ describe('a new week', () => {
     expect(after.students[16].mastery).toEqual(s.students[16].mastery);
     expect(after.study.s17.plan).toEqual(s.study.s17.plan);
   });
-  it('forgets for every student with a record and leaves the rest alone', () => {
+  it('forgets for every student who has set up and leaves the rest alone, even one who was only tapped', () => {
     const s = structuredClone(ready());
-    ensureRecord(s, 's29');
+    ensureRecord(s, 's29').reported = { weekday: 30, weekend: 60 };
+    ensureRecord(s, 's30');
     const after = ok(advance(s, 2, null)); // reaches Monday 42
     const of = (st: DemoState, id: string) => st.students.find((x) => x.id === id)!.mastery;
     expect(of(after, 's29')).toMatchObject({ propositions: 0.5, implication: 0.24 });
     expect(of(after, 's2')).toEqual(of(s, 's2'));
+    expect(of(after, 's30')).toEqual(of(s, 's30'));
   });
 });

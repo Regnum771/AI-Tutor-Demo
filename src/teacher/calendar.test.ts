@@ -4,7 +4,7 @@ import { seedState } from '../live/seed';
 import { ensureRecord } from '../live/study/record';
 import { lectureBefore } from '../scenario/course';
 import { VOICE } from '../scenario/voice';
-import { assessmentMarks, calendarWeek, lectureQuestions } from './calendar';
+import { assessmentMarks, calendarWeek, lectureQuestions, sessionLabel } from './calendar';
 
 const all = (w: ReturnType<typeof calendarWeek>) => w.days.flatMap((d) => d.events);
 
@@ -54,5 +54,17 @@ describe('calendar model', () => {
     expect(assessmentMarks(s, 'quiz3')).toEqual([]);
     ensureRecord(s, 's17').marks.push({ assessment: 'quiz3', mark: 22, day: 52 });
     expect(assessmentMarks(s, 'quiz3')).toEqual([{ studentId: 's17', mark: 22 }]);
+  });
+});
+
+describe('session label', () => {
+  const kim = { name: 'Trần Kim', short: 'Kim' };
+  const an = { name: 'Lê An', short: 'An' };
+  it('names one or two students, and says "N students" from three', () => {
+    expect(sessionLabel('Group recap', [kim, an])).toBe('Group recap · Kim, An');
+    expect(sessionLabel('Group recap', [kim, an, kim])).toBe('Group recap · 3 students');
+  });
+  it('does not repeat a name the title already carries', () => {
+    expect(sessionLabel('Check-in · Trần Kim', [kim])).toBe('Check-in · Trần Kim');
   });
 });

@@ -54,7 +54,7 @@ Runs in `advance` whenever the story reaches a Monday (`day % 7 === 0`), for the
   1. the newest lecture's concepts,
   2. concepts the next assessment tests,
   3. the weakest.
-- **Week 9 (revision) and the days before the exam:** every taught concept is eligible, weakest first.
+- **Week 9 (revision) and the days before the exam:** every taught concept of the day's CLO is eligible, weakest first.
 - The plan keeps its `reason`; refocusing is not a replan and adds nothing to `replans`.
 
 ### 2.4 Forgetting (`src/live/study/forgetting.ts`, pure)
@@ -63,7 +63,7 @@ Runs in `advance` whenever the story reaches a Monday (`day % 7 === 0`), for the
 export function forget(student: StudentProfile, rec: StudyRecord, today: number): void;   // mutates student.mastery
 ```
 
-Runs in `advance` at each Monday, before `refocus`. Every concept with no attempt in the last 7 days loses 0.02 mastery, but never drops below 0.25 (a concept already below 0.25 stays where it is). Only students with a study record are affected, which in practice is the student on the phone.
+Runs in `advance` at each Monday, before `refocus`. Every concept with no attempt in the last 7 days loses 0.02 mastery, but never drops below 0.25 (a concept already below 0.25 stays where it is). Only students who have set up (`rec.reported` is set) are affected, not a student whose name was merely tapped, and concepts not yet lectured by that Monday (`taughtBy(today)`) are skipped.
 
 ## 3. Stopped-practising alert
 
@@ -74,9 +74,9 @@ export function stoppedPractising(rec: StudyRecord, today: number): { done: numb
 
 Uses the existing disengagement rule (three planned days with nothing done, or under 25% of planned minutes over 7 days) and returns the minutes for the last 7 closed days, or null when the student is practising.
 
-- **Teacher Today list** (`TeacherScreen.tsx`, live only): one row per affected student, "Stopped practising · Minh Anh · 0 of 210 min this week". Clicking it asks "Minh Anh has stopped practising. What should I do?".
+- **Teacher Today list** (`TeacherScreen.tsx`, live only): one row per affected student, "Minh Anh · Stopped practising · 0 of 210 min in the last 7 days" (the student's name in `who`, "Stopped practising" in `what`, figure `done/planned`). Clicking it asks "Minh Anh has stopped practising. What should I do?".
 - **Road to the exam** (student panel): the line "Stopped practising: 0 of 210 min in the last 7 days."
-- **Forecast chart** (profile pop-up): a "Stopped" marker on the intervention row on each day a `disengaged` replan happened.
+- **Forecast chart** (profile pop-up): a single "Stopped" marker on the intervention row, on the day the current stretch began (`stoppedSince`), while the student is stopped. It agrees with the Today row and the calendar.
 - **`get_exam_outlook`** gains `practisedLast7Days: { done: number; planned: number }`.
 
 ## 4. The phone shows facts, not risk
@@ -90,6 +90,7 @@ Uses the existing disengagement rule (three planned days with nothing done, or u
 - **Semester screen** adds "Previous subjects": subject, term, grade and letter.
 - **Replan reasons** no longer mention the outlook: `bandChange` copy becomes "Your progress changed, so the plan did too."
 - `TodayView` drops `band` and `forecast`.
+- The agent plan check rejects a `reason` that mentions a forecast, a band or the chance of passing ("The reason must not mention the forecast, a band or the chance of passing."), so the rule holds even when the model ignores the prompt.
 - The teacher keeps the forecast, the bands, "May not pass" and the chart.
 
 ## 5. Teacher calendar
@@ -111,6 +112,7 @@ export function calendarWeek(state: DemoState, week: number): { week: number; da
 - **Sessions:** the sessions of plans with status `sent`, `autoApproved`, `approved` or `done` (pathways, class activities, check-ins), on the plan's date.
 - **Stopped:** one event per student, on the first day of the current stretch of `stoppedPractising`.
 - Events in a day are ordered by time, untimed ones first.
+- **Session label:** the title, then the students' names for a session with 1 or 2 students, or "N students" for 3 or more; no names are added when the title already carries the student's name (check-ins are titled "Check-in · <full name>"). Two sessions at the same time keep distinct React keys.
 
 ### 5.2 Tab (`src/teacher/CalendarTab.tsx`, exported `Calendar`, live only)
 

@@ -3,7 +3,7 @@ import { useLive } from '../live/LiveContext';
 import type { DemoState } from '../live/types';
 import { ASSESSMENTS, CLOS, fullDate, LECTURES, shortDate, weekOf } from '../scenario/course';
 import { CHANNEL_LABEL, voiceEvidenceId } from '../scenario/voice';
-import { assessmentMarks, calendarWeek, FIRST_WEEK, LAST_WEEK, lectureQuestions, type CalendarEvent } from './calendar';
+import { assessmentMarks, calendarWeek, FIRST_WEEK, LAST_WEEK, lectureQuestions, sessionLabel, type CalendarEvent } from './calendar';
 import { Eyebrow } from './parts';
 import { Words } from './voiceParts';
 
@@ -35,7 +35,7 @@ export function Calendar() {
     setOpen(null);
   };
   const text = (e: CalendarEvent): string =>
-    e.kind === 'session' ? `${e.title} · ${e.studentIds.map(short).join(', ')}`
+    e.kind === 'session' ? sessionLabel(e.title, e.studentIds.flatMap((id) => state.students.filter((s) => s.id === id)))
       : e.kind === 'stopped' ? `Stopped practising · ${short(e.studentId)}`
       : e.title;
   const act = (e: CalendarEvent) => {
@@ -72,9 +72,9 @@ export function Calendar() {
                   {today && <span className="rounded-full bg-egg-ink px-2 text-[10.5px] font-semibold text-egg-card">Today</span>}
                 </div>
                 <div className="mt-2 space-y-1.5">
-                  {d.events.map((e) => (
+                  {d.events.map((e, i) => (
                     <button
-                      key={keyOf(e)}
+                      key={`${keyOf(e)}-${i}`}
                       type="button"
                       data-event={keyOf(e)}
                       aria-expanded={e.kind === 'lecture' || e.kind === 'assessment' ? open === keyOf(e) : undefined}

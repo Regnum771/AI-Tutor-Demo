@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLive } from '../live/LiveContext';
 import { forecast, forecastSeries, projection } from '../live/study/estimate';
+import { stoppedSince } from '../live/study/signals';
 import type { StudentProfile as Profile } from '../live/types';
 import { ASSESSMENTS, EXAM_DAY, shortDate } from '../scenario/course';
 import { ForecastChart, type ChartMarker } from './ForecastChart';
@@ -41,12 +42,13 @@ export function StudentProfile({ studentId, entryId, onClose, onAsk, onOpenChat 
   const now = forecast(s, rec);
   const lit = (id: string) => id === entryId;
   const keep = (id: string) => (id === entryId ? (el: HTMLElement | null) => { hi.current = el; } : undefined);
+  const stoppedFrom = rec ? stoppedSince(rec, state.day) : null;
   const markers: ChartMarker[] = [
     ...ASSESSMENTS.map((a) => ({ day: a.day, label: SHORT[a.id] ?? a.title, row: 'assessment' as const })),
     ...state.plans
       .filter((p) => p.studentIds.includes(s.id) && ['sent', 'autoApproved', 'done', 'approved'].includes(p.status) && p.kind !== 'classActivity')
       .map((p) => ({ day: p.date, label: p.kind === 'pathway' ? 'Pathway' : 'Check-in', row: 'intervention' as const })),
-    ...(rec?.replans ?? []).filter((r) => r.signal === 'disengaged').map((r) => ({ day: r.day, label: 'Stopped', row: 'intervention' as const })),
+    ...(stoppedFrom === null ? [] : [{ day: stoppedFrom, label: 'Stopped', row: 'intervention' as const }]),
   ];
   const series = forecastSeries(s, rec);
   const points = rec ? [...series.filter((p) => p.day !== state.day), { day: state.day, value: now.value }] : series;

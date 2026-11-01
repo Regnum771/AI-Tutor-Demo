@@ -53,12 +53,16 @@ const WHY: Record<ReplanSignal, string> = {
   teacherPlan: 'The lecturer has just sent the student a plan.',
 };
 
+/** The student's phone never shows risk, so a reason must not talk about it. */
+const NO_RISK = /\b(likely|unlikely|at risk|forecast|out of 10|chance of passing)\b/i;
+
 /** What is wrong with a plan, as messages the agent can act on. */
 export function studyPlanProblems(state: DemoState, studentId: string, plan: StudyPlan): string[] {
   const student = state.students.find((s) => s.id === studentId)!;
   const wanted = studyDays(state.day);
   const out: string[] = [];
   if (!plan.reason.trim()) out.push('Give a reason.');
+  if (NO_RISK.test(plan.reason)) out.push('The reason must not mention the forecast, a band or the chance of passing.');
   if (plan.days.length !== wanted.length || wanted.some((d, i) => plan.days[i].day !== d)) {
     out.push(`Give exactly one entry for each day from ${state.day} to ${EXAM_DAY - 1}, in order, and nothing after that.`);
     return out;
@@ -127,6 +131,7 @@ export function studyMessages(state: DemoState, studentId: string, signal: Repla
     if (a) parts.push(`${a.title} on ${a.clos.join(', ')}`);
     return parts.join(' · ');
   });
+  // The fixed 09:00 matches the calendar above: a plan day counts its own lecture.
   const held = lectureBefore(state.day, '09:00');
   const coming = nextLecture(state.day, '09:00');
   const test = nextTest(state.day);
