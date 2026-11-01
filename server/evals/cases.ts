@@ -167,7 +167,11 @@ export const CASES: Case[] = [
     t.check('Diagnose', 'read the learning materials', a.steps.some((s) => s.includes('materials')), a.steps.join(' | '));
     const library = new Set(RESOURCES.map((r) => r.id));
     t.check('Diagnose', 'cites resources from the library', a.cites.some((c) => library.has(c)), a.cites.join(','));
-    t.check('Diagnose', 'recommends only released material', RESOURCES.filter((r) => a.cites.includes(r.id)).every((r) => isReleased(r, t.state.day, fmt(t.state.clock))), a.cites.join(','));
+    // The prompt says to cite each resource mentioned, so saying Lecture 7 is not out yet cites it too.
+    const cited = RESOURCES.filter((r) => a.cites.includes(r.id));
+    const released = cited.filter((r) => isReleased(r, t.state.day, fmt(t.state.clock)));
+    t.check('Diagnose', 'recommends released material', released.length > 0, a.cites.join(','));
+    t.check('Diagnose', 'says what is not released yet', released.length === cited.length || /unreleased|not (?:yet )?released|can(?:not|['’]t) be opened/i.test(a.answer), a.answer);
     t.check('Diagnose', 'every cited id exists', a.cites.every((c) => citableIds(t.state).has(c)), a.cites.join(','));
     t.check('Diagnose', 'puts no link in the answer', !/https?:\/\/|www\.|\.(com|org|edu|net)\b/i.test(a.answer), a.answer);
     t.noPronouns('Diagnose', a.answer);

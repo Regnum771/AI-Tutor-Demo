@@ -121,7 +121,7 @@ A lecture's details in the Calendar tab, which today list the student questions 
 - **Tab:** the graph renders 12 nodes and the edges, untaught concepts greyed with their lecture date, gaps marked; selecting a concept changes the chart's series and filters the lectures; engagement text matches `classEngagement`; expanding a resource lists exactly the students who have not opened it, and a name opens the pop-up. Live-only: the scripted sidebar has no "Lesson planning" item.
 - **Calendar:** a lecture's details show its resources.
 - **Agents:** tool tests for filters and the per-student fields; `checkBlocks` accepts a real resource id and rejects an unknown one; a resource chip opens the tab with its row expanded; the click audit gains a "lesson planning" scenario.
-- **Eval (real API):** new L2.8, "What should students read before Lecture 7?", expects cited resource ids that exist in the library, all released at that point (nothing is recommended that nobody can open yet), and no URL in the answer.
+- **Eval (real API):** new L2.8, "What should students read before Lecture 7?", expects cited resource ids that exist in the library, at least one released resource, a plain statement that anything cited but not released cannot be opened yet, and no URL in the answer.
 
 ## 8. Out of scope
 
