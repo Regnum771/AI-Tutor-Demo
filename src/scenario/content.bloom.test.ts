@@ -45,6 +45,12 @@ describe('question bank', () => {
       i.options.forEach((o, n) => expect(sameTruth(i.equivTo!, o), `${i.id} option ${n}: ${o}`).toBe(n === i.correct));
     }
   });
+  it('spreads the answer position of the added questions', () => {
+    const added = BANK.filter((i) => !i.core);
+    const byPosition = new Map<number, number>();
+    for (const i of added) byPosition.set(i.correct, (byPosition.get(i.correct) ?? 0) + 1);
+    for (const [position, n] of byPosition) expect(n / added.length, `position ${position}`).toBeLessThanOrEqual(0.4);
+  });
   it('keeps teacher plans on the original 37 questions', () => {
     expect(BANK.filter((i) => i.core)).toHaveLength(37);
     for (const c of CONCEPTS) for (const check of [true, false]) expect(sessionItems(c.id, check).every((i) => i.core), c.id).toBe(true);

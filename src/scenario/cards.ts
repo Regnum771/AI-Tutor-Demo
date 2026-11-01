@@ -18,7 +18,7 @@ export const CARDS: Card[] = [
   card('propositions', 1, 'Remember', 'What is a proposition?', 'A sentence that is either true or false, but not both. “7 is prime” is one; “Close the door” is not.'),
   card('propositions', 2, 'Remember', 'How many rows does a truth table with n variables have?', '2ⁿ rows: each variable doubles the count. Three variables give 8 rows.'),
   card('propositions', 3, 'Understand', 'Why is “x + 2 = 5” not a proposition?', 'Its truth depends on the value of x, so as written it is neither true nor false.'),
-  card('propositions', 4, 'Understand', 'What does a symbol such as p stand for?', 'A whole statement that has a truth value, for example p: “It is raining”. It is not a number or a connective.'),
+  card('propositions', 4, 'Understand', 'Why does logic use symbols such as p instead of whole sentences?', 'The truth of a compound statement depends only on the truth values of its parts, so symbols let us study its form apart from its wording.'),
 
   card('negation', 1, 'Remember', 'What does ¬p mean, and when is it true?', '“Not p”. It is true exactly when p is false.'),
   card('negation', 2, 'Remember', 'What is ¬¬p equivalent to?', 'p. Two negations cancel (double negation).'),
@@ -28,7 +28,7 @@ export const CARDS: Card[] = [
   card('conjunction', 1, 'Remember', 'When is p ∧ q true?', 'Only when both p and q are true.'),
   card('conjunction', 2, 'Remember', 'Which symbol is “and”, and which is “or”?', '∧ is “and” (conjunction). ∨ is “or” (disjunction).'),
   card('conjunction', 3, 'Understand', 'Why is p ∧ q false when one part is false?', 'A conjunction claims both parts hold. One false part is enough to break the claim.'),
-  card('conjunction', 4, 'Understand', 'Does the order of a conjunction matter?', 'No. p ∧ q ≡ q ∧ p (commutativity), and p ∧ p ≡ p (idempotence).'),
+  card('conjunction', 4, 'Understand', 'Does the order of a conjunction matter?', 'No. p ∧ q ≡ q ∧ p (commutativity): both are true in exactly the row where p and q are both true.'),
 
   card('disjunction', 1, 'Remember', 'When is p ∨ q false?', 'Only when both p and q are false.'),
   card('disjunction', 2, 'Remember', 'Is the logical ∨ inclusive or exclusive?', 'Inclusive: p ∨ q is still true when both p and q are true.'),
@@ -38,7 +38,7 @@ export const CARDS: Card[] = [
   card('implication', 1, 'Remember', 'When is p → q false?', 'Only when p is true and q is false. Every other row is true.'),
   card('implication', 2, 'Remember', 'What is the contrapositive of p → q?', '¬q → ¬p. It always has the same truth table as p → q.'),
   card('implication', 3, 'Understand', 'Why is p → q true when p is false?', 'The promise “if p then q” is only broken when p happens and q does not. With p false, nothing is broken (vacuously true).'),
-  card('implication', 4, 'Understand', 'What are the converse and the inverse of p → q?', 'Converse: q → p. Inverse: ¬p → ¬q. Neither is equivalent to p → q, but they are equivalent to each other.'),
+  card('implication', 4, 'Understand', 'Why is the inverse ¬p → ¬q not equivalent to p → q?', 'It negates both parts without swapping them. At p = F, q = T, p → q is true but ¬p → ¬q is false.'),
 
   card('biconditional', 1, 'Remember', 'When is p ↔ q true?', 'When p and q have the same truth value: both true or both false.'),
   card('biconditional', 2, 'Remember', 'How is p ↔ q read?', '“p if and only if q”.'),
@@ -51,7 +51,7 @@ export const CARDS: Card[] = [
   card('truthTables', 4, 'Understand', 'How do you use a truth table to compare two formulas?', 'Build both columns over the same rows. If they match in every row, the formulas are equivalent.'),
 
   card('expressions', 1, 'Remember', 'Which connective is evaluated first in ¬p ∧ q?', '¬ binds tightest, so it is (¬p) ∧ q. Use parentheses when in doubt.'),
-  card('expressions', 2, 'Remember', 'What is a well-formed formula?', 'One built from variables with ¬, ∧, ∨, →, ↔ and balanced parentheses, such as (p ∧ q) → r. “p ∧ → q” is not one.'),
+  card('expressions', 2, 'Remember', 'What is a well-formed formula?', 'One built from variables with ¬, ∧, ∨, →, ↔ and balanced parentheses, where each connective joins complete formulas, such as (p ∧ q) → r. “p ∧ → q” is not one: ∧ has no formula on its right.'),
   card('expressions', 3, 'Understand', 'How is “If it rains, the match is cancelled” written?', 'r → c, with r: it rains and c: the match is cancelled. The reverse, c → r, is the converse.'),
   card('expressions', 4, 'Understand', 'What does “neither p nor q” mean in symbols?', '¬p ∧ ¬q, which is equivalent to ¬(p ∨ q).'),
 
@@ -71,7 +71,7 @@ export const CARDS: Card[] = [
   card('equivLaws', 4, 'Apply', 'Simplify (p ∧ q) ∨ (p ∧ ¬q).', 'p. Factor out p to get p ∧ (q ∨ ¬q), and q ∨ ¬q is always true.'),
 
   card('applications', 1, 'Apply', 'The rule “if a student misses 3 tutorials, the teacher is alerted” holds and no alert was sent. What follows?', 'The student missed fewer than 3 tutorials. This is the contrapositive: ¬q → ¬p.'),
-  card('applications', 2, 'Apply', 'How do you write “you need a badge or a code, and the alarm must be off”?', '(b ∨ c) ∧ ¬a. The parentheses make the alarm condition apply in both cases.'),
+  card('applications', 2, 'Apply', 'How do you write “you need a badge or a code, and the alarm must be off”?', '(b ∨ c) ∧ ¬a, with b: has a badge, c: has a code, a: the alarm is on. The parentheses make the alarm condition apply in both cases.'),
   card('applications', 3, 'Analyze', 'The rule “if p then q” holds and q is true. Can you conclude p?', 'No. That is affirming the consequent. q could be true for another reason.'),
   card('applications', 4, 'Analyze', 'How do you check whether a plain-English argument is valid?', 'Translate it into symbols, then look for a row where all the premises are true and the conclusion is false. If there is one, it is invalid.'),
 ];
