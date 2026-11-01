@@ -2,6 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import { fmt } from '../../src/live/clock';
 import type { DemoState, LiveBlock, Plan } from '../../src/live/types';
 import { fullDate } from '../../src/scenario/course';
+import { RESOURCES } from '../../src/scenario/materials';
 import type { ConceptId } from '../../src/scenario/knowledgeGraph';
 import type { AgentSpec, Check } from './loop';
 import { CONCEPT_IDS, obj, READ_TOOLS, readLabel, readTool, tool } from './tools';
@@ -26,7 +27,7 @@ export const BLOCKS_SCHEMA = {
   items: obj({
     kind: { type: 'string', enum: ['p', 'li'] },
     text: { type: 'string', description: 'Plain text; **bold** allowed for key figures.' },
-    cites: { type: 'array', items: { type: 'string' }, description: 'Evidence ids behind this block, exactly as the tools returned them.' },
+    cites: { type: 'array', items: { type: 'string' }, description: 'Evidence or resource ids behind this block, exactly as the tools returned them.' },
   }),
 };
 
@@ -43,7 +44,7 @@ const REPORT_TOOL = tool('report', 'Give your answer to the lecturer. Call this 
 
 export const SAS_SYSTEM = `You are the Student Analysis Agent in Beyond, a teaching assistant for Lam (Nguyễn Thanh Lam), who lectures Discrete Mathematics (DM-2026, 55 students, Week 6: logical equivalence). All data is fictional demo data.
 
-Answer the lecturer's question from the class data. Look things up with the tools; never invent students, figures or events. Student ids look like s17; evidence ids look like s17-quiz2-q4 or class-quiz2-q4.
+Answer the lecturer's question from the class data. Look things up with the tools; never invent students, figures or events. Student ids look like s17; evidence ids look like s17-quiz2-q4 or class-quiz2-q4; resource ids look like l7-slides.
 
 Write for a busy lecturer: lead with the answer in one or two sentences, then 2–4 bullets of evidence, then one sentence on what to do next. Keep the whole answer under 140 words. Put the evidence ids behind each factual claim in that block's cites. Use **bold** for the key figures. Refer to students by name; do not assume anyone's pronouns.
 
@@ -51,7 +52,7 @@ Mastery runs from 0 to 1; below 0.50 on a focus concept is a gap. The Week 6 top
 
 Set needs_plan only when the lecturer asks what to do, asks for a plan, asks who needs them personally, or asks why a student or group is struggling. A factual lookup (a score, a count, a list) never sets needs_plan. A plan is drafted separately by the Teaching Assistance Agent and is limited to 4 sessions and 45 minutes in total. Never describe a plan’s length or contents in your answer; only say one is ready. If the lecturer asks for more than the limit, say so. If a plan is already open or running for that student, leave needs_plan false unless the lecturer asks for a new one. Set revise_plan when the lecturer asks to change the plan open in this conversation. Use focus_kind "student" for a question about one student, "class" for the class or a group, and "none" otherwise.
 
-For questions about the exam, passing or readiness, use get_exam_outlook. Its forecast (out of 10; 4.0 passes, 7.0 is Khá, 8.5 is Giỏi), its if-plan-kept figure and its band are each an estimate, so say so; never state a pass or fail as fact. To find who may not pass, use find_students with status examRisk. To name who chose the converse on Quiz 2 Q4, use find_students with mistake converse. When a student's own message explains a gap, cite that message. For what the class or a group is asking or confused about, use get_class_questions and cite the messages behind the entries you mention.
+For questions about the exam, passing or readiness, use get_exam_outlook. Its forecast (out of 10; 4.0 passes, 7.0 is Khá, 8.5 is Giỏi), its if-plan-kept figure and its band are each an estimate, so say so; never state a pass or fail as fact. To find who may not pass, use find_students with status examRisk. To name who chose the converse on Quiz 2 Q4, use find_students with mistake converse. When a student's own message explains a gap, cite that message. For what the class or a group is asking or confused about, use get_class_questions and cite the messages behind the entries you mention. For slides, recordings, worksheets, readings or what to set before a lecture, use get_lecture_materials and cite each resource you mention. Cite learning material only by the ids get_lecture_materials returns. Never invent a link, a book or a resource.
 
 When you have the answer, call the report tool. Always finish with report.`;
 
@@ -59,9 +60,16 @@ export function evidenceIds(state: DemoState): Set<string> {
   return new Set([...state.classEvidence.map((e) => e.id), ...state.students.flatMap((s) => s.evidence.map((e) => e.id))]);
 }
 
+/** Everything an answer may cite: evidence ids and the library's resource ids. */
+export function citableIds(state: DemoState): Set<string> {
+  const ids = evidenceIds(state);
+  for (const r of RESOURCES) ids.add(r.id);
+  return ids;
+}
+
 type RawBlock = { kind?: unknown; text?: unknown; cites?: unknown };
 
-/** Model blocks → LiveBlocks; rejects empty answers and cited ids that do not exist. */
+/** Model blocks → LiveBlocks; rejects empty answers and cited ids that are neither evidence nor a library resource. */
 export function checkBlocks(state: DemoState, raw: unknown): { ok: true; value: LiveBlock[] } | { ok: false; error: string } {
   if (!Array.isArray(raw) || raw.length === 0) return { ok: false, error: 'blocks must contain at least one paragraph.' };
   const blocks: LiveBlock[] = (raw as RawBlock[]).map((b) => ({
@@ -70,7 +78,7 @@ export function checkBlocks(state: DemoState, raw: unknown): { ok: true; value: 
     cites: Array.isArray(b.cites) ? b.cites.map(String) : [],
   }));
   if (blocks.some((b) => !b.text.trim())) return { ok: false, error: 'Every block needs text.' };
-  const known = evidenceIds(state);
+  const known = citableIds(state);
   const unknown = blocks.flatMap((b) => b.cites).filter((id) => !known.has(id));
   if (unknown.length) return { ok: false, error: `These evidence ids do not exist: ${unknown.join(', ')}. Cite only ids returned by the tools.` };
   return { ok: true, value: blocks };

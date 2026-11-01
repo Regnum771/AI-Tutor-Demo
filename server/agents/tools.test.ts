@@ -17,7 +17,7 @@ const find = (input: Record<string, unknown>) =>
 
 describe('read tools', () => {
   it('are strict object schemas', () => {
-    expect(READ_TOOLS.map((t) => t.name)).toEqual(['get_class_overview', 'find_students', 'get_student', 'get_evidence', 'compare_students', 'get_exam_outlook', 'get_class_questions']);
+    expect(READ_TOOLS.map((t) => t.name)).toEqual(['get_class_overview', 'find_students', 'get_student', 'get_evidence', 'compare_students', 'get_exam_outlook', 'get_class_questions', 'get_lecture_materials']);
     for (const t of READ_TOOLS) {
       expect(t.strict).toBe(true);
       expect(t.input_schema.additionalProperties).toBe(false);
@@ -134,5 +134,36 @@ describe('student voice', () => {
     expect(t).toMatchObject({ forecast: { value: 4.4, band: 'At risk' } });
     expect(t.gpa).toBeGreaterThan(0);
     expect((t.history as unknown[]).length).toBeGreaterThanOrEqual(4);
+  });
+});
+describe('lecture materials', () => {
+  const state = seedState();
+  const materials = (input: Record<string, unknown>) =>
+    readTool(state, 'get_lecture_materials', { lecture: -1, concept: '', student_id: '', ...input }) as Array<Record<string, unknown>>;
+  it('lists a lecture’s resources with their class engagement, and nothing opened before the lecture', () => {
+    expect(materials({ lecture: 7 }).map((r) => r.id)).toEqual(['l7-slides', 'l7-recording', 'l7-worksheet', 'l7-video']);
+    expect(materials({ lecture: 7 })[0]).toMatchObject({
+      lecture: 7, lectureDate: 'Tue 3 Nov', kind: 'slides', title: 'Lecture 7 · Equivalence laws.pdf', concepts: ['equivLaws'], bloom: 'Understand', minutes: 25,
+      source: 'Course slides', released: false, classEngagement: { opened: 0, of: 55, meanFraction: 0 },
+    });
+    expect(materials({ lecture: 5 }).find((r) => r.id === 'l5-recording')).toMatchObject({ released: true, classEngagement: { opened: 31, of: 55, meanFraction: 0.46 } });
+    expect(materials({})).toHaveLength(29);
+  });
+  it('filters by concept, and adds one student’s own figures', () => {
+    expect(materials({ concept: 'implication' }).map((r) => r.id)).toEqual(['l5-slides', 'l5-recording', 'l5-worksheet', 'l5-reading', 'l9-revision']);
+    expect(materials({ lecture: 5 })[0]).not.toHaveProperty('opened');
+    const ma = materials({ lecture: 5, student_id: 's17' });
+    expect(ma.find((r) => r.id === 'l5-recording')).toMatchObject({ opened: true, fraction: 0.22 });
+    expect(materials({ lecture: 6, student_id: 's8' }).every((r) => r.opened === false && r.fraction === 0)).toBe(true);
+  });
+  it('fails clearly on an unknown lecture, concept or student, and never returns a link', () => {
+    expect(() => materials({ lecture: 12 })).toThrow('Unknown lecture 12. Lectures run from 1 to 9; use -1 for every lecture.');
+    expect(() => materials({ concept: 'predicates' })).toThrow('Unknown concept predicates.');
+    expect(() => materials({ student_id: 's99' })).toThrow('Unknown student id s99.');
+    expect(JSON.stringify(materials({}))).not.toMatch(/https?:|www\./);
+  });
+  it('labels the call as a thinking line', () => {
+    expect(readLabel(state, 'get_lecture_materials', { lecture: 7, concept: '', student_id: '' })).toBe('Student Analysis Agent · reading the materials for Lecture 7');
+    expect(readLabel(state, 'get_lecture_materials', { lecture: -1, concept: 'implication', student_id: '' })).toBe('Student Analysis Agent · reading the learning materials');
   });
 });

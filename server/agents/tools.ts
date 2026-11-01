@@ -4,12 +4,13 @@ import { classKpis, topicMastery } from '../../src/live/mastery';
 import type { DemoState, EvidenceKind, StudentProfile } from '../../src/live/types';
 import { examOutlook, examRisk } from '../../src/live/study/outlook';
 import { forecast } from '../../src/live/study/estimate';
-import { fullDate, lectureLabel, shortDate } from '../../src/scenario/course';
+import { fullDate, LECTURES, lectureLabel, shortDate } from '../../src/scenario/course';
 import { GROUPS } from '../../src/scenario/classroom';
 import { CONCEPTS, conceptById, type ConceptId } from '../../src/scenario/knowledgeGraph';
 import { TWIN_FOCUS } from '../../src/scenario/minhAnh';
 import { FAQ, faqLog, faqStats, voiceEvidenceId } from '../../src/scenario/voice';
 import { choseConverse } from '../../src/scenario/roster';
+import { classEngagement, engagement, isReleased, RESOURCES } from '../../src/scenario/materials';
 
 export const CONCEPT_IDS: ConceptId[] = CONCEPTS.map((c) => c.id);
 
@@ -47,6 +48,11 @@ export const READ_TOOLS: Anthropic.Beta.BetaTool[] = [
     student_id: { type: 'string' },
   }),
   tool('get_class_questions', 'What students have been asking on Zalo, email, WhatsApp and the LMS forum, grouped into FAQ entries: the question, what confuses them, the concept, how many students and messages, when they ask relative to the lectures, and the evidence ids of the messages (cite these).', {}),
+  tool('get_lecture_materials', "The course's learning materials (slides, recordings, worksheets, readings, short videos) with their resource ids (cite these): lecture and its date, kind, title, concepts, Bloom level, minutes, source, released (false before the lecture) and classEngagement (opened of 55, and meanFraction: the mean share worked through by those who opened it). With student_id, each also carries that student's opened and fraction. Readings name a textbook section and have no link. Use -1 or \"\" to leave a filter out.", {
+    lecture: { type: 'number', description: 'Lecture 1–9, or -1 for every lecture.' },
+    concept: { type: 'string', enum: ['', ...CONCEPT_IDS] },
+    student_id: { type: 'string', description: 'A student id such as s17, or "".' },
+  }),
 ];
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
@@ -107,6 +113,24 @@ function twin(state: DemoState, s: StudentProfile) {
   };
 }
 
+function materials(state: DemoState, input: Record<string, unknown>) {
+  const lecture = Number(input.lecture ?? -1);
+  if (lecture !== -1 && !LECTURES.some((l) => l.n === lecture)) throw new Error(`Unknown lecture ${String(input.lecture)}. Lectures run from 1 to ${LECTURES.length}; use -1 for every lecture.`);
+  const concept = String(input.concept ?? '');
+  if (concept && !CONCEPT_IDS.includes(concept as ConceptId)) throw new Error(`Unknown concept ${concept}. Use one of ${CONCEPT_IDS.join(', ')}, or "" for any.`);
+  const student = input.student_id ? studentOf(state, input.student_id) : null;
+  const time = fmt(state.clock);
+  return RESOURCES
+    .filter((r) => (lecture === -1 || r.lecture === lecture) && (!concept || r.concepts.includes(concept as ConceptId)))
+    .map((r) => ({
+      id: r.id, lecture: r.lecture, lectureDate: shortDate(LECTURES[r.lecture - 1].day), kind: r.kind, title: r.title, concepts: r.concepts,
+      bloom: r.bloom, minutes: r.minutes, source: r.source,
+      released: isReleased(r, state.day, time),
+      classEngagement: classEngagement(r.id, state.day),
+      ...(student ? engagement(r.id, student.index, state.day) : {}),
+    }));
+}
+
 /** Executes a read tool against a state snapshot. Throws (→ error tool result) on bad input. */
 export function readTool(state: DemoState, name: string, input: Record<string, unknown>): unknown {
   switch (name) {
@@ -131,6 +155,7 @@ export function readTool(state: DemoState, name: string, input: Record<string, u
         const stats = faqStats(f.id);
         return { ...f, ...stats, latestDate: shortDate(stats.latestDay), evidenceIds: faqLog(f.id).map(voiceEvidenceId) };
       }).sort((a, b) => b.students - a.students || b.messages - a.messages);
+    case 'get_lecture_materials': return materials(state, input);
     default: throw new Error(`Unknown tool ${name}.`);
   }
 }
@@ -154,6 +179,7 @@ export function readLabel(state: DemoState, name: string, input: Record<string, 
     case 'compare_students': return `${p} comparing ${Array.isArray(input.student_ids) ? input.student_ids.length : 0} learning twins`;
     case 'get_exam_outlook': return `${p} reading ${who(input.student_id)}’s road to the exam`;
     case 'get_class_questions': return `${p} reading what students are asking`;
+    case 'get_lecture_materials': return Number(input.lecture) > 0 ? `${p} reading the materials for Lecture ${Number(input.lecture)}` : `${p} reading the learning materials`;
     default: return null;
   }
 }

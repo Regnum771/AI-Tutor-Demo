@@ -5,7 +5,7 @@ import { adaptMessages, adaptSpec } from './adapt';
 import { fakeClient } from './fakeClient';
 import { runAgent } from './loop';
 import { adaptInput, pathwaySessions, planInput, reportInput } from './samples';
-import { SAS_SYSTEM, sasMessages, sasSpec, type Report } from './sas';
+import { checkBlocks, SAS_SYSTEM, sasMessages, sasSpec, type Report } from './sas';
 import { TAS_SYSTEM, tasMessages, tasSpec, toPlan } from './tas';
 
 const quiet = { onStep: () => {} };
@@ -142,6 +142,12 @@ describe('prompts carry the eval fixes', () => {
     expect(SAS_SYSTEM).toContain('A factual lookup (a score, a count, a list) never sets needs_plan.');
     expect(SAS_SYSTEM).toContain('limited to 4 sessions and 45 minutes');
     expect(SAS_SYSTEM).toContain('Never describe a plan’s length or contents');
+  });
+  it('SAS cites learning material only by library id', () => {
+    expect(SAS_SYSTEM).toContain('Cite learning material only by the ids get_lecture_materials returns. Never invent a link, a book or a resource.');
+    const state = stateWithPlan();
+    expect(checkBlocks(state, [{ kind: 'p', text: 'Set the slides.', cites: ['l7-slides', 's17-quiz2'] }])).toMatchObject({ ok: true });
+    expect(checkBlocks(state, [{ kind: 'p', text: 'Set the handout.', cites: ['l7-handout'] }])).toEqual({ ok: false, error: 'These evidence ids do not exist: l7-handout. Cite only ids returned by the tools.' });
   });
   it('TAS changes only what was asked when revising', () => {
     expect(TAS_SYSTEM).toContain('change only what the lecturer asked');
