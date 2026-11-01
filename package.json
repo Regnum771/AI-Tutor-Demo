@@ -11,7 +11,8 @@
     "contact-sheet": "tsx scripts/contact-sheet.ts",
     "server": "tsx server/index.ts",
     "booth": "concurrently -k -n vite,api -c yellow,cyan \"vite --host --strictPort\" \"tsx server/index.ts\"",
-    "test:live": "tsx server/live.smoke.ts"
+    "test:live": "tsx server/live.smoke.ts",
+    "eval": "tsx server/evals/run.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
