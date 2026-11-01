@@ -1,5 +1,7 @@
 import type { ConceptId } from './knowledgeGraph';
+import { cloOf, type Bloom, type CloId } from './course';
 import { GUIDED, Q1 } from './practice';
+import { EXTRA_ITEMS } from './practiceExtra';
 
 export interface GuidedStep { expr: string; why: string }
 
@@ -13,15 +15,24 @@ export interface BankItem {
   hints: string[];
   /** Shown after a correct answer: a worked rewrite the student steps through. */
   guided?: { start: string; steps: GuidedStep[] };
+  clo: CloId;
+  /** Difficulty, as a Bloom level of the concept's CLO. */
+  bloom: Bloom;
+  /** One of the original items teacher plans use. */
+  core: boolean;
+  /** The option formulas are compared with this by truth table: only the correct one may match. */
+  equivTo?: string;
 }
 
+type OriginalItem = Omit<BankItem, 'clo' | 'bloom' | 'core'>;
+
 let counts: Partial<Record<ConceptId, number>> = {};
-function item(concept: ConceptId, prompt: string, options: string[], correct: number, hints: string[], guided?: BankItem['guided']): BankItem {
+function item(concept: ConceptId, prompt: string, options: string[], correct: number, hints: string[], guided?: BankItem['guided']): OriginalItem {
   counts[concept] = (counts[concept] ?? 0) + 1;
   return { id: `${concept}-${counts[concept]}`, concept, prompt, options, correct, hints, guided };
 }
 
-export const BANK: BankItem[] = [
+const ORIGINAL: OriginalItem[] = [
   item('propositions', 'Which of these is a proposition?', ['x + 2 = 5', 'Close the door.', '7 is a prime number.', 'Is it raining?'], 2, [
     'It has a variable, so it is not true or false on its own.', 'A command is not true or false.', '', 'A question is not true or false.']),
   item('propositions', 'p: “It is raining”, q: “I take an umbrella”. Which sentence is p ∧ q?', ['It is raining or I take an umbrella.', 'It is raining and I take an umbrella.', 'If it is raining, I take an umbrella.', 'It is not raining.'], 1, [
@@ -124,12 +135,59 @@ export const BANK: BankItem[] = [
 ];
 counts = {};
 
+const TAGS: Record<string, { bloom: Bloom; equivTo?: string }> = {
+  'propositions-1': { bloom: 'Remember' },
+  'propositions-2': { bloom: 'Understand' },
+  'propositions-3': { bloom: 'Apply' },
+  'negation-1': { bloom: 'Understand' },
+  'negation-2': { bloom: 'Remember' },
+  'negation-3': { bloom: 'Apply', equivTo: '¬(p ∧ q)' },
+  'conjunction-1': { bloom: 'Remember' },
+  'conjunction-2': { bloom: 'Apply' },
+  'conjunction-3': { bloom: 'Apply', equivTo: 'p ∧ (p ∨ q)' },
+  'disjunction-1': { bloom: 'Remember' },
+  'disjunction-2': { bloom: 'Understand' },
+  'disjunction-3': { bloom: 'Apply', equivTo: '¬(p ∨ q)' },
+  'implication-1': { bloom: 'Apply', equivTo: 'p → q' },
+  'implication-2': { bloom: 'Remember' },
+  'implication-3': { bloom: 'Understand', equivTo: 'p → q' },
+  'biconditional-1': { bloom: 'Remember' },
+  'biconditional-2': { bloom: 'Understand', equivTo: 'p ↔ q' },
+  'biconditional-3': { bloom: 'Apply' },
+  'truthTables-1': { bloom: 'Understand' },
+  'truthTables-2': { bloom: 'Remember' },
+  'truthTables-3': { bloom: 'Apply' },
+  'expressions-1': { bloom: 'Understand' },
+  'expressions-2': { bloom: 'Apply' },
+  'expressions-3': { bloom: 'Understand', equivTo: '¬(p ∨ q)' },
+  'equivalence-1': { bloom: 'Understand' },
+  'equivalence-2': { bloom: 'Apply', equivTo: 'p → q' },
+  'equivalence-3': { bloom: 'Apply' },
+  'equivalence-4': { bloom: 'Analyze' },
+  'deMorgan-1': { bloom: 'Understand', equivTo: '¬(p ∧ q)' },
+  'deMorgan-2': { bloom: 'Apply' },
+  'deMorgan-3': { bloom: 'Apply', equivTo: '¬(¬p ∨ q)' },
+  'equivLaws-1': { bloom: 'Understand' },
+  'equivLaws-2': { bloom: 'Apply', equivTo: 'p ∧ (q ∨ r)' },
+  'equivLaws-3': { bloom: 'Analyze', equivTo: '¬(p → q) ∨ q' },
+  'applications-1': { bloom: 'Apply' },
+  'applications-2': { bloom: 'Analyze' },
+  'applications-3': { bloom: 'Apply' },
+};
+
+export const BANK: BankItem[] = [
+  ...ORIGINAL.map((i) => ({ ...i, ...TAGS[i.id], clo: cloOf(i.concept).id, core: true })),
+  ...EXTRA_ITEMS,
+];
+
 export const BANK_CONCEPTS: ConceptId[] = [...new Set(BANK.map((i) => i.concept))];
 
-export const itemsFor = (c: ConceptId): BankItem[] => BANK.filter((i) => i.concept === c);
+export const itemsFor = (c: ConceptId): BankItem[] => BANK.filter((i) => i.concept === c && i.core);
 
 /** Practice sessions take a concept's first 2 items; the mastery check takes its last 3. */
 export function sessionItems(concept: ConceptId, isMasteryCheck: boolean): BankItem[] {
   const all = itemsFor(concept);
   return isMasteryCheck ? all.slice(-3) : all.slice(0, 2);
 }
+
+export const itemById = (id: string): BankItem | undefined => BANK.find((i) => i.id === id);
