@@ -20,6 +20,9 @@ describe('ControllerApp', () => {
 
 
 describe('BoothPanel', () => {
+  it('offers the Quiz 3 drop for a drastic signal on demand', () => {
+    expect(renderToStaticMarkup(<BoothPanel />)).toContain('Simulate a Quiz 3 drop');
+  });
   it('offers the live teacher, Reset demo and (once loaded) the phone QR code', () => {
     const out = renderToStaticMarkup(<BoothPanel />);
     expect(out).toContain('Live booth demo');

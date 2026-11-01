@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { fmt } from '../live/clock';
 import { useLive } from '../live/LiveContext';
 import { classKpis } from '../live/mastery';
+import { examRisk } from '../live/study/outlook';
 import { fullDate } from '../scenario/course';
 import type { AssistantMsg as LiveAssistant, DemoState } from '../live/types';
 import { STUDENTS, type Student } from '../scenario/classroom';
@@ -37,11 +38,14 @@ const SOURCES = ['LMS', 'Zalo', 'WhatsApp', 'Email', 'Assessments', 'Attendance'
 const ORDER: ContextId[] = ['student', 'class', 'attention'];
 
 /** Today's attention list on the empty state, styled after the reference's ruled schedule. */
-const TODAY: { topic: ContextId; who: string; what: string }[] = [
+const TODAY: { topic: ContextId; who: string; what: string; prompt?: string }[] = [
   { topic: 'student', who: 'Nguyễn Minh Anh', what: 'Quiz 2 dropped' },
   { topic: 'class', who: 'Discrete Mathematics', what: 'Gap: logical equivalence' },
   { topic: 'attention', who: 'Escalation rule', what: 'Need you personally' },
 ];
+
+/** Live only, while at least one student's exam estimate is At risk or Unlikely. */
+const EXAM_ROW = { topic: 'attention' as ContextId, who: 'Road to the exam', what: 'May not pass', prompt: 'Which students may not pass the exam?' };
 
 /** Figures count up with the row's reveal; at 1 they read as written. */
 const figureOf = (i: number, p: number): string =>
@@ -68,7 +72,7 @@ const liveBlocks = (m: LiveAssistant): Block[] =>
 const liveFigures = (s: DemoState): string[] => {
   const ma = s.students[MINH_ANH.index];
   const k = classKpis(s.students);
-  return [`${ma.quiz.q1}→${ma.quiz.q2}`, `${k.needSupport}/55`, String(k.escalated)];
+  return [`${ma.quiz.q1}→${ma.quiz.q2}`, `${k.needSupport}/55`, String(k.escalated), String(examRisk(s).length)];
 };
 
 /** Stateless: everything on screen is a function of `frame`. With no `actions`, buttons render but do nothing. */
@@ -280,6 +284,7 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
   const line2 = comma < 0 ? '' : typed.slice(comma + 1).trim();
   const rows = frame.greeting.rows;
   const live = useLive();
+  const list = live && examRisk(live.state).length > 0 ? [...TODAY, EXAM_ROW] : TODAY;
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto flex max-w-[760px] flex-col px-8 pt-[97px]">
@@ -292,13 +297,13 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
             <span className="text-[13px] text-egg-mute">Needs your attention today</span>
             <span className="text-[13px] text-egg-mute">from 8 sources</span>
           </div>
-          {TODAY.map((row, i) => (
+          {list.map((row, i) => (
             <button
-              key={row.topic}
+              key={row.what}
               type="button"
-              onClick={() => actions?.send(TOPICS[row.topic].prompt)}
+              onClick={() => actions?.send(row.prompt ?? TOPICS[row.topic].prompt)}
               className="grid w-full grid-cols-[1fr_auto_auto] items-center gap-6 border-t border-egg-ink/70 py-3.5 text-left"
-              style={{ opacity: rows[i], transform: `translateY(${(1 - rows[i]) * 12}px)` }}
+              style={{ opacity: rows[Math.min(i, 2)], transform: `translateY(${(1 - rows[Math.min(i, 2)]) * 12}px)` }}
             >
               <span>
                 <span className="block text-[13px] italic text-egg-mute">{row.who}</span>
@@ -306,7 +311,7 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
                   <Mark size={13} className="text-egg-ink" />{row.what}
                 </span>
               </span>
-              <span className="font-serif text-[40px] leading-none text-egg-accent-ink">{live ? liveFigures(live.state)[i] : figureOf(i, rows[i])}</span>
+              <span className="font-serif text-[40px] leading-none text-egg-accent-ink">{live ? liveFigures(live.state)[i] : figureOf(i, rows[Math.min(i, 2)])}</span>
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-egg-ink text-egg-card">
                 <Arrow size={15} dir="right" />
               </span>

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup as html } from 'react-dom/server';
 import { keysOf, liveEvents, SeenClock } from '../live/events';
 import { ctxFor, stateWithPlan } from '../live/fixtures';
+import { seedState } from '../live/seed';
+import { ensureRecord } from '../live/study/record';
 import { LiveProvider } from '../live/LiveContext';
 import type { AssistantMsg, DemoState, LivePanel } from '../live/types';
 import { COMPLEX } from '../scenario/classroom';
@@ -81,6 +83,12 @@ describe('live teacher screen', () => {
     expect(out).toMatch(/aria-current="page"[^>]*>Minh Anh · implication gap</);
     expect(out).not.toContain('Who needs me personally');
     expect(render({ ...stateWithPlan(), conversations: [] }, null)).toContain('No conversations yet');
+  });
+  it('adds an attention row for students who may not pass, only when there are some', () => {
+    expect(render(seedState(), null)).not.toContain('May not pass');
+    const withPlan = seedState();
+    ensureRecord(withPlan, 's17').plan = { createdDay: 40, reason: '', leftOut: [], source: 'offline', days: [] };
+    expect(render(withPlan, null)).toContain('May not pass');
   });
   it('shows the story clock, Reset demo and live attention figures on the opening screen', () => {
     const out = render(stateWithPlan(), null);

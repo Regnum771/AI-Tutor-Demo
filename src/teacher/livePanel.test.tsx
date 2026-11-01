@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup as html } from 'react-dom/server';
 import { ctxFor, stateWithPlan } from '../live/fixtures';
+import { ensureRecord } from '../live/study/record';
 import { LiveProvider } from '../live/LiveContext';
 import type { DemoState, LivePanel } from '../live/types';
 import { ContextPanel } from './ContextPanel';
@@ -83,5 +84,27 @@ describe('live panels', () => {
     expect(pathway).not.toMatch(/font-serif[^>]*>Rebuild implication/);
     const cls = render(stateWithPlan('classActivity'), { kind: 'class', planId: 'p1' });
     expect(cls).toMatch(/font-serif[^>]*>Group recap</);
+  });
+});
+
+describe('road to the exam', () => {
+  const withStudy = () => {
+    const s = stateWithPlan();
+    const rec = ensureRecord(s, 's17');
+    rec.reported = { weekday: 30, weekend: 60 };
+    rec.plan = { createdDay: 40, reason: 'More on equivalence.', leftOut: [], source: 'agents', days: [{ day: 41, minutes: 20, clo: 'CLO2', concepts: ['equivalence'] }] };
+    rec.days[40] = { planned: 20, done: 12, check: null };
+    rec.replans.push({ day: 40, signal: 'markSwing', reason: 'More on equivalence.' });
+    return s;
+  };
+  it('shows the estimate, minutes and the last change for a student with a plan', () => {
+    const out = render(withStudy(), { kind: 'student', studentId: 's17', planId: null, highlight: null });
+    expect(out).toContain('Road to the exam');
+    expect(out).toContain('At risk');
+    expect(out).toContain('12 of 20 min');
+    expect(out).toContain('More on equivalence.');
+  });
+  it('stays out of the way for a student who has not set up', () => {
+    expect(render(stateWithPlan(), { kind: 'student', studentId: 's17', planId: null, highlight: null })).not.toContain('Road to the exam');
   });
 });

@@ -15,10 +15,17 @@ export function BoothPanel() {
   useEffect(() => {
     if (info && info !== 'down' && info.lanUrl) void QRCode.toDataURL(info.lanUrl, { margin: 1, width: 220 }).then(setQr);
   }, [info]);
+  const [note, setNote] = useState<string | null>(null);
   const reset = (e: MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.blur(); // the Director's Space handler plays and pauses; a focused button would also fire
     void fetch('/api/reset', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
       .then((r) => { if (!r.ok) throw new Error(); })
+      .catch(() => setInfo('down'));
+  };
+  const drop = (e: MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.blur();
+    void fetch('/api/study/simulate-drop', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
+      .then(async (r) => setNote(r.ok ? 'Quiz 3 mark dropped: the phone’s plan is being rewritten.' : ((await r.json()) as { error?: string }).error ?? 'That did not work.'))
       .catch(() => setInfo('down'));
   };
   return (
@@ -31,7 +38,9 @@ export function BoothPanel() {
         <div className="mt-3 flex gap-3">
           <button className={btn} onClick={() => window.open('/teacher.html', 'live-teacher')}>Open live teacher</button>
           <button className={btn} onClick={reset}>Reset demo</button>
+          <button className={btn} onClick={drop}>Simulate a Quiz 3 drop</button>
         </div>
+        {note && <div className="mt-2 text-[13px] text-dim">{note}</div>}
         {info && info !== 'down' && info.lanUrl && <div className="mt-3 font-mono text-[13px] text-dim">{info.lanUrl}</div>}
       </div>
       {qr && <img src={qr} alt="QR code for the live phone" width={220} height={220} className="rounded-lg bg-[#FFFDF8] p-2" />}

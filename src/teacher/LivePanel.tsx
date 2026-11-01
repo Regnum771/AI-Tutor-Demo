@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLive } from '../live/LiveContext';
 import { classKpis, topicMastery, twinConcepts } from '../live/mastery';
+import { examOutlook } from '../live/study/outlook';
 import type { DemoState, Evidence, LivePanel, Plan, StudentProfile } from '../live/types';
 import { GROUPS } from '../scenario/classroom';
 import { conceptById } from '../scenario/knowledgeGraph';
@@ -138,11 +139,33 @@ function StudentLive({ s, plan, highlight, bars, state }: { s: StudentProfile; p
       <Section title="Concept mastery" aside="gap below 0.50">
         {twinConcepts(state, s.id).map((c) => <Meter key={c} label={conceptById(c).label} value={s.mastery[c]} grow={bars} />)}
       </Section>
+      <RoadToExam s={s} state={state} />
       {plan && <LivePlanCard plan={plan} />}
       <Section title="Evidence" aside={`${s.evidence.length} entries`}>
         <EvidenceList entries={s.evidence} highlight={highlight} />
       </Section>
     </>
+  );
+}
+
+/** The student's own study, for a teacher who wants to look in. Nothing here needs approval. */
+function RoadToExam({ s, state }: { s: StudentProfile; state: DemoState }) {
+  const o = examOutlook(state, s);
+  if (!o.setUp) return null;
+  return (
+    <Section title="Road to the exam" aside="estimate">
+      <div className="grid grid-cols-2 border-b border-egg-line pb-3">
+        <div className="pr-4">
+          <Eyebrow>Pass estimate</Eyebrow>
+          <div className="mt-1 font-serif text-[28px] leading-none text-egg-ink">{o.band}</div>
+        </div>
+        <div className="pl-4">
+          <Eyebrow>Studied</Eyebrow>
+          <div className="mt-1 text-[15px] font-semibold text-egg-ink">{`${o.minutesDone} of ${o.minutesPlanned} min`}</div>
+        </div>
+      </div>
+      {o.lastChange && <div className="mt-3 text-[13.5px] text-egg-ink">{`${o.lastChange.date}: ${o.lastChange.reason}`}</div>}
+    </Section>
   );
 }
 
