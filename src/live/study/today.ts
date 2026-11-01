@@ -18,7 +18,7 @@ export function todayList(state: DemoState, studentId: string): { budget: number
   const concepts = planned?.concepts ?? [];
   const yesterday = rec.days[day - 1];
   const carry = yesterday ? Math.max(0, yesterday.planned - selfDone(yesterday)) : 0;
-  const budget = Math.min(capacityLeft(state, studentId, day), (planned?.minutes ?? 0) + carry);
+  const budget = Math.round(Math.min(capacityLeft(state, studentId, day), (planned?.minutes ?? 0) + carry));
   const done = selfDone(rec.days[day]);
   const rows: TodayRow[] = [];
 

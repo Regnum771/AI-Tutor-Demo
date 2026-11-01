@@ -338,3 +338,13 @@ describe('an overdue teacher session stays on Today', () => {
     expect(todayList(s, 's17').rows.some((r) => r.kind === 'plan')).toBe(false);
   });
 });
+
+describe('Today budget', () => {
+  it('is a whole number of minutes even with a carry', () => {
+    const s = ready();
+    s.study.s17.days[39] = { planned: 20, done: 2.5, check: null };
+    s.day = 40;
+    const { budget } = todayList(s, 's17');
+    expect(Number.isInteger(budget)).toBe(true);
+  });
+});
