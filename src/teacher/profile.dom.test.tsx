@@ -68,3 +68,17 @@ describe('student profile pop-up', () => {
     expect(dialog(m.el)).toBeNull();
   });
 });
+
+describe('quotes in answers', () => {
+  it('quotes up to two cited messages under the block and opens the profile at one', async () => {
+    const s = stateWithPlan();
+    const answer = s.conversations[0].msgs[1];
+    if (answer.role === 'assistant') answer.blocks[0].cites = ['s17-quiz2', 's17-zalo-1', 's17-zalo-2', 's5-voice-8'];
+    const m = await mount(s);
+    const quotes = [...m.el.querySelectorAll('[data-quote]')].map((q) => q.getAttribute('data-quote'));
+    expect(quotes).toEqual(['s17-zalo-1', 's17-zalo-2']);
+    expect(m.el.querySelector('[data-quote="s17-zalo-1"]')!.textContent).toContain('Zalo · Nguyễn Minh Anh · Wed 21 Oct · 1 day after Lecture 5');
+    await click(m.el.querySelector('[data-quote="s17-zalo-1"]')!);
+    expect(dialog(m.el)!.querySelector('[data-entry="s17-zalo-1"]')!.getAttribute('style')).toContain('background');
+  });
+});

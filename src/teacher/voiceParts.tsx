@@ -32,3 +32,14 @@ export function MessageRow({ e, lit, rowRef }: { e: Evidence; lit: boolean; rowR
     </li>
   );
 }
+
+/** A cited message under an answer block: the student's words, then who and when. */
+export function QuoteCard({ e, name, onOpen }: { e: Evidence; name: string; onOpen(): void }) {
+  const when = e.day !== undefined && e.time ? ` · ${shortDate(e.day)} · ${lectureLabel(e.day, e.time)}` : ` · ${e.when}`;
+  return (
+    <button type="button" data-quote={e.id} onClick={onOpen} className="mt-2 block w-full rounded-xl border-l-4 border-egg-accent bg-egg-card px-3 py-2 text-left hover:bg-egg-tint">
+      <Words e={e} />
+      <span className="mt-1 block font-mono text-[10.5px] uppercase tracking-wide text-egg-mute">{`${e.source} · ${name}${when}`}</span>
+    </button>
+  );
+}

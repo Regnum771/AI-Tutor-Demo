@@ -1,5 +1,6 @@
 import { useLive } from '../live/LiveContext';
 import type { LiveBlock, LivePanel } from '../live/types';
+import { QuoteCard } from './voiceParts';
 
 /** Where a cited evidence id opens: the class panel, or the student's panel with that entry highlighted. */
 export const panelForEvidence = (id: string): LivePanel =>
@@ -17,6 +18,13 @@ export function LiveText({ block }: { block: LiveBlock }) {
     if (id.startsWith('class-')) live.showPanel(panelForEvidence(id));
     else live.openProfile(id.split('-')[0], id);
   };
+  const studentOf = (id: string) => live?.state.students.find((s) => s.id === id.split('-')[0]);
+  const quotes = block.cites
+    .flatMap((id) => {
+      const e = id.startsWith('class-') ? undefined : studentOf(id)?.evidence.find((x) => x.id === id);
+      return e?.kind === 'message' ? [e] : [];
+    })
+    .slice(0, 2);
   return (
     <>
       {block.text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((part, i) =>
@@ -36,6 +44,7 @@ export function LiveText({ block }: { block: LiveBlock }) {
           {source(id)}
         </button>
       ))}
+      {quotes.map((e) => <QuoteCard key={e.id} e={e} name={studentOf(e.id)?.name ?? ''} onOpen={() => open(e.id)} />)}
     </>
   );
 }
