@@ -1,5 +1,6 @@
 import { CARDS } from '../../scenario/cards';
 import { ASSESSMENTS, CLOS, EXAM_DAY, START_DAY, type CloId } from '../../scenario/course';
+import { noteClassMastery } from '../history';
 import { statusFor } from '../mastery';
 import { studentById } from '../reducer';
 import { IDLE_PHONE } from '../seed';
@@ -131,6 +132,7 @@ export function advance(state: DemoState, days: number, check: StudyDay['check']
     }
     s.day += 1;
     if (s.day % 7 === 0) weekTurn(s, id);
+    noteClassMastery(s);
     noteForecast(rec, student, s.day);
   }
   s.clock = MORNING;

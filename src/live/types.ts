@@ -179,6 +179,9 @@ export interface StudyRecord {
   planning: { steps: string[] } | null;
 }
 
+/** One point of the class's average mastery on a concept. */
+export interface MasteryPoint { day: number; value: number }
+
 /** A self-started practice session. */
 export interface SelfSession { clo: CloId | null; concepts: ConceptId[]; served: string[] }
 
@@ -217,5 +220,7 @@ export interface DemoState {
   conversations: Conversation[];
   phone: PhoneState;
   study: Record<string, StudyRecord>;
+  /** Class average mastery per concept, one point per closed live day. The seeded Weeks 1–6 come from `seededHistory`. */
+  masteryHistory: Record<ConceptId, MasteryPoint[]>;
   busy: boolean;
 }

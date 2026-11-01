@@ -1,6 +1,7 @@
 import { buildRoster, classEvidence } from '../scenario/roster';
 import { START_DAY } from '../scenario/course';
 import { STORY_START } from './clock';
+import { emptyHistory } from './history';
 import type { DemoState, PhoneState } from './types';
 
 export const IDLE_PHONE: PhoneState = {
@@ -21,6 +22,7 @@ export function seedState(epoch = 0): DemoState {
     conversations: [],
     phone: { ...IDLE_PHONE, done: [] },
     study: {},
+    masteryHistory: emptyHistory(),
     busy: false,
   };
 }
