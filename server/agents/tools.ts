@@ -3,10 +3,12 @@ import { fmt } from '../../src/live/clock';
 import { classKpis, topicMastery } from '../../src/live/mastery';
 import type { DemoState, EvidenceKind, StudentProfile } from '../../src/live/types';
 import { examOutlook, examRisk } from '../../src/live/study/outlook';
-import { fullDate } from '../../src/scenario/course';
+import { forecast } from '../../src/live/study/estimate';
+import { fullDate, lectureLabel } from '../../src/scenario/course';
 import { GROUPS } from '../../src/scenario/classroom';
 import { CONCEPTS, conceptById, type ConceptId } from '../../src/scenario/knowledgeGraph';
 import { TWIN_FOCUS } from '../../src/scenario/minhAnh';
+import { FAQ, faqLog, faqStats, voiceEvidenceId } from '../../src/scenario/voice';
 import { choseConverse } from '../../src/scenario/roster';
 
 export const CONCEPT_IDS: ConceptId[] = CONCEPTS.map((c) => c.id);
@@ -44,6 +46,7 @@ export const READ_TOOLS: Anthropic.Beta.BetaTool[] = [
   tool('get_exam_outlook', "A student's road to the final exam: forecast out of 10 now (pass 4.0), the forecast if the current plan is kept, and the band (all estimates), mastery per learning outcome (CLO), minutes planned and done against the current plan, assessment marks so far (for example Quiz 3), the next assessment, and the last change to the study plan with its reason. setUp is false until the student has set up on the phone.", {
     student_id: { type: 'string' },
   }),
+  tool('get_class_questions', 'What students have been asking on Zalo, email, WhatsApp and the LMS forum, grouped into FAQ entries: the question, what confuses them, the concept, how many students and messages, when they ask relative to the lectures, and the evidence ids of the messages (cite these).', {}),
 ];
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
@@ -95,6 +98,9 @@ function twin(state: DemoState, s: StudentProfile) {
   return {
     id: s.id, name: s.name, group: s.group, status: s.status, escalated: s.escalated, mastery: s.mastery,
     quiz: s.quiz, practicePerWeek: s.practicePerWeek,
+    gpa: s.gpa,
+    history: s.history,
+    forecast: forecast(s, state.study[s.id]),
     gaps: TWIN_FOCUS.filter((c) => s.mastery[c] < 0.5),
     evidenceCount: s.evidence.length,
     plans: state.plans.filter((p) => p.studentIds.includes(s.id)).map((p) => ({ id: p.id, kind: p.kind, title: p.title, status: p.status })),
@@ -110,7 +116,9 @@ export function readTool(state: DemoState, name: string, input: Record<string, u
     case 'get_evidence': {
       const s = studentOf(state, input.student_id);
       // The phone's result and planId stay out of what agents read.
-      return s.evidence.filter((e) => !input.kind || e.kind === input.kind).map(({ result: _result, planId: _planId, ...e }) => e);
+      return s.evidence
+        .filter((e) => !input.kind || e.kind === input.kind)
+        .map(({ result: _result, planId: _planId, ...e }) => (e.day !== undefined && e.time ? { ...e, lecture: lectureLabel(e.day, e.time) } : e));
     }
     case 'get_exam_outlook': return examOutlook(state, studentOf(state, input.student_id));
     case 'compare_students':
@@ -118,6 +126,8 @@ export function readTool(state: DemoState, name: string, input: Record<string, u
         const s = studentOf(state, id);
         return { id: s.id, name: s.name, mastery: s.mastery };
       });
+    case 'get_class_questions':
+      return FAQ.map((f) => ({ ...f, ...faqStats(f.id), evidenceIds: faqLog(f.id).map(voiceEvidenceId) }));
     default: throw new Error(`Unknown tool ${name}.`);
   }
 }
@@ -140,6 +150,7 @@ export function readLabel(state: DemoState, name: string, input: Record<string, 
     case 'get_evidence': return `${p} reading ${who(input.student_id)}’s ${KIND_LABEL[input.kind as EvidenceKind] ?? 'evidence'}`;
     case 'compare_students': return `${p} comparing ${Array.isArray(input.student_ids) ? input.student_ids.length : 0} learning twins`;
     case 'get_exam_outlook': return `${p} reading ${who(input.student_id)}’s road to the exam`;
+    case 'get_class_questions': return `${p} reading what students are asking`;
     default: return null;
   }
 }

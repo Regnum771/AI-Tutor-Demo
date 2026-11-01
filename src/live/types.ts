@@ -20,7 +20,7 @@ export interface Evidence {
   day?: number;
   /** HH:MM, log messages only. */
   time?: string;
-  /** Live practice only: how the answer went, and the teacher plan it belonged to (none for self-practice). Scripted screens never read these, and agents do not see them (get_evidence strips them). */
+  /** Live practice only: how the answer went, and the teacher plan it belonged to (none for self-practice). Scripted screens never read these. Agents do not see these two (get_evidence strips them); they do see day and time. */
   result?: 'correct' | 'wrong' | 'skipped';
   planId?: string;
 }

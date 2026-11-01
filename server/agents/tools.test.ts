@@ -17,7 +17,7 @@ const find = (input: Record<string, unknown>) =>
 
 describe('read tools', () => {
   it('are strict object schemas', () => {
-    expect(READ_TOOLS.map((t) => t.name)).toEqual(['get_class_overview', 'find_students', 'get_student', 'get_evidence', 'compare_students', 'get_exam_outlook']);
+    expect(READ_TOOLS.map((t) => t.name)).toEqual(['get_class_overview', 'find_students', 'get_student', 'get_evidence', 'compare_students', 'get_exam_outlook', 'get_class_questions']);
     for (const t of READ_TOOLS) {
       expect(t.strict).toBe(true);
       expect(t.input_schema.additionalProperties).toBe(false);
@@ -110,5 +110,25 @@ describe('exam outlook', () => {
     const rec = ensureRecord(state, 's17');
     rec.plan = { createdDay: 40, reason: '', leftOut: [], source: 'offline', days: [] };
     expect(readTool(state, 'find_students', { status: 'examRisk', concept: '', below: -1, name: '' })).toMatchObject([{ id: 's17' }]);
+  });
+});
+
+describe('student voice', () => {
+  it('lists the class questions with figures and the ids behind them', () => {
+    const state = seedState();
+    const qs = readTool(state, 'get_class_questions', {}) as Array<Record<string, unknown>>;
+    const converse = qs.find((q) => q.id === 'f-converse')!;
+    expect(converse).toMatchObject({ messages: 16, students: 13, concept: 'implication' });
+    expect(converse.evidenceIds).toContain('s17-zalo-1');
+    expect(readLabel(state, 'get_class_questions', {})).toBe('Student Analysis Agent · reading what students are asking');
+  });
+  it('places messages relative to a lecture, and adds the record and forecast to the twin', () => {
+    const state = seedState();
+    const msgs = readTool(state, 'get_evidence', { student_id: 's17', kind: 'message' }) as Array<Record<string, unknown>>;
+    expect(msgs[0]).toMatchObject({ id: 's17-zalo-1', lecture: '1 day after Lecture 5' });
+    const t = readTool(state, 'get_student', { student_id: 's17' }) as Record<string, unknown>;
+    expect(t).toMatchObject({ forecast: { value: 4.4, band: 'At risk' } });
+    expect(t.gpa).toBeGreaterThan(0);
+    expect((t.history as unknown[]).length).toBeGreaterThanOrEqual(4);
   });
 });

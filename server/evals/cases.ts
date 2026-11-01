@@ -116,6 +116,7 @@ export const CASES: Case[] = [
     t.check('Diagnose', 'names implication as the root', /implication/i.test(a.answer), a.answer);
     t.check('Diagnose', 'names the converse mistake', /converse/i.test(a.answer), a.answer);
     t.check('Diagnose', 'cites at least 3 pieces of evidence', new Set(a.cites).size >= 3, a.cites.join(','));
+    t.check('Diagnose', 'cites a Zalo message', a.cites.some((c) => c.startsWith('s17-zalo')), a.cites.join(','));
     t.check('Diagnose', 'every cited id exists', a.cites.every((c) => evidenceIds(t.state).has(c)), a.cites.join(','));
     t.check('Diagnose', 'stays under 140 words', a.answer.split(/\s+/).length <= 140, `${a.answer.split(/\s+/).length} words`);
     t.noPronouns('Diagnose', a.answer);
@@ -148,6 +149,14 @@ export const CASES: Case[] = [
     const a = await t.ask(`How should I approach ${s.name} about the gap?`, null, 'Diagnose');
     t.check('Diagnose', 'reads the TA note', a.cites.includes('s13-ta'), a.cites.join(','));
     t.check('Diagnose', 'keeps it low-pressure', /(low.pressure|gentle|supportive|private|quiet|sensitive|care)/i.test(a.answer), a.answer);
+    t.noPronouns('Diagnose', a.answer);
+  } },
+  { id: 'L2.7', level: 2, title: 'Reads what students are asking', run: async (t) => {
+    const a = await t.ask('What are students confused about after Lecture 5?', null, 'Diagnose');
+    t.check('Diagnose', 'read the class questions', a.steps.some((s) => s.includes('what students are asking')), a.steps.join(' | '));
+    const messages = new Set(t.state.students.flatMap((s) => s.evidence.filter((e) => e.kind === 'message').map((e) => e.id)));
+    t.check('Diagnose', 'cites a student message', a.cites.some((c) => messages.has(c)), a.cites.join(','));
+    t.check('Diagnose', 'names the converse confusion', /converse|q → p|both ways/i.test(a.answer), a.answer);
     t.noPronouns('Diagnose', a.answer);
   } },
 
