@@ -93,7 +93,7 @@ export function TodayScreen({ view, onRow, onNextDay, onNextWeek }: { view: Toda
       <div className="mt-4 rounded-3xl bg-egg-ink p-5 text-egg-card">
         <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-egg-card/60">{view.examIn}</div>
         <div className="mt-2 font-serif text-[34px] leading-none">{view.band}</div>
-        <div className="mt-1.5 text-[13px] text-egg-card/75">Your pass estimate. It is an estimate, not a result.</div>
+        <div className="mt-1.5 text-[13px] text-egg-card/75">{`Your forecast: ${view.forecast.toFixed(1)} out of 10, and 4.0 passes. It is an estimate, not a result.`}</div>
       </div>
       {view.planning && (
         <div className="mt-4 rounded-2xl bg-egg-tint p-4">

@@ -38,7 +38,7 @@ describe('setup', () => {
   it('writes the first plan in the background and lands on Today', async () => {
     const session = await offline();
     expect(session.state.phone.screen).toBe('today');
-    expect(session.state.study.s17).toMatchObject({ planning: null, pendingSignal: null, lastReplanDay: 40, band: 'Likely' });
+    expect(session.state.study.s17).toMatchObject({ planning: null, pendingSignal: null, lastReplanDay: 40, band: 'At risk' });
     expect(session.state.study.s17.plan?.source).toBe('offline');
   });
   it('shows the agent’s thinking lines while it writes', async () => {

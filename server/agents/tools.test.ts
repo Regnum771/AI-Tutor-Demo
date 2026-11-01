@@ -70,7 +70,7 @@ describe('read tools', () => {
 describe('exam outlook', () => {
   it('reports the road to the exam, and says when a student has not set up', () => {
     const state = seedState();
-    expect(readTool(state, 'get_exam_outlook', { student_id: 's17' })).toMatchObject({ setUp: false, passMark: 50, nextAssessment: { title: 'Assignment 2' } });
+    expect(readTool(state, 'get_exam_outlook', { student_id: 's17' })).toMatchObject({ setUp: false, passMark: 4, nextAssessment: { title: 'Assignment 2' } });
     const rec = ensureRecord(state, 's17');
     rec.reported = { weekday: 30, weekend: 60 };
     rec.plan = { createdDay: 40, reason: 'Implication first.', leftOut: [], source: 'agents', days: [{ day: 41, minutes: 20, clo: 'CLO1', concepts: ['implication'] }] };

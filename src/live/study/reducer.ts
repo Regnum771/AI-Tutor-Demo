@@ -6,7 +6,7 @@ import { IDLE_PHONE } from '../seed';
 import type { CardRating, DemoState, ReplanSignal, StudyDay, StudyPlan } from '../types';
 import { applyCheck, openPathways } from './capacity';
 import { reviewCard } from './cards';
-import { passEstimate } from './estimate';
+import { forecast } from './estimate';
 import { markFor } from './marks';
 import { ensureRecord, logMinutes, MINUTES } from './record';
 import { nextItem } from './select';
@@ -131,7 +131,7 @@ export function advance(state: DemoState, days: number, check: StudyDay['check']
   }
   s.clock = MORNING;
   s.phone = { ...s.phone, ...NO_PRACTICE, screen: 'lock', morning: true };
-  const { band } = passEstimate(student, rec, s.day);
+  const { band } = forecast(student, rec);
   rec.band ??= band;
   return done(s, detectSignal(rec, s.day, band, swing?.mark ?? null, swing?.previous ?? null));
 }
@@ -153,6 +153,6 @@ export function simulateDrop(state: DemoState): StudyResult {
 export function applyPlan(s: DemoState, studentId: string, plan: StudyPlan, signal: ReplanSignal): void {
   const rec = s.study[studentId];
   Object.assign(rec, { plan, planning: null, lastReplanDay: s.day });
-  rec.band = passEstimate(studentById(s, studentId)!, rec, s.day).band;
+  rec.band = forecast(studentById(s, studentId)!, rec).band;
   rec.replans.push({ day: s.day, signal, reason: plan.reason });
 }

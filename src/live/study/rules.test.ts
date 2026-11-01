@@ -7,7 +7,7 @@ import { seedState } from '../seed';
 import type { DemoState, StudentProfile } from '../types';
 import { applyCheck, capacityFor, capacityLeft, shortOfTime, teacherMinutes } from './capacity';
 import { NEW_PER_DAY, cardsToday, reviewCard } from './cards';
-import { bandOf, cloMastery, minutesNeeded, passEstimate } from './estimate';
+import { bandOf, cloMastery, forecast, minutesNeeded, projection } from './estimate';
 import { markFor } from './marks';
 import { ensureRecord, newRecord, noteAttempt } from './record';
 import { SELF_SESSION, nextItem } from './select';
@@ -115,26 +115,55 @@ describe('next question', () => {
   });
 });
 
-describe('pass estimate', () => {
-  it('weights CLO mastery by exam share and bands the score', () => {
+describe('forecast', () => {
+  it('weights mastery by exam share and blends in the latest mark, on 0–10', () => {
     const { s, rec } = setup();
     const st = student(s);
-    const est = passEstimate(st, rec, 40);
-    const expected = CLOS.reduce((a, c) => a + c.share * cloMastery(st, c.id), 0) * 100;
-    expect(Math.abs(est.score - expected)).toBeLessThanOrEqual(0.5);
-    expect(est.band).toBe(bandOf(est.score));
-    expect(bandOf(60)).toBe('Likely');
-    expect(bandOf(59)).toBe('At risk');
-    expect(bandOf(45)).toBe('At risk');
-    expect(bandOf(44)).toBe('Unlikely');
+    const m = CLOS.reduce((a, c) => a + c.share * cloMastery(st, c.id), 0);
+    expect(forecast(st, rec).value).toBeCloseTo(Math.round((6 * m + st.quiz.q2 / 25) * 10) / 10, 5);
+    expect(forecast(st, rec)).toEqual({ value: 4.4, band: 'At risk' });
   });
-  it('counts planned study, capped at +0.20 mastery', () => {
+  it('bands at 3.5 and 5.0', () => {
+    expect(bandOf(5)).toBe('Likely');
+    expect(bandOf(4.9)).toBe('At risk');
+    expect(bandOf(3.5)).toBe('At risk');
+    expect(bandOf(3.4)).toBe('Unlikely');
+  });
+  it('a plan alone never moves the forecast; a lower mark does', () => {
     const { s, rec } = setup();
     const st = student(s);
-    const plain = passEstimate(st, rec, 40).score;
+    const before = forecast(st, rec).value;
     rec.plan = { createdDay: 40, reason: '', leftOut: [], source: 'offline', days: [{ day: 41, minutes: 2000, clo: 'CLO1', concepts: [] }] };
-    expect(passEstimate(st, rec, 40).score).toBeLessThanOrEqual(plain + 20.01);
-    expect(passEstimate(st, rec, 40).score).toBeGreaterThan(plain);
+    expect(forecast(st, rec).value).toBe(before);
+    rec.marks.push({ assessment: 'quiz3', mark: 22, day: 52 });
+    expect(forecast(st, rec).value).toBeLessThan(before - 0.6);
+  });
+});
+
+describe('projection', () => {
+  it('adds the plan, scaled by the time it covers and the work done', () => {
+    const { s, rec } = setup();
+    const st = student(s);
+    const now = forecast(st, rec).value;
+    expect(projection(st, rec, 40)).toBe(now);
+    const need = minutesNeeded(st);
+    rec.plan = { createdDay: 40, reason: '', leftOut: [], source: 'offline', days: [{ day: 41, minutes: need, clo: 'CLO1', concepts: [] }] };
+    expect(projection(st, rec, 40)).toBeCloseTo(now + 2, 5);
+    rec.plan.days[0].minutes = Math.round(need / 2);
+    expect(projection(st, rec, 40)).toBeCloseTo(now + 1, 1);
+    for (let d = 33; d < 40; d++) rec.days[d] = { planned: 20, done: 10, check: null };
+    expect(projection(st, rec, 40)).toBeCloseTo(now + 0.5, 1);
+  });
+  it('caps at 10 and adds nothing when no study is needed', () => {
+    const { s, rec } = setup();
+    const st = student(s);
+    rec.plan = { createdDay: 40, reason: '', leftOut: [], source: 'offline', days: [{ day: 41, minutes: 1000, clo: 'CLO1', concepts: [] }] };
+    setAll(st, 0.74);
+    rec.marks.push({ assessment: 'quiz3', mark: 100, day: 52 });
+    expect(projection(st, rec, 40)).toBe(10);
+    setAll(st, 0.97);
+    expect(minutesNeeded(st)).toBe(0);
+    expect(projection(st, rec, 40)).toBe(forecast(st, rec).value);
   });
   it('counts 12 minutes per 0.1 of gap to 0.75, per concept', () => {
     const st = student(seedState());

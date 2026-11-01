@@ -1,6 +1,6 @@
 import { studentById } from '../live/reducer';
 import { cardsToday } from '../live/study/cards';
-import { cloMastery, passEstimate } from '../live/study/estimate';
+import { cloMastery, forecast } from '../live/study/estimate';
 import { todayList, type TodayRow } from '../live/study/today';
 import type { DemoState, PassBand, ReplanSignal } from '../live/types';
 import type { Card } from '../scenario/cards';
@@ -14,6 +14,8 @@ export interface TodayView {
   examIn: string;
   examDay: boolean;
   band: PassBand;
+  /** Out of 10. An estimate. */
+  forecast: number;
   reason: string | null;
   offline: boolean;
   /** Agent steps while a plan is being written with none on the phone yet. */
@@ -80,7 +82,8 @@ export function todayView(state: DemoState): TodayView | null {
     date: fullDate(state.day),
     examIn: countdown(exam, state.day),
     examDay: state.day >= EXAM_DAY,
-    band: passEstimate(r.student, r.rec, state.day).band,
+    band: forecast(r.student, r.rec).band,
+    forecast: forecast(r.student, r.rec).value,
     reason: r.rec.plan?.reason ?? null,
     offline: r.rec.plan?.source === 'offline',
     planning: r.rec.planning && !r.rec.plan ? r.rec.planning.steps : null,

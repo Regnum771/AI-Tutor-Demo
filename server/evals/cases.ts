@@ -1,7 +1,7 @@
 import { classKpis, topicMastery } from '../../src/live/mastery';
 import { planProblems } from '../../src/live/plans';
 import { planById } from '../../src/live/reducer';
-import { passEstimate } from '../../src/live/study/estimate';
+import { forecast } from '../../src/live/study/estimate';
 import type { AssistantMsg, Plan } from '../../src/live/types';
 import { GROUPS } from '../../src/scenario/classroom';
 import { CONCEPTS, type ConceptId } from '../../src/scenario/knowledgeGraph';
@@ -402,26 +402,27 @@ export const CASES: Case[] = [
   } },
   { id: 'L6.6', level: 6, title: 'Week 6 to the exam', run: async (t) => {
     await joinPhone(t, MA, 30, 60);
-    const estimate = () => passEstimate(t.student(MA), t.state.study[MA], t.state.day);
-    const start = estimate().score;
+    const estimate = () => forecast(t.student(MA), t.state.study[MA]);
+    const start = estimate().value;
     t.point('setup', MA, 'equivalence');
     while (t.state.day < 64) {
       await practiseToday(t);
       t.session.nextDay('right');
       await t.session.settled();
-      if (t.state.day % 7 === 1) t.point(`day ${t.state.day}: ${estimate().band} ${estimate().score}`, MA, 'equivalence');
+      if (t.state.day % 7 === 1) t.point(`day ${t.state.day}: ${estimate().band} ${estimate().value.toFixed(1)}`, MA, 'equivalence');
     }
     const rec = t.state.study[MA];
-    t.check('Adapt', 'mastery rose', estimate().score > start, `${start} -> ${estimate().score}`);
+    t.check('Adapt', 'mastery rose', estimate().value > start, `${start} -> ${estimate().value}`);
     t.check('Sense', 'both remaining assessments have marks', rec.marks.map((m) => m.assessment).join() === 'a2,quiz3', rec.marks.map((m) => m.assessment).join());
     t.check('Oversee', 'replans stayed rare', replansOf(t).length <= 4, replansOf(t).map((r) => `${r.day}:${r.signal}`).join(' '));
   } },
   { id: 'L6.7', level: 6, title: 'Readiness answers match the data', run: async (t) => {
     await joinPhone(t, MA, 30, 60);
-    const est = passEstimate(t.student(MA), t.state.study[MA], t.state.day);
+    const est = forecast(t.student(MA), t.state.study[MA]);
     const a = await t.ask('Is Minh Anh likely to pass the exam?', null, 'Diagnose');
     t.check('Diagnose', 'used the exam outlook', a.steps.some((s) => s.includes('road to the exam')), a.steps.join(' | '));
-    t.check('Diagnose', 'quotes the projected score (within 2)', [-2, -1, 0, 1, 2].some((d) => new RegExp(`\\b${est.score + d}\\b`).test(a.answer)), `expected ${est.score} in: ${a.answer}`);
+    const near = [-0.1, 0, 0.1].map((d) => (est.value + d).toFixed(1).replace('.', '\\.'));
+    t.check('Diagnose', 'quotes the forecast (within 0.1)', near.some((v) => new RegExp(`\\b${v}\\b`).test(a.answer)), `expected ${est.value.toFixed(1)} in: ${a.answer}`);
     t.check('Diagnose', 'says it is an estimate', /estimate|projected|projection/i.test(a.answer), a.answer);
     t.noPronouns('Diagnose', a.answer);
   } },

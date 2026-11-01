@@ -1,12 +1,14 @@
 import { ASSESSMENTS, CLOS, EXAM_DAY, fullDate, nextAssessment, shortDate, type CloId } from '../../scenario/course';
 import type { DemoState, PassBand, ReplanSignal, StudentProfile } from '../types';
-import { cloMastery, PASS_MARK, passEstimate } from './estimate';
+import { cloMastery, forecast, PASS, projection } from './estimate';
 import { newRecord, selfDone } from './record';
 
 export interface ExamOutlook {
   setUp: boolean;
-  /** Always an estimate, never a prediction to state as fact. */
-  projectedScore: number;
+  /** Out of 10, now. Always an estimate, never a prediction to state as fact. */
+  forecast: number;
+  /** Out of 10 on exam day if the current plan is kept. An estimate. */
+  ifPlanKept: number;
   band: PassBand;
   passMark: number;
   cloMastery: Record<CloId, number>;
@@ -24,13 +26,14 @@ export function examOutlook(state: DemoState, student: StudentProfile): ExamOutl
   const rec = state.study[student.id] ?? newRecord(student);
   const next = nextAssessment(state.day);
   const last = rec.replans.at(-1) ?? null;
-  const est = passEstimate(student, rec, state.day);
+  const est = forecast(student, rec);
   const round2 = (v: number) => Math.round(v * 100) / 100;
   return {
     setUp: rec.reported !== null,
-    projectedScore: est.score,
+    forecast: est.value,
+    ifPlanKept: projection(student, rec, state.day),
     band: est.band,
-    passMark: PASS_MARK,
+    passMark: PASS,
     cloMastery: Object.fromEntries(CLOS.map((c) => [c.id, round2(cloMastery(student, c.id))])) as Record<CloId, number>,
     // Measured against the current plan: what it asked for up to today, and what was self-studied since it was made.
     minutesPlanned: rec.plan ? rec.plan.days.filter((d) => d.day <= state.day).reduce((a, d) => a + d.minutes, 0) : 0,
@@ -44,6 +47,6 @@ export function examOutlook(state: DemoState, student: StudentProfile): ExamOutl
   };
 }
 
-/** Students with a study plan whose estimate is At risk or Unlikely. */
+/** Students with a study plan whose forecast is At risk or Unlikely. */
 export const examRisk = (state: DemoState): StudentProfile[] =>
-  state.students.filter((s) => state.study[s.id]?.plan && passEstimate(s, state.study[s.id], state.day).band !== 'Likely');
+  state.students.filter((s) => state.study[s.id]?.plan && forecast(s, state.study[s.id]).band !== 'Likely');

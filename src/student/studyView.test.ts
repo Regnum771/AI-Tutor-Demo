@@ -33,7 +33,7 @@ describe('study views', () => {
   });
   it('builds Today: countdown, estimate, reason and rows', () => {
     const v = todayView(ready())!;
-    expect(v).toMatchObject({ name: 'Minh Anh', examIn: 'Final exam in 24 days', band: 'Likely', reason: 'Implication first.', offline: false, planning: null, examDay: false });
+    expect(v).toMatchObject({ name: 'Minh Anh', examIn: 'Final exam in 24 days', band: 'At risk', reason: 'Implication first.', offline: false, planning: null, examDay: false });
     expect(v.rows.map(rowLabel)).toEqual(['4 flip cards', 'Practise implication']);
   });
   it('shows the agent’s lines while the first plan is written', () => {

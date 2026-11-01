@@ -158,8 +158,9 @@ function RoadToExam({ s, state }: { s: StudentProfile; state: DemoState }) {
     <Section title="Road to the exam" aside="estimate">
       <div className="grid grid-cols-2 border-b border-egg-line pb-3">
         <div className="pr-4">
-          <Eyebrow>Pass estimate</Eyebrow>
+          <Eyebrow>Forecast</Eyebrow>
           <div className="mt-1 font-serif text-[28px] leading-none text-egg-ink">{o.band}</div>
+          <div className="mt-1 text-[12.5px] text-egg-mute">{`${o.forecast.toFixed(1)} of 10 now · ${o.ifPlanKept.toFixed(1)} if the plan is kept`}</div>
         </div>
         <div className="pl-4">
           <Eyebrow>Studied</Eyebrow>
