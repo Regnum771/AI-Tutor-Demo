@@ -5,7 +5,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { playOut, stateWithPlan } from '../live/fixtures';
 import { seedState } from '../live/seed';
 import { ensureRecord } from '../live/study/record';
-import { approvePlan, phoneAnswer, phoneContinue, phoneOpen, phoneShowPlan, phoneSkip, type Result } from '../live/reducer';
+import { approvePlan, phoneAgain, phoneAnswer, phoneContinue, phoneNext, phoneOpen, phoneShowPlan, phoneSkip, type Result } from '../live/reducer';
 import type { DemoSource } from '../live/source';
 import type { DemoState } from '../live/types';
 import { LivePhoneView } from './LivePhone';
@@ -37,6 +37,8 @@ const STATES: [string, () => DemoState][] = [
   ['practice', practice],
   ['practice after a wrong answer', () => ok(phoneAnswer(practice(), 0))],
   ['practice after a right answer', () => ok(phoneAnswer(practice(), 1))],
+  ['practice on the last question', () => ok(phoneNext(practice()))],
+  ['practice reopened by Answer again', () => ok(phoneAgain(ok(phoneAnswer(practice(), 1))))],
   ['review', () => ok(playOut(practice(), true))],
   ['review of a mastery check', checked],
   ['progress', progress],

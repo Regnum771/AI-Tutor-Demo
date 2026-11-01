@@ -5,7 +5,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { stateWithPlan } from '../live/fixtures';
 import { seedState } from '../live/seed';
 import { ensureRecord } from '../live/study/record';
-import { approvePlan, type Result } from '../live/reducer';
+import { approvePlan, phoneAnswer, phoneNext, phoneOpen, type Result } from '../live/reducer';
 import type { DemoSource } from '../live/source';
 import type { DemoState } from '../live/types';
 import { LivePhoneView } from './LivePhone';
@@ -51,6 +51,33 @@ async function mount(state: DemoState, post: (c: Call) => Promise<{ ok: boolean 
 }
 const button = (el: HTMLElement, text: string) => [...el.querySelectorAll('button')].find((b) => b.textContent?.includes(text))!;
 const instant = async () => ({ ok: true });
+
+describe('moving through a session', () => {
+  const practice = () => ok(phoneOpen(ok(approvePlan(stateWithPlan(), 'p1')), 0));
+  it('a dot opens its question, and the dot on screen is disabled', async () => {
+    const m = await mount(practice(), instant);
+    const dots = m.el.querySelectorAll<HTMLButtonElement>('[data-dot]');
+    expect(dots[0].disabled).toBe(true);
+    await act(async () => dots[1].click());
+    expect(m.calls).toEqual([{ path: 'phone/goto', body: { item: 1 } }]);
+  });
+  it('Next, Back, Answer again and Finish each post their route', async () => {
+    const first = await mount(practice(), instant);
+    await act(async () => button(first.el, 'Next').click());
+    expect(first.calls.map((c) => c.path)).toEqual(['phone/next']);
+    act(() => root?.unmount());
+    host?.remove();
+    const last = await mount(ok(phoneNext(practice())), instant);
+    await act(async () => button(last.el, 'Back').click());
+    await act(async () => button(last.el, 'questions left').click());
+    expect(last.calls).toEqual([{ path: 'phone/goto', body: { item: 0 } }, { path: 'phone/finish', body: undefined }]);
+    act(() => root?.unmount());
+    host?.remove();
+    const right = await mount(ok(phoneAnswer(practice(), 1)), instant);
+    await act(async () => button(right.el, 'Answer again').click());
+    expect(right.calls.map((c) => c.path)).toEqual(['phone/again']);
+  });
+});
 
 describe('one tap, one request', () => {
   it('two clicks in the same tick post once', async () => {

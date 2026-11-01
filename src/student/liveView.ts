@@ -1,5 +1,5 @@
-import { planById, studentById } from '../live/reducer';
-import type { DemoState, Plan } from '../live/types';
+import { planById, slotCount, studentById } from '../live/reducer';
+import type { DemoState, Plan, QuestionSheet } from '../live/types';
 import { relativeDay } from '../scenario/course';
 import { conceptById, type ConceptId } from '../scenario/knowledgeGraph';
 import { itemById, type BankItem } from '../scenario/practiceBank';
@@ -25,6 +25,8 @@ export interface ProgressView {
   remaining: string | null;
   backLabel: string;
 }
+
+export type DotState = 'empty' | 'tried' | 'right';
 
 export interface ReviewRow {
   prompt: string;
@@ -114,3 +116,9 @@ export function reviewView(state: DemoState): ReviewView {
   const questions = `${rows.length} question${rows.length === 1 ? '' : 's'}`;
   return { summary: `${questions} · ${firstTry} right first try · ${tries} ${tries === 1 ? 'try' : 'tries'} in all`, rows };
 }
+
+/** A question dot: grey before any try, outlined after one, green once right. */
+export const dotState = (q: QuestionSheet | undefined): DotState => (!q || q.tries.length === 0 ? 'empty' : q.rightOn === null ? 'tried' : 'right');
+
+/** Questions in the open session without a right answer yet, including slots not opened. */
+export const questionsLeft = (state: DemoState): number => slotCount(state) - state.phone.sheet.filter((q) => q.rightOn !== null).length;

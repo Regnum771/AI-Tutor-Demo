@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import { Stage } from '../engine/Stage';
 import { useNow } from '../engine/useNow';
 import { fmt } from '../live/clock';
-import { slotCount } from '../live/reducer';
 import { useServerSource, type DemoSource } from '../live/source';
 import { fullDate } from '../scenario/course';
 import type { StudyTab } from '../live/study/reducer';
@@ -85,7 +84,15 @@ export function LivePhoneView({ source }: { source: DemoSource }) {
         <PlanScreen local={local} variant={ph.updated ? 'updated' : 'initial'} clock={clock} live={plan} onOpen={(i) => send('phone/open', { sessionIndex: i })} onSkip={() => send('phone/skip')} />
       )}
       {ph.screen === 'practice' && (
-        <LivePractice key={`${ph.session}:${ph.item}`} state={state} onAnswer={(o) => send('phone/answer', { option: o })} onNext={() => send(ph.item + 1 >= slotCount(state) ? 'phone/finish' : 'phone/next')} />
+        <LivePractice
+          key={`${ph.session}:${ph.item}`}
+          state={state}
+          onAnswer={(o) => send('phone/answer', { option: o })}
+          onNext={() => send('phone/next')}
+          onGoto={(item) => send('phone/goto', { item })}
+          onAgain={() => send('phone/again')}
+          onFinish={() => send('phone/finish')}
+        />
       )}
       {ph.screen === 'review' && <ReviewScreen view={reviewView(state)} onContinue={() => send('phone/continue')} />}
       {ph.screen === 'progress' && progress && <ProgressScreen local={local} live={progress} onBack={() => send('phone/plan')} />}
