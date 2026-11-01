@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { CARDS } from '../../scenario/cards';
-import { ASSESSMENTS, CLOS, EXAM_DAY, START_DAY } from '../../scenario/course';
-import { CONCEPTS } from '../../scenario/knowledgeGraph';
+import { ASSESSMENTS, CLOS, EXAM_DAY, START_DAY, taughtBy, type CloId } from '../../scenario/course';
+import { CONCEPTS, EDGES, type ConceptId } from '../../scenario/knowledgeGraph';
 import { planFor } from '../fixtures';
 import { seedState } from '../seed';
-import type { DemoState, StudentProfile } from '../types';
+import type { DemoState, StudentProfile, StudyPlan } from '../types';
 import { applyCheck, capacityFor, capacityLeft, shortOfTime, teacherMinutes } from './capacity';
 import { NEW_PER_DAY, cardsToday, reviewCard } from './cards';
 import { bandOf, cloMastery, forecast, forecastSeries, minutesNeeded, projection } from './estimate';
 import { markFor } from './marks';
 import { ensureRecord, newRecord, noteAttempt, noteForecast } from './record';
+import { refocus } from './refocus';
 import { SELF_SESSION, nextItem } from './select';
 import { detectSignal, mayReplan, nextReplan } from './signals';
 import { todayList } from './today';
@@ -393,5 +394,61 @@ describe('forecast history', () => {
     noteForecast(rec, st, 40);
     expect(rec.forecasts).toEqual([{ day: 40, value: forecast(st, rec).value }]);
     expect(forecastSeries(st, rec).map((p) => p.day)).toEqual([17, 38, 40]);
+  });
+});
+
+describe('weekly refocus', () => {
+  const plan = (clo: (day: number) => CloId, concept: (day: number) => ConceptId): StudyPlan => ({
+    createdDay: 40, reason: 'Kept.', leftOut: ['Something'], source: 'agents',
+    days: Array.from({ length: 24 }, (_, i) => ({ day: 40 + i, minutes: 10 + i, clo: clo(40 + i), concepts: [concept(40 + i)] })),
+  });
+  const FIRST: Record<CloId, ConceptId> = { CLO1: 'implication', CLO2: 'deMorgan', CLO3: 'applications' };
+  const mixed = () => plan((d) => (d === 42 || d === 43 ? 'CLO2' : d === 44 ? 'CLO3' : 'CLO1'), (d) => FIRST[d === 42 || d === 43 ? 'CLO2' : d === 44 ? 'CLO3' : 'CLO1']);
+  it('relies on CONCEPTS being listed prerequisites first', () => {
+    const at = (c: ConceptId) => CONCEPTS.findIndex((x) => x.id === c);
+    for (const [a, b] of EDGES) expect(at(a)).toBeLessThan(at(b));
+  });
+  it('changes only that week, keeps minutes and the reason, and leaves its input alone', () => {
+    const before = mixed();
+    const copy = structuredClone(before);
+    const after = refocus(before, student(seedState()), 42);
+    expect(before).toEqual(copy);
+    expect(after.days.map((d) => d.minutes)).toEqual(before.days.map((d) => d.minutes));
+    expect(after).toMatchObject({ createdDay: 40, reason: 'Kept.', leftOut: ['Something'], source: 'agents' });
+    const outside = (p: StudyPlan) => p.days.filter((d) => d.day < 42 || d.day > 48);
+    expect(outside(after)).toEqual(outside(before));
+  });
+  it('puts the newest lecture first, moves an unlectured CLO to the next test, then takes the weakest', () => {
+    const days = refocus(mixed(), student(seedState()), 42).days;
+    const on = (day: number) => days.find((d) => d.day === day)!;
+    expect(on(42)).toMatchObject({ clo: 'CLO2', concepts: ['equivalence', 'deMorgan'] });
+    expect(on(43)).toMatchObject({ clo: 'CLO2', concepts: ['equivalence', 'equivLaws'] });
+    expect(on(44)).toMatchObject({ clo: 'CLO2', concepts: ['equivalence', 'equivLaws'] });
+    expect(on(45)).toMatchObject({ clo: 'CLO1', concepts: ['implication', 'biconditional'] });
+  });
+  it('never picks an untaught concept or one outside the day’s CLO', () => {
+    const st = student(seedState());
+    for (const clo of ['CLO1', 'CLO2', 'CLO3'] as CloId[]) {
+      let p = plan(() => clo, () => FIRST[clo]);
+      for (const monday of [42, 49, 56, 63]) p = refocus(p, st, monday);
+      for (const d of p.days.filter((x) => x.day >= 42)) {
+        expect(d.concepts.length).toBeGreaterThan(0);
+        expect(d.concepts.length).toBeLessThanOrEqual(2);
+        for (const c of d.concepts) {
+          expect(taughtBy(d.day), `day ${d.day}`).toContain(c);
+          expect(CLOS.find((x) => x.id === d.clo)!.concepts).toContain(c);
+        }
+      }
+      if (clo === 'CLO3') expect(p.days.filter((d) => d.day >= 42 && d.day < 50).every((d) => d.clo === 'CLO2')).toBe(true);
+    }
+  });
+  it('spreads revision week over every taught concept, weakest first', () => {
+    const days = refocus(plan(() => 'CLO1', () => 'implication'), student(seedState()), 56).days.filter((d) => d.day >= 56 && d.day <= 62);
+    expect(days[0].concepts).toEqual(['implication', 'biconditional']);
+    expect(new Set(days.flatMap((d) => d.concepts)).size).toBe(CLOS[0].concepts.length);
+  });
+  it('leaves a day before Lecture 1 as it is', () => {
+    const early: StudyPlan = { createdDay: 0, reason: 'r', leftOut: [], source: 'offline', days: [{ day: 0, minutes: 5, clo: 'CLO3', concepts: ['applications'] }] };
+    expect(refocus(early, student(seedState()), 0).days).toEqual(early.days);
   });
 });
