@@ -37,7 +37,7 @@ export function taughtBy(day: number): ConceptId[];   // concepts of every lectu
 ### 2.2 Both planners respect it
 
 - **Agent plan check** (`server/agents/study.ts`): a plan day that lists a concept not yet taught by that day is rejected with a message the agent can act on, for example "Day 41: Equivalence laws is not taught until Lecture 7 on Tue 3 Nov."
-- **Agent prompt** gains two lines: "Lectures so far: 1–6 (latest: Lecture 6 · Logical equivalence and De Morgan, Tue 27 Oct). This week: Lecture 7 · Equivalence laws, Tue 3 Nov." and "Next assessment: Quiz 3 on Thu 12 Nov, covering CLO2, CLO3."
+- **Agent prompt** gains two lines: "Lectures so far: 1–6 (latest: Lecture 6 · Logical equivalence and De Morgan, Tue 27 Oct). Next lecture: Lecture 7 · Equivalence laws, Tue 3 Nov." and "Next assessment: Quiz 3 on Thu 12 Nov, covering CLO2, CLO3."
 - **Offline planner** (`server/agents/cannedStudy.ts`): draws each day's concepts only from `taughtBy(day)`. A day whose CLO has no taught concept yet takes a CLO the next assessment tests.
 
 ### 2.3 Weekly refocus (`src/live/study/refocus.ts`, pure)
@@ -82,11 +82,11 @@ Uses the existing disengagement rule (three planned days with nothing done, or u
 ## 4. The phone shows facts, not risk
 
 - **Today's top card** loses the band and the forecast. It shows:
-  - **GPA**: "GPA 2.75 of 4".
+  - **GPA**: "GPA 2.30 of 4".
   - **This course's marks so far**: "Quiz 1 75% · Quiz 2 42%", from the seed (Quiz 1 and Quiz 2), then `rec.marks`, oldest first.
   - **Next lecture**: "Lecture 7 · Equivalence laws · Tue 3 Nov".
   - **Next assessment**: "Quiz 3 · Thu 12 Nov · in 12 days · CLO2, CLO3".
-  - **Next assignment**: "Assignment 2 · due Fri 6 Nov", and after its day, its mark.
+  - **Assignment**: "Assignment 2 · due Fri 6 Nov", and after its day, its mark ("Assignment 2 · 61%").
 - **Semester screen** adds "Previous subjects": subject, term, grade and letter.
 - **Replan reasons** no longer mention the outlook: `bandChange` copy becomes "Your progress changed, so the plan did too."
 - `TodayView` drops `band` and `forecast`.
@@ -112,13 +112,13 @@ export function calendarWeek(state: DemoState, week: number): { week: number; da
 - **Stopped:** one event per student, on the first day of the current stretch of `stoppedPractising`.
 - Events in a day are ordered by time, untimed ones first.
 
-### 5.2 Tab (`src/teacher/Calendar.tsx`, live only)
+### 5.2 Tab (`src/teacher/CalendarTab.tsx`, exported `Calendar`, live only)
 
 - A "Calendar" item in the teacher sidebar, next to Classroom, shown only in the live booth. The `View` type gains `'calendar'`. The scripted video's sidebar is unchanged.
 - A week grid, Monday to Sunday, opening on the story's current week, with a today marker. "‹ Prev week" and "Next week ›" browse Weeks 1 to 10; they never advance the story.
 - **Each event opens something:**
-  - a lecture expands inline into the student questions placed after it: the FAQ log filtered to messages whose `lectureBefore` is that lecture;
-  - an assessment expands inline into its date, CLOs and, once there are any, the marks;
+  - a lecture expands, under the week grid, into the student questions placed after it: the FAQ log filtered to messages whose `lectureBefore` is that lecture;
+  - an assessment expands, under the week grid, into its date, CLOs and, once there are any, the marks;
   - a session opens its plan's conversation;
   - a stopped flag opens the student's profile pop-up.
 - Empty days show nothing. A week with no events reads "Nothing scheduled".

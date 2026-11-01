@@ -2,6 +2,7 @@ import { classKpis, topicMastery } from '../../src/live/mastery';
 import { planProblems } from '../../src/live/plans';
 import { planById } from '../../src/live/reducer';
 import { forecast } from '../../src/live/study/estimate';
+import { examOutlook } from '../../src/live/study/outlook';
 import type { AssistantMsg, Plan, StudyPlan } from '../../src/live/types';
 import { GROUPS } from '../../src/scenario/classroom';
 import { CONCEPTS, type ConceptId } from '../../src/scenario/knowledgeGraph';
@@ -435,6 +436,22 @@ export const CASES: Case[] = [
     const near = [-0.1, 0, 0.1].map((d) => (est.value + d).toFixed(1).replace('.', '\\.'));
     t.check('Diagnose', 'quotes the forecast (within 0.1)', near.some((v) => new RegExp(`\\b${v}\\b`).test(a.answer)), `expected ${est.value.toFixed(1)} in: ${a.answer}`);
     t.check('Diagnose', 'says it is an estimate', /estimate|projected|projection/i.test(a.answer), a.answer);
+    t.noPronouns('Diagnose', a.answer);
+  } },
+  { id: 'L6.8', level: 6, title: 'Minh Anh skips three weeks', run: async (t) => {
+    await joinPhone(t, MA, 30, 60);
+    const start = forecast(t.student(MA), t.state.study[MA]).value;
+    for (let i = 0; i < 3; i++) {
+      t.session.nextWeek();
+      await t.session.settled();
+    }
+    const o = examOutlook(t.state, t.student(MA));
+    t.check('Sense', 'the outlook reports the missed minutes', o.practisedLast7Days.done === 0 && o.practisedLast7Days.planned > 0, JSON.stringify(o.practisedLast7Days));
+    t.check('Sense', 'the forecast fell', o.forecast < start, `${start} -> ${o.forecast}`);
+    const a = await t.ask('Is Minh Anh keeping up with revision?', null, 'Diagnose');
+    t.check('Diagnose', 'used the exam outlook', a.steps.some((s) => s.includes('road to the exam')), a.steps.join(' | '));
+    t.check('Diagnose', 'reports the missed minutes', new RegExp(`\b${o.practisedLast7Days.planned}\b`).test(a.answer), `expected ${o.practisedLast7Days.planned} in: ${a.answer}`);
+    t.check('Diagnose', 'says the forecast fell', /fell|dropped|lower|down|declin|slipp/i.test(a.answer), a.answer);
     t.noPronouns('Diagnose', a.answer);
   } },
 ];

@@ -120,6 +120,11 @@ const SCENARIOS: [string, (el: HTMLElement) => Promise<void>][] = [
     await click(byText(el, 'Classroom12'));
     await click(buttons(el).find((b) => b.textContent?.includes('Why is p → q not the same as q → p?'))!);
   }],
+  ['calendar', async (el) => click(byText(el, 'Calendar'))],
+  ['calendar with Lecture 6 open', async (el) => {
+    await click(byText(el, 'Calendar'));
+    await click(el.querySelector('[data-event="lecture-6"]')!);
+  }],
 ];
 
 describe('live teacher click audit (spec §2.6)', () => {

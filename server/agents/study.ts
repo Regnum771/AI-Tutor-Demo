@@ -49,7 +49,7 @@ const WHY: Record<ReplanSignal, string> = {
   setup: 'This is the student’s first plan.',
   markSwing: 'A new mark moved sharply against the previous one.',
   disengaged: 'The student has mostly stopped practising.',
-  bandChange: 'The forecast moved to a different band.',
+  bandChange: 'Progress changed noticeably.',
   teacherPlan: 'The lecturer has just sent the student a plan.',
 };
 
