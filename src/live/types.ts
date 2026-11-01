@@ -198,7 +198,7 @@ export interface QuestionSheet {
 /** A self-started practice session. */
 export interface SelfSession { clo: CloId | null; concepts: ConceptId[]; served: string[] }
 
-export type PhoneScreen = 'lock' | 'plan' | 'practice' | 'progress' | 'pick' | 'setup' | 'today' | 'choosePractice' | 'cards' | 'semester' | 'checkIn';
+export type PhoneScreen = 'lock' | 'plan' | 'practice' | 'review' | 'progress' | 'pick' | 'setup' | 'today' | 'choosePractice' | 'cards' | 'semester' | 'checkIn';
 
 export interface PhoneState {
   planId: string | null;
@@ -208,6 +208,8 @@ export interface PhoneState {
   item: number;
   /** One entry per question slot opened so far; a teacher session fills all of them when it opens. */
   sheet: QuestionSheet[];
+  /** Where Continue goes from the review. Set when a session finishes, because a follow-up can replace the plan while the review is open. */
+  reviewNext: 'today' | 'plan' | 'progress' | null;
   done: number[];
   /** The plan whose mastery check finished last (the progress screen's subject). */
   lastDone: string | null;

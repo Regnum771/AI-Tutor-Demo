@@ -34,6 +34,9 @@ describe('booth HTTP API', () => {
     expect(session.state.phone.item).toBe(1);
     expect((await post('phone/goto', { item: 9 })).status).toBe(400);
     expect((await post('phone/again')).status).toBe(400);
+    expect((await post('phone/continue')).status).toBe(400);
+    expect((await post('phone/finish')).status).toBe(200);
+    expect(session.state.phone.item).toBe(0);
   });
   it('reports bad commands as 400', async () => {
     const { post } = setup();

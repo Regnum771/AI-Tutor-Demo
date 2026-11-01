@@ -2,13 +2,12 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { stateWithPlan } from '../live/fixtures';
+import { playOut, stateWithPlan } from '../live/fixtures';
 import { seedState } from '../live/seed';
 import { ensureRecord } from '../live/study/record';
-import { approvePlan, phoneAnswer, phoneNext, phoneOpen, phoneShowPlan, phoneSkip, type Result } from '../live/reducer';
+import { approvePlan, phoneAnswer, phoneContinue, phoneOpen, phoneShowPlan, phoneSkip, type Result } from '../live/reducer';
 import type { DemoSource } from '../live/source';
 import type { DemoState } from '../live/types';
-import { sessionItems } from '../scenario/practiceBank';
 import { LivePhoneView } from './LivePhone';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -19,11 +18,8 @@ const ok = (r: Result): DemoState => {
 };
 const sent = () => ok(approvePlan(stateWithPlan(), 'p1'));
 const practice = () => ok(phoneOpen(sent(), 0));
-const progress = () => {
-  let s = ok(phoneOpen(ok(phoneSkip(ok(phoneShowPlan(sent())))), 1));
-  for (const item of sessionItems('equivalence', true)) s = ok(phoneNext(ok(phoneAnswer(s, item.correct))));
-  return s;
-};
+const checked = () => ok(playOut(ok(phoneOpen(ok(phoneSkip(ok(phoneShowPlan(sent())))), 1))));
+const progress = () => ok(phoneContinue(checked()));
 const study = (screen: DemoState['phone']['screen'], over: Partial<DemoState['phone']> = {}) => () => {
   const s = seedState();
   const rec = ensureRecord(s, 's17');
@@ -41,6 +37,8 @@ const STATES: [string, () => DemoState][] = [
   ['practice', practice],
   ['practice after a wrong answer', () => ok(phoneAnswer(practice(), 0))],
   ['practice after a right answer', () => ok(phoneAnswer(practice(), 1))],
+  ['review', () => ok(playOut(practice(), true))],
+  ['review of a mastery check', checked],
   ['progress', progress],
   ['idle lock', seedState],
   ['morning lock', study('lock', { morning: true })],

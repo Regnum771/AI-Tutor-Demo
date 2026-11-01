@@ -2,6 +2,7 @@ import { planById, studentById } from '../live/reducer';
 import type { DemoState, Plan } from '../live/types';
 import { relativeDay } from '../scenario/course';
 import { conceptById, type ConceptId } from '../scenario/knowledgeGraph';
+import { itemById, type BankItem } from '../scenario/practiceBank';
 
 export interface PlanView {
   name: string;
@@ -23,6 +24,21 @@ export interface ProgressView {
   done: number;
   remaining: string | null;
   backLabel: string;
+}
+
+export interface ReviewRow {
+  prompt: string;
+  /** Every option tapped, in order. */
+  tries: { option: string; right: boolean }[];
+  answer: string;
+  /** The hint for each wrong option the student chose. */
+  hints: { option: string; hint: string }[];
+  guided: BankItem['guided'] | null;
+}
+
+export interface ReviewView {
+  summary: string;
+  rows: ReviewRow[];
 }
 
 const conceptsOf = (plan: Plan): ConceptId[] => [...new Set(plan.sessions.flatMap((s) => (s.concept ? [s.concept] : [])))];
@@ -77,4 +93,24 @@ export function progressView(state: DemoState): ProgressView | null {
     remaining: state.phone.updated ? 'Next steps are ready for tomorrow' : null,
     backLabel: state.phone.updated ? 'See tomorrow’s plan' : 'Back to plan',
   };
+}
+
+/** The review after a session: a summary line and one row per question, from the answer sheet. */
+export function reviewView(state: DemoState): ReviewView {
+  const rows = state.phone.sheet.flatMap((q): ReviewRow[] => {
+    const item = itemById(q.itemId);
+    if (!item) return [];
+    const wrong = [...new Set(q.tries)].filter((o) => o !== item.correct);
+    return [{
+      prompt: item.prompt,
+      tries: q.tries.map((o) => ({ option: item.options[o], right: o === item.correct })),
+      answer: item.options[item.correct],
+      hints: wrong.map((o) => ({ option: item.options[o], hint: item.hints[o] })),
+      guided: item.guided ?? null,
+    }];
+  });
+  const firstTry = state.phone.sheet.filter((q) => q.rightOn === 1).length;
+  const tries = state.phone.sheet.reduce((a, q) => a + q.tries.length, 0);
+  const questions = `${rows.length} question${rows.length === 1 ? '' : 's'}`;
+  return { summary: `${questions} · ${firstTry} right first try · ${tries} ${tries === 1 ? 'try' : 'tries'} in all`, rows };
 }

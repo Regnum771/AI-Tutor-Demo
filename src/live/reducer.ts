@@ -26,7 +26,7 @@ function say(s: DemoState, conversationId: string, text: string) {
 
 /**
  * Puts `plan` on the phone and records its baseline. A fresh delivery shows the lock-screen notification;
- * a follow-up keeps the current screen and the finished plan, so the progress screen still shows that result.
+ * a follow-up keeps the current screen and the finished plan, so the review and the progress screen still show that result.
  */
 export function deliver(s: DemoState, plan: Plan, updated: boolean): void {
   const student = studentById(s, plan.studentIds[0]);
@@ -38,9 +38,11 @@ export function deliver(s: DemoState, plan: Plan, updated: boolean): void {
     s.phone = { ...s.phone, planId: plan.id, done: [], updated };
     return;
   }
+  const reviewing = updated && s.phone.screen === 'review';
   s.phone = {
     ...IDLE_PHONE,
-    sheet: [],
+    sheet: reviewing ? s.phone.sheet : [],
+    reviewNext: reviewing ? s.phone.reviewNext : null,
     done: [],
     planId: plan.id,
     studentId: plan.studentIds[0],
@@ -113,7 +115,7 @@ export const blankQuestion = (itemId: string): QuestionSheet => ({ itemId, tries
 export function phoneShowPlan(state: DemoState): Result {
   if (!state.phone.planId) return fail('No plan on the phone.');
   const s = structuredClone(state);
-  s.phone = { ...s.phone, sheet: [], self: null, screen: 'plan', session: null, item: 0 };
+  s.phone = { ...s.phone, sheet: [], reviewNext: null, self: null, screen: 'plan', session: null, item: 0 };
   return done(s);
 }
 
@@ -134,7 +136,7 @@ export function phoneOpen(state: DemoState, index: number): Result {
   if (!plan || !session) return fail('No such session.');
   if (s.phone.done.includes(index)) return fail('That session is already done.');
   moveClockTo(s, plan, session.time);
-  s.phone = { ...s.phone, self: null, screen: 'practice', session: index, item: 0 };
+  s.phone = { ...s.phone, reviewNext: null, self: null, screen: 'practice', session: index, item: 0 };
   s.phone.sheet = currentItems(s).map((item) => blankQuestion(item.id));
   return done(s);
 }
@@ -207,24 +209,41 @@ export function phoneAgain(state: DemoState): Result {
   return done(s);
 }
 
-export function phoneNext(state: DemoState): Result {
+export const phoneNext = (state: DemoState): Result => phoneGoto(state, state.phone.item + 1);
+
+/** The first slot with no right answer yet, or null when every slot has one. */
+function firstOpen(s: DemoState): number | null {
+  for (let i = 0; i < slotCount(s); i++) if ((s.phone.sheet[i]?.rightOn ?? null) === null) return i;
+  return null;
+}
+
+/** With open questions, moves to the first of them. Otherwise opens the review and completes the session: marks it done and, after a mastery check, closes the plan. */
+export function phoneFinish(state: DemoState): Result {
   if (state.phone.screen !== 'practice') return fail('No practice open.');
-  if (state.phone.item + 1 < slotCount(state)) return phoneGoto(state, state.phone.item + 1);
-  if ((state.phone.sheet[state.phone.item]?.rightOn ?? null) === null) return fail('Answer the item first.');
+  const open = firstOpen(state);
+  if (open !== null) return phoneGoto(state, open);
   const s = structuredClone(state);
   if (s.phone.self) {
-    s.phone = { ...s.phone, sheet: [], self: null, item: 0, screen: 'today' };
+    s.phone = { ...s.phone, self: null, item: 0, screen: 'review', reviewNext: 'today' };
     return done(s);
   }
   const plan = planById(s, s.phone.planId)!;
   const index = s.phone.session!;
   const isCheck = plan.sessions[index].isMasteryCheck;
-  s.phone = { ...s.phone, sheet: [], done: [...s.phone.done, index], session: null, item: 0, screen: isCheck ? 'progress' : 'plan' };
+  s.phone = { ...s.phone, done: [...s.phone.done, index], session: null, item: 0, screen: 'review', reviewNext: isCheck ? 'progress' : 'plan' };
   if (!isCheck) return done(s);
   s.clock = Math.max(s.clock, TONIGHT);
   plan.status = 'done';
   s.phone.lastDone = plan.id;
   return done(s, true);
+}
+
+/** Leaves the review for Today, the plan or the progress screen. */
+export function phoneContinue(state: DemoState): Result {
+  if (state.phone.screen !== 'review') return fail('No review open.');
+  const s = structuredClone(state);
+  s.phone = { ...s.phone, sheet: [], reviewNext: null, screen: s.phone.reviewNext ?? 'today' };
+  return done(s);
 }
 
 /** "Skip to tonight": earlier sessions count as done, each item correct after a hint. */

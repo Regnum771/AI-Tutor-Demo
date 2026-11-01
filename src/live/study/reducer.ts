@@ -23,7 +23,7 @@ const TABS: StudyTab[] = ['today', 'choosePractice', 'cards', 'semester'];
 const RATINGS: CardRating[] = ['again', 'hard', 'good', 'easy'];
 const CHECKS: StudyDay['check'][] = ['tooMuch', 'right', 'tooLittle', null];
 const MORNING = 7 * 60 + 30;
-const NO_PRACTICE = { self: null, session: null, item: 0, sheet: [] };
+const NO_PRACTICE = { self: null, session: null, item: 0, sheet: [], reviewNext: null };
 
 const fail = (error: string): StudyResult => ({ ok: false, error });
 const done = (state: DemoState, signal: ReplanSignal | null = null): StudyResult => ({ ok: true, state, signal });

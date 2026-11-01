@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { sessionItems } from '../scenario/practiceBank';
-import { planFor, stateWithPlan } from './fixtures';
+import { planFor, playOut, stateWithPlan } from './fixtures';
 import { afterAnswer } from './mastery';
 import {
-  approvePlan, currentItems, deliver, dismissPlan, editPlan, phoneAgain, phoneAnswer, phoneGoto, phoneNext, phoneOpen, phoneShowPlan, phoneSkip, slotCount, type Result,
+  approvePlan, currentItems, deliver, dismissPlan, editPlan, phoneAgain, phoneAnswer, phoneContinue, phoneFinish, phoneGoto, phoneNext, phoneOpen, phoneShowPlan, phoneSkip, slotCount, type Result,
 } from './reducer';
 import type { DemoState } from './types';
 
@@ -153,28 +152,46 @@ describe('phone flow', () => {
     expect(s.phone.sheet[0]).toMatchObject({ tries: [item.correct], reopened: false });
     expect(ma(s).evidence).toHaveLength(rows);
   });
-  it('finishing a practice session returns to the plan; finishing the check reports it', () => {
+  it('Finish with open questions moves to the first of them and keeps the sheet', () => {
     let s = ok(phoneOpen(sent(), 0));
-    for (const item of sessionItems('implication', false)) {
-      s = ok(phoneAnswer(s, item.correct));
-      s = ok(phoneNext(s));
-    }
-    expect(s.phone).toMatchObject({ screen: 'plan', done: [0], session: null });
+    s = ok(phoneNext(s));
+    s = ok(phoneAnswer(s, currentItems(s)[1].correct));
+    s = ok(phoneFinish(s));
+    expect(s.phone).toMatchObject({ screen: 'practice', item: 0, session: 0 });
+    expect(s.phone.sheet[1].rightOn).toBe(1);
+    expect(s.phone.done).toEqual([]);
+  });
+  it('Finish fails only outside a session; Next stops at the last question', () => {
+    expect(phoneFinish(sent())).toEqual({ ok: false, error: 'No practice open.' });
+    const s = ok(phoneNext(ok(phoneOpen(sent(), 0))));
+    expect(phoneNext(s)).toEqual({ ok: false, error: 'No such question.' });
+  });
+  it('finishing a practice session opens the review, then the plan; finishing the check reports it', () => {
+    let s = ok(playOut(ok(phoneOpen(sent(), 0))));
+    expect(s.phone).toMatchObject({ screen: 'review', done: [0], session: null, reviewNext: 'plan' });
+    expect(s.phone.sheet).toHaveLength(2);
+    s = ok(phoneContinue(s));
+    expect(s.phone).toMatchObject({ screen: 'plan', done: [0], session: null, sheet: [], reviewNext: null });
     s = ok(phoneOpen(s, 1));
     expect(s.clock).toBe(20 * 60);
-    const check = sessionItems('equivalence', true);
-    let last: Result = { ok: true, state: s };
-    for (const item of check) {
-      s = ok(phoneAnswer(s, item.correct));
-      last = phoneNext(s);
-      s = ok(last);
-    }
+    const last = playOut(s);
+    s = ok(last);
     expect(last.ok && last.finishedCheck).toBe(true);
-    expect(s.phone).toMatchObject({ screen: 'progress', done: [0, 1], lastDone: 'p1' });
+    expect(s.phone).toMatchObject({ screen: 'review', done: [0, 1], lastDone: 'p1', reviewNext: 'progress' });
     expect(s.clock).toBe(20 * 60 + 40);
     expect(s.plans[0].status).toBe('done');
     expect(ma(s).status).toBe('onTrack');
     expect(phoneOpen(s, 0).ok).toBe(false);
+    expect(ok(phoneContinue(s)).phone.screen).toBe('progress');
+    expect(phoneContinue(sent())).toEqual({ ok: false, error: 'No review open.' });
+  });
+  it('a follow-up landing on the review keeps it, and Continue still goes to progress', () => {
+    const s = ok(playOut(ok(phoneOpen(sent(), 1))));
+    s.plans.push(planFor('pathway', { id: 'p2', status: 'autoApproved' }));
+    deliver(s, s.plans[1], true);
+    expect(s.phone).toMatchObject({ screen: 'review', planId: 'p2', updated: true, reviewNext: 'progress', lastDone: 'p1' });
+    expect(s.phone.sheet).toHaveLength(3);
+    expect(ok(phoneContinue(s)).phone).toMatchObject({ screen: 'progress', planId: 'p2', sheet: [] });
   });
   it('skip to tonight marks earlier sessions done with seeded results', () => {
     const s = ok(phoneSkip(ok(phoneShowPlan(sent()))));

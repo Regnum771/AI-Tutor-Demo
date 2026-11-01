@@ -4,6 +4,7 @@ import { sessionItems } from '../src/scenario/practiceBank';
 import type { MessagesClient } from './agents/client';
 import { fakeClient } from './agents/fakeClient';
 import { planInput, reportInput } from './agents/samples';
+import { playOpenSession } from './playSession';
 import { DemoSession } from './session';
 
 const MA = 'Why did Minh Anh’s quiz score drop?';
@@ -22,15 +23,10 @@ async function perfectRun(skip: boolean) {
   session.phonePlan();
   if (skip) session.phoneSkip();
   const plan = session.state.plans[0];
-  for (const [i, s] of plan.sessions.entries()) {
+  for (const i of plan.sessions.keys()) {
     if (session.state.phone.done.includes(i)) continue;
     expect(session.phoneOpen(i)).toEqual({ ok: true });
-    for (const item of sessionItems(s.concept!, s.isMasteryCheck)) {
-      expect(session.phoneAnswer(item.correct)).toEqual({ ok: true });
-      const next = session.phoneNext();
-      if (!next.ok) throw new Error(next.error);
-      await next.done;
-    }
+    await playOpenSession(session);
   }
   return session.state;
 }
@@ -108,18 +104,33 @@ describe('DemoSession', () => {
     session.phonePlan();
     session.phoneSkip();
     expect(session.phoneOpen(3)).toEqual({ ok: true });
-    for (const item of sessionItems('equivalence', true)) {
-      expect(session.phoneAnswer(item.correct)).toEqual({ ok: true });
-      const next = session.phoneNext();
-      if (!next.ok) throw new Error(next.error);
-      await next.done;
-    }
+    await playOpenSession(session);
     const s = session.state;
     expect(s.clock).toBe(TONIGHT);
     expect(s.phone).toMatchObject({ screen: 'progress', updated: true, lastDone: 'p1', planId: 'p2' });
     expect(s.plans.find((p) => p.id === 'p2')?.status).toBe('autoApproved');
     expect(s.conversations[0].msgs.at(-1)).toMatchObject({ role: 'assistant', stamp: '20:40' });
     expect(s.busy).toBe(false);
+  });
+  it('Finish starts the adapt run, and its follow-up lands while the review is open', async () => {
+    const session = new DemoSession(null);
+    await asked(session);
+    session.approve('p1');
+    session.phonePlan();
+    session.phoneSkip();
+    session.phoneOpen(3);
+    for (const [i, item] of sessionItems('equivalence', true).entries()) {
+      session.phoneAnswer(item.correct);
+      if (i < 2) session.phoneNext();
+    }
+    const finished = session.phoneFinish();
+    if (!finished.ok) throw new Error(finished.error);
+    expect(session.state.phone.screen).toBe('review');
+    await finished.done;
+    expect(session.state.phone).toMatchObject({ screen: 'review', planId: 'p2', updated: true });
+    expect(session.state.phone.sheet).toHaveLength(3);
+    expect(session.phoneContinue()).toEqual({ ok: true });
+    expect(session.state.phone).toMatchObject({ screen: 'progress', planId: 'p2', sheet: [] });
   });
   it('a perfect offline run reaches the target, with or without Skip', async () => {
     for (const skip of [false, true]) {

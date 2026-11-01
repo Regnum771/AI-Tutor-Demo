@@ -5,7 +5,7 @@ import { emptyHistory } from './history';
 import type { DemoState, PhoneState } from './types';
 
 export const IDLE_PHONE: PhoneState = {
-  planId: null, screen: 'lock', session: null, item: 0, sheet: [],
+  planId: null, screen: 'lock', session: null, item: 0, sheet: [], reviewNext: null,
   done: [], lastDone: null, updated: false, studentId: null, morning: false, self: null,
 };
 

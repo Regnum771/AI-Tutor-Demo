@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { stateWithPlan } from '../live/fixtures';
-import { approvePlan, phoneAnswer, phoneNext, phoneOpen, phoneShowPlan, phoneSkip, type Result } from '../live/reducer';
+import { playOut, stateWithPlan } from '../live/fixtures';
+import { approvePlan, phoneAnswer, phoneContinue, phoneFinish, phoneNext, phoneOpen, phoneShowPlan, phoneSkip, type Result } from '../live/reducer';
 import type { DemoState } from '../live/types';
 import { sessionItems } from '../scenario/practiceBank';
-import { notificationCopy, planView, progressView } from './liveView';
+import { notificationCopy, planView, progressView, reviewView } from './liveView';
 
 const ok = (r: Result): DemoState => {
   if (!r.ok) throw new Error(r.error);
@@ -23,8 +23,7 @@ describe('phone views', () => {
     expect(planView(stateWithPlan())).toBeNull();
   });
   it('progress view after the mastery check', () => {
-    let s = ok(phoneOpen(ok(phoneSkip(ok(phoneShowPlan(sent())))), 1));
-    for (const item of sessionItems('equivalence', true)) s = ok(phoneNext(ok(phoneAnswer(s, item.correct))));
+    const s = ok(phoneContinue(ok(playOut(ok(phoneOpen(ok(phoneSkip(ok(phoneShowPlan(sent())))), 1))))));
     const p = progressView(s)!;
     expect(p).toMatchObject({ concept: 'Logical equivalence', from: 35, accuracy: 100, done: 2, remaining: null, backLabel: 'Back to plan' });
     expect(p.to).toBeGreaterThan(60);
@@ -34,7 +33,8 @@ describe('phone views', () => {
     const [first, ...rest] = sessionItems('equivalence', true);
     const wrong = first.correct === 0 ? 1 : 0;
     s = ok(phoneNext(ok(phoneAnswer(ok(phoneAnswer(s, wrong)), first.correct))));
-    for (const item of rest) s = ok(phoneNext(ok(phoneAnswer(s, item.correct))));
+    s = ok(phoneNext(ok(phoneAnswer(s, rest[0].correct))));
+    s = ok(phoneAnswer(s, rest[1].correct));
     // Four answers, three of them correct: the skipped rows do not count.
     expect(progressView(s)?.accuracy).toBe(75);
   });
@@ -44,13 +44,31 @@ describe('phone views', () => {
     base.students.find((x) => x.id === 's17')!.evidence.push(
       { id: 's17-practice-self', kind: 'practice', source: 'Beyond practice', when: '09:00', concept: 'deMorgan', text: 'De Morgan: “a correct negation?” · correct first try' },
     );
-    let s = ok(phoneOpen(ok(phoneSkip(ok(phoneShowPlan(base)))), 1));
-    for (const item of sessionItems('deMorgan', true)) {
-      const wrong = item.correct === 0 ? 1 : 0;
-      s = ok(phoneNext(ok(phoneAnswer(ok(phoneAnswer(s, wrong)), item.correct))));
-    }
+    const s = ok(playOut(ok(phoneOpen(ok(phoneSkip(ok(phoneShowPlan(base)))), 1)), true));
     // Three wrong, three right, in this plan's session: half. The self-practice row and the skipped rows do not count.
     expect(progressView(s)?.accuracy).toBe(50);
+  });
+  it('the review lists each question with its tries in order, the answer and the hint for each wrong choice', () => {
+    let s = ok(phoneOpen(sent(), 0));
+    const [first, second] = sessionItems('implication', false);
+    const wrong = first.correct === 0 ? 1 : 0;
+    s = ok(phoneAnswer(ok(phoneAnswer(s, wrong)), first.correct));
+    s = ok(phoneAnswer(ok(phoneNext(s)), second.correct));
+    const v = reviewView(ok(phoneFinish(s)));
+    expect(v.summary).toBe('2 questions · 1 right first try · 3 tries in all');
+    expect(v.rows[0]).toMatchObject({
+      prompt: first.prompt,
+      tries: [{ option: first.options[wrong], right: false }, { option: first.options[first.correct], right: true }],
+      answer: first.options[first.correct],
+      hints: [{ option: first.options[wrong], hint: first.hints[wrong] }],
+      guided: first.guided,
+    });
+    expect(v.rows[1].hints).toEqual([]);
+  });
+  it('the summary reads naturally for one question and one try', () => {
+    const s = sent();
+    s.phone.sheet = [{ itemId: 'implication-1', tries: [1], rightOn: 1, reopened: false }];
+    expect(reviewView(s).summary).toBe('1 question · 1 right first try · 1 try in all');
   });
   it('offers Skip to tonight only on a plan for today', () => {
     const s = sent();

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CARDS } from '../../scenario/cards';
 import { BANK } from '../../scenario/practiceBank';
-import { planFor, stateWithPlan } from '../fixtures';
-import { approvePlan, currentItems, deliver, phoneAgain, phoneAnswer, phoneGoto, phoneNext, phoneOpen, phoneShowPlan, type Result } from '../reducer';
+import { planFor, playOut, stateWithPlan } from '../fixtures';
+import { approvePlan, currentItems, deliver, phoneAgain, phoneAnswer, phoneContinue, phoneFinish, phoneGoto, phoneNext, phoneOpen, phoneShowPlan, type Result } from '../reducer';
 import { seedState } from '../seed';
 import type { DemoState } from '../types';
 import { ensureRecord, noteAttempt } from './record';
@@ -47,16 +47,14 @@ describe('joining', () => {
 });
 
 describe('self practice', () => {
-  it('serves 5 adaptive questions and returns to Today', () => {
+  it('serves 5 adaptive questions, opens the review and returns to Today', () => {
     let s = ok(startSelf(ready(), 'CLO1'));
     expect(s.phone).toMatchObject({ screen: 'practice', session: null, item: 0 });
-    for (let n = 0; n < 5; n++) {
-      const item = currentItems(s)[s.phone.item];
-      expect(item).toBeDefined();
-      s = ok(phoneAnswer(s, item.correct));
-      s = ok(phoneNext(s));
-    }
-    expect(s.phone).toMatchObject({ screen: 'today', self: null });
+    s = ok(playOut(s));
+    expect(s.phone).toMatchObject({ screen: 'review', self: null, reviewNext: 'today' });
+    expect(s.phone.sheet).toHaveLength(5);
+    s = ok(phoneContinue(s));
+    expect(s.phone).toMatchObject({ screen: 'today', self: null, sheet: [] });
     expect(new Set(s.study.s17.attempts.map((a) => a.itemId)).size).toBe(5);
     expect(s.study.s17.days[40].done).toBe(7.5);
     expect(s.students[16].evidence.filter((e) => e.kind === 'practice')).toHaveLength(5);
@@ -249,6 +247,13 @@ describe('review follow-ups', () => {
     s.phone.planId = 'p2';
     expect(ok(phoneOpen(s, 0)).phone.self).toBeNull();
     expect(ok(phoneShowPlan(s)).phone.self).toBeNull();
+  });
+  it('Finish before every slot is opened goes to the first open slot', () => {
+    let s = ok(startSelf(ready(), 'CLO1'));
+    s = ok(phoneAnswer(s, currentItems(s)[0].correct));
+    s = ok(phoneFinish(s));
+    expect(s.phone).toMatchObject({ screen: 'practice', item: 1 });
+    expect(s.phone.sheet).toHaveLength(2);
   });
   it('a skipped slot picks one question and keeps it', () => {
     let s = ok(startSelf(ready(), 'CLO1'));
