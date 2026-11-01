@@ -74,3 +74,48 @@ export const ASSESSMENTS: Assessment[] = [
 ];
 
 export const nextAssessment = (today: number): Assessment | null => ASSESSMENTS.find((a) => a.day >= today) ?? null;
+
+export interface Lecture { n: number; title: string; day: number; concepts: ConceptId[] }
+
+const LECTURE_START = 9 * 60;
+const LECTURE_END = 11 * 60;
+
+/** One lecture a week, Tuesday 09:00–11:00. */
+export const LECTURES: Lecture[] = (
+  [
+    ['Propositions', ['propositions']],
+    ['Negation, conjunction, disjunction', ['negation', 'conjunction', 'disjunction']],
+    ['Truth tables', ['truthTables']],
+    ['Biconditionals and compound expressions', ['biconditional', 'expressions']],
+    ['Implication', ['implication']],
+    ['Logical equivalence and De Morgan', ['equivalence', 'deMorgan']],
+    ['Equivalence laws', ['equivLaws']],
+    ['Logic in real problems', ['applications']],
+    ['Revision', []],
+  ] as [string, ConceptId[]][]
+).map(([title, concepts], i) => ({ n: i + 1, title, day: 7 * i + 1, concepts }));
+
+const minutesOf = (time: string) => {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + m;
+};
+
+/** The last lecture that had started by this moment, or null before Lecture 1. */
+export function lectureBefore(day: number, time: string): Lecture | null {
+  const t = minutesOf(time);
+  return [...LECTURES].reverse().find((l) => l.day < day || (l.day === day && t >= LECTURE_START)) ?? null;
+}
+
+/** "during Lecture 5", "2 hours after Lecture 5", "1 day after Lecture 5", or "before Lecture 1". */
+export function lectureLabel(day: number, time: string): string {
+  const l = lectureBefore(day, time);
+  if (!l) return 'before Lecture 1';
+  if (l.day < day) {
+    const d = day - l.day;
+    return `${d} day${d === 1 ? '' : 's'} after Lecture ${l.n}`;
+  }
+  const t = minutesOf(time);
+  if (t < LECTURE_END) return `during Lecture ${l.n}`;
+  const h = Math.floor((t - LECTURE_END) / 60);
+  return h < 1 ? `just after Lecture ${l.n}` : `${h} hour${h === 1 ? '' : 's'} after Lecture ${l.n}`;
+}

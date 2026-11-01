@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ASSESSMENTS, CLOS, EXAM_DAY, REVISION_START, START_DAY, cloOf, fullDate, nextAssessment, relativeDay, resolveDay, shortDate, studyDays, weekOf } from './course';
+import { ASSESSMENTS, CLOS, EXAM_DAY, LECTURES, REVISION_START, START_DAY, cloOf, fullDate, lectureBefore, lectureLabel, nextAssessment, relativeDay, resolveDay, shortDate, studyDays, weekOf } from './course';
 import { CONCEPTS } from './knowledgeGraph';
 
 describe('course calendar', () => {
@@ -39,5 +39,24 @@ describe('CLOs', () => {
     }
     expect(CLOS.reduce((a, c) => a + c.share, 0)).toBeCloseTo(1);
     expect(cloOf('applications').id).toBe('CLO3');
+  });
+});
+
+describe('lectures', () => {
+  it('runs one lecture a week on Tuesday, Lectures 1–9', () => {
+    expect(LECTURES.map((l) => l.day)).toEqual([1, 8, 15, 22, 29, 36, 43, 50, 57]);
+    expect(shortDate(LECTURES[4].day)).toBe('Tue 20 Oct');
+    expect(LECTURES[4]).toMatchObject({ n: 5, title: 'Implication', concepts: ['implication'] });
+  });
+  it('places a message relative to the lecture before it', () => {
+    expect(lectureLabel(29, '10:00')).toBe('during Lecture 5');
+    expect(lectureLabel(29, '11:20')).toBe('just after Lecture 5');
+    expect(lectureLabel(29, '13:30')).toBe('2 hours after Lecture 5');
+    expect(lectureLabel(29, '12:05')).toBe('1 hour after Lecture 5');
+    expect(lectureLabel(30, '21:40')).toBe('1 day after Lecture 5');
+    expect(lectureLabel(31, '08:10')).toBe('2 days after Lecture 5');
+    expect(lectureLabel(29, '08:00')).toBe('7 days after Lecture 4');
+    expect(lectureLabel(0, '12:00')).toBe('before Lecture 1');
+    expect(lectureBefore(0, '12:00')).toBeNull();
   });
 });
