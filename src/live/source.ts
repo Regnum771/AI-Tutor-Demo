@@ -9,7 +9,7 @@ export interface DemoSource {
 
 export async function postJson(path: string, body: unknown = {}): Promise<{ ok: boolean; [k: string]: unknown }> {
   try {
-    const r = await fetch(`/api/${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const r = await fetch(`/api/${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(10_000) });
     return (await r.json()) as { ok: boolean };
   } catch {
     return { ok: false };

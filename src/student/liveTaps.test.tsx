@@ -67,7 +67,7 @@ describe('one tap, one request', () => {
   });
   it('a failed post releases the latch', async () => {
     let n = 0;
-    const m = await mount(study('today'), async () => { if (n++ === 0) throw new Error('offline'); return { ok: true }; });
+    const m = await mount(study('today'), async () => ({ ok: n++ !== 0 }));
     await act(async () => { button(m.el, 'Next week').click(); });
     await act(async () => button(m.el, 'Next week').click());
     expect(m.calls).toHaveLength(2);
