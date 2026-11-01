@@ -54,6 +54,10 @@ export interface Plan {
   studentIds: string[];
   /** "Today", "Tomorrow" or a weekday. Only "Today" sessions must fall after the story clock. */
   day: string;
+  /** The day number `day` resolved to when the plan was drafted. */
+  date: number;
+  /** Mastery when the plan reached the phone; adapt reports the change against this. */
+  baseline: Mastery | null;
   sessions: PlanSession[];
   rationale: string;
   outcome: string;
@@ -109,8 +113,6 @@ export interface PhoneState {
   result: 'right' | 'wrong' | null;
   lastOption: number | null;
   done: number[];
-  /** Mastery when the current plan arrived, for the progress screen. */
-  before: Mastery | null;
   /** The plan whose mastery check finished last (the progress screen's subject). */
   lastDone: string | null;
   /** The plan was replaced by an auto-approved follow-up. */
@@ -122,6 +124,8 @@ export interface DemoState {
   epoch: number;
   /** Story clock, minutes after midnight. */
   clock: number;
+  /** Story date: day 0 is Monday 21 September. */
+  day: number;
   students: StudentProfile[];
   classEvidence: Evidence[];
   plans: Plan[];

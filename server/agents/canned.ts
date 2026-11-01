@@ -2,6 +2,7 @@ import { fmt, parseTime } from '../../src/live/clock';
 import { studentById } from '../../src/live/reducer';
 import type { AssistantMsg, DemoState, LivePanel, Mastery, Plan, PlanKind, PlanSession } from '../../src/live/types';
 import { COMPLEX } from '../../src/scenario/classroom';
+import { resolveDay } from '../../src/scenario/course';
 import { conceptById, type ConceptId } from '../../src/scenario/knowledgeGraph';
 import { MINH_ANH } from '../../src/scenario/minhAnh';
 import { EXPECTED_OUTCOME, PATHWAY_PROPOSED, PATHWAY_UPDATED } from '../../src/scenario/orchestration';
@@ -28,7 +29,7 @@ export function cannedPlan(state: DemoState, topic: ContextId, id: string, conve
   if (topic === 'student') {
     const times = shifted(PATHWAY_PROPOSED.map((p) => p.when.replace('Today ', '')), state.clock);
     return {
-      ...base, kind: 'pathway', title: 'Rebuild implication, then equivalence', studentIds: [MINH_ANH.id], day: 'Today',
+      ...base, kind: 'pathway', title: 'Rebuild implication, then equivalence', studentIds: [MINH_ANH.id], day: 'Today', date: resolveDay('Today', state.day), baseline: null,
       rationale: 'Almost every lost mark traces back to implication.', outcome: EXPECTED_OUTCOME,
       sessions: PATHWAY_PROPOSED.map((p, i) => session(times[i], p.title, p.mins, PATHWAY_CONCEPTS[i], i === PATHWAY_PROPOSED.length - 1)),
     };
@@ -36,14 +37,14 @@ export function cannedPlan(state: DemoState, topic: ContextId, id: string, conve
   if (topic === 'class') {
     const affected = state.students.filter((s) => s.status !== 'onTrack').map((s) => s.id);
     return {
-      ...base, kind: 'classActivity', title: 'Group recap + adaptive practice', studentIds: affected, day: 'Thursday',
+      ...base, kind: 'classActivity', title: 'Group recap + adaptive practice', studentIds: affected, day: 'Thursday', date: resolveDay('Thursday', state.day), baseline: null,
       rationale: 'Guided conceptual practice worked in 82% of similar cases.', outcome: 'Class mastery on equivalence ≥ 0.60 by Quiz 3',
       sessions: [session('10:00', '15-min recap in tutorial · whole class', 15, null), session('10:15', `Adaptive practice set · ${affected.length} students`, 20, null)],
     };
   }
   const people = COMPLEX.map((i) => state.students[i]);
   return {
-    ...base, kind: 'checkIns', title: '15-minute check-ins', studentIds: people.map((p) => p.id), day: 'Friday',
+    ...base, kind: 'checkIns', title: '15-minute check-ins', studentIds: people.map((p) => p.id), day: 'Friday', date: resolveDay('Friday', state.day), baseline: null,
     rationale: 'No mastery gain after 2 sessions: a conversation will help more than more practice.', outcome: 'A plan you’ve agreed with each student',
     sessions: people.map((p, i) => session(['14:00', '14:20', '14:40'][i], `Check-in · ${p.name}`, 15, null, false, p.id)),
   };
@@ -71,7 +72,7 @@ export function cannedAdapt(state: DemoState, plan: Plan, before: Mastery, follo
   const reached = s.mastery[target] >= 0.75;
   const today = plan.day === 'Today';
   const followUp: Plan | null = !today ? null : {
-    id: followUpId, kind: 'pathway', title: 'Next: equivalence laws in practice', studentIds: [s.id], day: 'Tomorrow',
+    id: followUpId, kind: 'pathway', title: 'Next: equivalence laws in practice', studentIds: [s.id], day: 'Tomorrow', date: state.day + 1, baseline: null,
     rationale: 'Builds on tonight’s mastery check.', outcome: 'Equivalence laws mastery ≥ 0.60', status: 'autoApproved', conversationId: plan.conversationId,
     sessions: PATHWAY_UPDATED.map((p, i) => session(p.when.replace('Tomorrow ', ''), p.title, p.mins, FOLLOW_UP_CONCEPTS[i], i === PATHWAY_UPDATED.length - 1)),
   };

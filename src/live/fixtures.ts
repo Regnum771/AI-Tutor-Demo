@@ -1,8 +1,9 @@
+import { resolveDay, START_DAY } from '../scenario/course';
 import { seedState } from './seed';
 import type { DemoState, LivePanel, Plan, PlanKind } from './types';
 import type { LiveCtx } from './LiveContext';
 
-type PlanBase = Omit<Plan, 'id' | 'status' | 'conversationId'>;
+type PlanBase = Omit<Plan, 'id' | 'status' | 'conversationId' | 'date' | 'baseline'>;
 
 const BASE: Record<PlanKind, () => PlanBase> = {
   pathway: () => ({
@@ -29,8 +30,10 @@ const BASE: Record<PlanKind, () => PlanBase> = {
 };
 
 /** A valid proposed plan of each kind: id p1, conversation c1. */
-export const planFor = (kind: PlanKind, over: Partial<Plan> = {}): Plan =>
-  ({ ...BASE[kind](), id: 'p1', status: 'proposed', conversationId: 'c1', ...over });
+export const planFor = (kind: PlanKind, over: Partial<Plan> = {}): Plan => {
+  const base = BASE[kind]();
+  return { ...base, date: resolveDay(base.day, START_DAY), baseline: null, id: 'p1', status: 'proposed', conversationId: 'c1', ...over };
+};
 
 const PANEL: Record<PlanKind, LivePanel> = {
   pathway: { kind: 'student', studentId: 's17', planId: 'p1', highlight: null },

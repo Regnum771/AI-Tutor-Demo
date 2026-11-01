@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { fmt } from '../live/clock';
 import { useLive } from '../live/LiveContext';
 import { classKpis } from '../live/mastery';
+import { fullDate } from '../scenario/course';
 import type { AssistantMsg as LiveAssistant, DemoState } from '../live/types';
 import { STUDENTS, type Student } from '../scenario/classroom';
 import { MINH_ANH } from '../scenario/minhAnh';
@@ -119,7 +120,7 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
         <header className="flex h-[60px] shrink-0 items-center gap-4 border-b border-egg-line px-8">
           {/* Instrument Serif has no Vietnamese glyphs, so student-name titles use the sans face. */}
           <h1 className={`truncate leading-none ${frame.sansTitle && view === 'chat' ? 'text-[19px] font-semibold' : 'font-serif text-[24px]'}`}>{title}</h1>
-          {live && <span className="ml-auto font-mono text-[12px] tabular-nums text-egg-mute">{fmt(live.state.clock)}</span>}
+          {live && <span className="ml-auto font-mono text-[12px] tabular-nums text-egg-mute">{`${fullDate(live.state.day)} · ${fmt(live.state.clock)}`}</span>}
           <span className={`${live ? '' : 'ml-auto '}rounded-full border border-egg-line px-3 py-1 text-[12px] text-egg-mute`}>Discrete Mathematics · DM-2026</span>
           {actions && view === 'chat' && panel === null && hasAnswer && (
             <button

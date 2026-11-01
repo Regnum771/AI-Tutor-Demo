@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { sessionItems } from '../scenario/practiceBank';
-import { stateWithPlan } from './fixtures';
+import { planFor, stateWithPlan } from './fixtures';
 import { afterAnswer } from './mastery';
 import {
-  approvePlan, currentItems, dismissPlan, editPlan, phoneAnswer, phoneNext, phoneOpen, phoneShowPlan, phoneSkip, type Result,
+  approvePlan, currentItems, deliver, dismissPlan, editPlan, phoneAnswer, phoneNext, phoneOpen, phoneShowPlan, phoneSkip, type Result,
 } from './reducer';
 import type { DemoState } from './types';
 
@@ -20,7 +20,7 @@ describe('plan transitions', () => {
     const s = ok(approvePlan(before, 'p1'));
     expect(s.plans[0].status).toBe('sent');
     expect(s.phone).toMatchObject({ planId: 'p1', screen: 'lock', done: [], updated: false });
-    expect(s.phone.before).toEqual(ma(s).mastery);
+    expect(s.plans[0].baseline).toEqual(ma(s).mastery);
     const msg = lastMsg(s);
     expect(msg.role === 'assistant' && msg.source).toBe('system');
     expect(msg.role === 'assistant' && msg.blocks[0].text).toContain('Sent to Minh Anh’s phone');
@@ -106,5 +106,21 @@ describe('phone flow', () => {
     expect(s.clock).toBe(20 * 60);
     expect(ma(s).mastery.implication).toBeGreaterThan(0.31);
     expect(ma(s).evidence.filter((e) => e.kind === 'practice')).toHaveLength(2);
+  });
+});
+
+describe('dates', () => {
+  it('a follow-up keeps its own baseline, and opening it moves the story to its date', () => {
+    const first = ok(approvePlan(stateWithPlan(), 'p1'));
+    const s = structuredClone(first);
+    s.students[16].mastery.equivalence = 0.65;
+    const follow = planFor('pathway', { id: 'p2', day: 'Tomorrow', date: 41, status: 'autoApproved' });
+    s.plans.push(follow);
+    deliver(s, s.plans[1], true);
+    expect(s.plans[1].baseline?.equivalence).toBe(0.65);
+    expect(s.plans[0].baseline?.equivalence).toBe(0.35);
+    const opened = ok(phoneOpen(s, 0));
+    expect(opened.day).toBe(41);
+    expect(opened.clock).toBe(15 * 60 + 30);
   });
 });

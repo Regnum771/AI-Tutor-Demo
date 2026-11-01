@@ -1,5 +1,6 @@
 import { planById, studentById } from '../live/reducer';
 import type { DemoState, Plan } from '../live/types';
+import { relativeDay } from '../scenario/course';
 import { conceptById, type ConceptId } from '../scenario/knowledgeGraph';
 
 export interface PlanView {
@@ -37,13 +38,13 @@ export function planView(state: DemoState): PlanView | null {
   const check = plan.sessions.findIndex((s) => s.isMasteryCheck);
   return {
     name: student.short,
-    heading: `Learning pathway · ${plan.day.toLowerCase()}`,
+    heading: `Learning pathway · ${relativeDay(plan.date, state.day).toLowerCase()}`,
     topic: conceptById(targetOf(plan)).label,
     objectives: conceptsOf(plan).slice(-2).map((c) => conceptById(c).label),
-    items: plan.sessions.map((s) => ({ title: s.title, when: `${plan.day} ${s.time}`, mins: s.minutes })),
+    items: plan.sessions.map((s) => ({ title: s.title, when: `${relativeDay(plan.date, state.day)} ${s.time}`, mins: s.minutes })),
     done,
     next: next < 0 ? null : next,
-    canSkip: plan.day === 'Today' && plan.sessions.some((_, i) => i < check && !done.includes(i)),
+    canSkip: plan.date === state.day && plan.sessions.some((_, i) => i < check && !done.includes(i)),
   };
 }
 
@@ -54,7 +55,7 @@ export function notificationCopy(state: DemoState): { title: string; body: strin
   const labels = conceptsOf(plan).slice(-2).map((c) => conceptById(c).label.toLowerCase());
   return {
     title: state.phone.updated ? 'Your plan was updated' : 'Your personalized plan is ready',
-    body: `${plan.sessions.length} short sessions ${plan.day.toLowerCase()} to strengthen ${labels.join(' & ')}.`,
+    body: `${plan.sessions.length} short sessions ${relativeDay(plan.date, state.day).toLowerCase()} to strengthen ${labels.join(' & ')}.`,
   };
 }
 
@@ -68,7 +69,7 @@ export function progressView(state: DemoState): ProgressView | null {
   const correct = practice.filter((e) => e.text.includes('correct')).length;
   return {
     concept: conceptById(target).label,
-    from: Math.round((state.phone.before?.[target] ?? student.mastery[target]) * 100),
+    from: Math.round((plan.baseline?.[target] ?? student.mastery[target]) * 100),
     to: Math.round(student.mastery[target] * 100),
     accuracy: practice.length ? Math.round((correct / practice.length) * 100) : 0,
     items: plan.sessions.map((s) => ({ title: s.title, when: s.time })),

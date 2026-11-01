@@ -15,7 +15,7 @@ describe('planProblems', () => {
     const p = planFor('pathway');
     p.sessions[0].time = '14:30';
     expect(planProblems(p, state)).toEqual(['Session 1 at 14:30 is not after now (15:00).']);
-    expect(planProblems({ ...p, day: 'Tomorrow' }, state)).toEqual([]);
+    expect(planProblems({ ...p, day: 'Tomorrow', date: 41 }, state)).toEqual([]);
   });
   it('rejects malformed times and unknown students', () => {
     const p = planFor('pathway', { studentIds: ['s99'] });

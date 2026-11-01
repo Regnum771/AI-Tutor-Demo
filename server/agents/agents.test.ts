@@ -90,7 +90,7 @@ describe('Teaching Assistance Agent', () => {
     expect(String(tasMessages(state, 'q', report, null)[0].content)).toContain(`Students on the escalation list: ${list.join(', ')}.`);
   });
   it('normalises the day so the policy checks see "Today" and "Tomorrow"', () => {
-    const day = (d: unknown) => toPlan({ day: d }, { id: 'p1', conversationId: 'c1', status: 'proposed' }).day;
+    const day = (d: unknown) => toPlan({ day: d }, { id: 'p1', conversationId: 'c1', status: 'proposed', today: 40 }).day;
     expect(day(' today ')).toBe('Today');
     expect(day('TOMORROW')).toBe('Tomorrow');
     expect(day('Thursday')).toBe('Thursday');

@@ -1,6 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { fmt } from '../../src/live/clock';
 import type { DemoState, LiveBlock, Plan } from '../../src/live/types';
+import { fullDate } from '../../src/scenario/course';
 import type { ConceptId } from '../../src/scenario/knowledgeGraph';
 import type { AgentSpec, Check } from './loop';
 import { CONCEPT_IDS, obj, READ_TOOLS, readLabel, readTool, tool } from './tools';
@@ -109,6 +110,6 @@ export const planBrief = (p: Plan) => ({ id: p.id, kind: p.kind, title: p.title,
 
 /** Earlier turns as plain text, then the question with the volatile context, all after the cached prefix. */
 export function sasMessages(history: Turn[], question: string, state: DemoState, openPlan: Plan | null): Anthropic.Beta.BetaMessageParam[] {
-  const context = `Story time: ${fmt(state.clock)} on Saturday 31 October.\nOpen plan in this conversation: ${openPlan ? JSON.stringify(planBrief(openPlan)) : 'none'}.`;
+  const context = `Story time: ${fmt(state.clock)} on ${fullDate(state.day)}.\nOpen plan in this conversation: ${openPlan ? JSON.stringify(planBrief(openPlan)) : 'none'}.`;
   return [...history.map((t) => ({ role: t.role, content: t.text })), { role: 'user', content: `${context}\n\nLecturer: ${question}` }];
 }

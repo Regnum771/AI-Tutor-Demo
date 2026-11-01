@@ -4,7 +4,7 @@ import type { DemoState, Plan } from './types';
 
 export const POLICY = { maxSessions: 4, maxMinutes: 45, followUpMaxSessions: 3, maxCheckIns: 5 } as const;
 
-type PlanContext = Pick<DemoState, 'clock' | 'students'>;
+type PlanContext = Pick<DemoState, 'clock' | 'day' | 'students'>;
 
 /** Problems with a draft plan, as sentences an agent can act on. Empty when the plan is valid. */
 export function planProblems(plan: Plan, state: PlanContext): string[] {
@@ -15,7 +15,7 @@ export function planProblems(plan: Plan, state: PlanContext): string[] {
   plan.sessions.forEach((s, i) => {
     const t = parseTime(s.time);
     if (t === null) out.push(`Session ${i + 1}: time "${s.time}" is not HH:MM.`);
-    else if (plan.day === 'Today' && t <= state.clock) out.push(`Session ${i + 1} at ${s.time} is not after now (${fmt(state.clock)}).`);
+    else if (plan.date === state.day && t <= state.clock) out.push(`Session ${i + 1} at ${s.time} is not after now (${fmt(state.clock)}).`);
   });
   if (plan.kind === 'pathway') {
     if (plan.studentIds.length !== 1) out.push('A pathway is for exactly one student.');

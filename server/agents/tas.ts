@@ -3,6 +3,7 @@ import { fmt } from '../../src/live/clock';
 import { planProblems } from '../../src/live/plans';
 import { studentById } from '../../src/live/reducer';
 import type { DemoState, Plan, PlanKind, PlanStatus } from '../../src/live/types';
+import { fullDate, resolveDay } from '../../src/scenario/course';
 import { BANK_CONCEPTS } from '../../src/scenario/practiceBank';
 import type { AgentSpec, Check } from './loop';
 import { planBrief, type Report } from './sas';
@@ -43,7 +44,7 @@ If an open plan is given, change only what the lecturer asked and keep every oth
 
 You may look things up with the read tools. Then call propose_plan. Always finish with propose_plan.`;
 
-type Meta = { id: string; conversationId: string; status: PlanStatus };
+type Meta = { id: string; conversationId: string; status: PlanStatus; today: number };
 
 const dayOf = (raw: unknown): string => {
   const d = String(raw ?? 'Today').trim();
@@ -67,14 +68,15 @@ export function toPlan(input: unknown, meta: Meta): Plan {
   });
   let studentIds = Array.isArray(r.student_ids) ? r.student_ids.map(String) : [];
   if (kind === 'checkIns' && studentIds.length === 0) studentIds = sessions.flatMap((s) => (s.studentId ? [s.studentId] : []));
+  const day = dayOf(r.day);
   return {
-    id: meta.id, kind, title: String(r.title ?? 'Plan'), studentIds, day: dayOf(r.day), sessions,
+    id: meta.id, kind, title: String(r.title ?? 'Plan'), studentIds, day, date: resolveDay(day, meta.today), baseline: null, sessions,
     rationale: String(r.rationale ?? ''), outcome: String(r.outcome ?? ''), status: meta.status, conversationId: meta.conversationId,
   };
 }
 
 export const checkPlan = (state: DemoState, planId: string, conversationId: string): Check<Plan> => (input) => {
-  const plan = toPlan(input, { id: planId, conversationId, status: 'proposed' });
+  const plan = toPlan(input, { id: planId, conversationId, status: 'proposed', today: state.day });
   const problems = planProblems(plan, state);
   return problems.length
     ? { ok: false, error: `The plan breaks the policy: ${problems.join(' ')} Fix it and call propose_plan again.` }
@@ -104,7 +106,7 @@ export function tasMessages(state: DemoState, question: string, report: Report, 
     `Focus: ${focus}. Gap concepts: ${report.gaps.join(', ') || 'none named'}.`,
     `Students on the escalation list: ${state.students.filter((s) => s.escalated).map((s) => s.id).join(', ') || 'none'}.`,
     `Concepts with practice items (pathway sessions may use only these): ${BANK_CONCEPTS.join(', ')}.`,
-    `Story time now: ${fmt(state.clock)} (day "Today").`,
+    `Story time now: ${fullDate(state.day)}, ${fmt(state.clock)} (day "Today").`,
     `Open plan to revise: ${openPlan ? JSON.stringify(planBrief(openPlan)) : 'none'}.`,
   ];
   return [{ role: 'user', content: lines.join('\n\n') }];

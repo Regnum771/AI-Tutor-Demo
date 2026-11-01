@@ -3,6 +3,7 @@ import { Stage } from '../engine/Stage';
 import { useNow } from '../engine/useNow';
 import { fmt } from '../live/clock';
 import { useServerSource, type DemoSource } from '../live/source';
+import { fullDate } from '../scenario/course';
 import { notificationCopy, planView, progressView } from './liveView';
 import { StatusBar } from './screens/Chrome';
 import { LivePractice } from './screens/LivePractice';
@@ -40,7 +41,7 @@ export function LivePhoneView({ source }: { source: DemoSource }) {
   return (
     <Stage width={390} height={844} background="#F2EDE4">
       {ph.screen === 'lock' && (
-        <LockScreen t={local} clock={clock} notification={message ? Math.min(1, Math.max(0.01, local / 500)) : 0} message={message ?? undefined} onTap={message ? () => send('phone/plan') : undefined} />
+        <LockScreen t={local} clock={clock} date={fullDate(state.day)} notification={message ? Math.min(1, Math.max(0.01, local / 500)) : 0} message={message ?? undefined} onTap={message ? () => send('phone/plan') : undefined} />
       )}
       {ph.screen === 'plan' && plan && (
         <PlanScreen local={local} variant={ph.updated ? 'updated' : 'initial'} clock={clock} live={plan} onOpen={(i) => send('phone/open', { sessionIndex: i })} onSkip={() => send('phone/skip')} />

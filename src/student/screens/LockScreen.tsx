@@ -8,8 +8,8 @@ const CARD = 'absolute left-3 right-3 rounded-3xl border border-egg-line bg-egg-
 const SCRIPTED_MESSAGE = { title: 'Your personalized plan is ready', body: '4 short sessions today to strengthen implication & logical equivalence.' };
 
 /** `onTap` (live mode) makes the notification a real button. */
-export function LockScreen({ t, notification, tapAt, clock, message = SCRIPTED_MESSAGE, onTap }: {
-  t: number; notification: number; tapAt?: number; clock: string; message?: { title: string; body: string }; onTap?: () => void;
+export function LockScreen({ t, notification, tapAt, clock, date = 'Saturday, 31 October', message = SCRIPTED_MESSAGE, onTap }: {
+  t: number; notification: number; tapAt?: number; clock: string; date?: string; message?: { title: string; body: string }; onTap?: () => void;
 }) {
   const pressed = tapAt !== undefined && t >= tapAt && t < tapAt + 250;
   const style = { top: 250, opacity: notification, transform: `translateY(${(1 - notification) * -40}px) scale(${pressed ? 0.97 : 1})` };
@@ -26,7 +26,7 @@ export function LockScreen({ t, notification, tapAt, clock, message = SCRIPTED_M
   );
   return (
     <div className="absolute inset-0 flex flex-col items-center font-sans" style={{ background: WALLPAPER }}>
-      <div className="mt-24 font-display text-[18px] font-semibold text-egg-card/70">Saturday, 31 October</div>
+      <div className="mt-24 font-display text-[18px] font-semibold text-egg-card/70">{date}</div>
       <div className="font-serif text-[84px] leading-none text-egg-card">{clock}</div>
       {notification > 0 && (onTap ? (
         <button type="button" onClick={onTap} className={`${CARD} text-left`} style={style}>{content}</button>

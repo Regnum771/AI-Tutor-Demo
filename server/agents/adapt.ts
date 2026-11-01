@@ -4,6 +4,7 @@ import { planProblems, withinFollowUpPolicy } from '../../src/live/plans';
 import { studentById } from '../../src/live/reducer';
 import type { DemoState, LiveBlock, Mastery, Plan } from '../../src/live/types';
 import { conceptById, type ConceptId } from '../../src/scenario/knowledgeGraph';
+import { fullDate } from '../../src/scenario/course';
 import { TWIN_FOCUS } from '../../src/scenario/minhAnh';
 import { BANK_CONCEPTS } from '../../src/scenario/practiceBank';
 import type { AgentSpec, Check } from './loop';
@@ -38,7 +39,7 @@ export const checkAdapt = (state: DemoState, plan: Plan, followUpId: string): Ch
   const blocks = checkBlocks(state, r.blocks);
   if (!blocks.ok) return blocks;
   if (r.follow_up_needed !== true) return { ok: true, value: { blocks: blocks.value, followUp: null } };
-  const draft = toPlan({ ...(r.follow_up as object), kind: 'pathway', day: 'Tomorrow', student_ids: plan.studentIds }, { id: followUpId, conversationId: plan.conversationId, status: 'proposed' });
+  const draft = toPlan({ ...(r.follow_up as object), kind: 'pathway', day: 'Tomorrow', student_ids: plan.studentIds }, { id: followUpId, conversationId: plan.conversationId, status: 'proposed', today: state.day });
   const problems = planProblems(draft, state);
   if (problems.length) return { ok: false, error: `The follow-up breaks the policy: ${problems.join(' ')} Fix it and call adapt_report again.` };
   return { ok: true, value: { blocks: blocks.value, followUp: withinFollowUpPolicy(draft, state) ? { ...draft, status: 'autoApproved' } : draft } };
@@ -63,7 +64,7 @@ export function adaptMessages(state: DemoState, plan: Plan, before: Mastery): An
     `Target concept: ${label(target)} (target 0.75), now ${s.mastery[target].toFixed(2)}.`,
     `Mastery changes tonight: ${changes.join('; ') || 'none'}.`,
     `Focus concepts still below 0.50: ${TWIN_FOCUS.filter((c) => s.mastery[c] < 0.5).map(label).join(', ') || 'none'}.`,
-    `Story time now: ${fmt(state.clock)}. Concepts with practice items: ${BANK_CONCEPTS.join(', ')}.`,
+    `Story time now: ${fullDate(state.day)}, ${fmt(state.clock)}. Concepts with practice items: ${BANK_CONCEPTS.join(', ')}.`,
     'Policy: a pathway follow-up of at most 3 sessions is sent without asking; anything bigger waits for the lecturer.',
   ];
   return [{ role: 'user', content: lines.join('\n') }];

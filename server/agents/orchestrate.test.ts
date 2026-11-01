@@ -183,7 +183,7 @@ describe('adaptAfterCheck', () => {
   const after = () => {
     const s = stateWithPlan('pathway', { status: 'done' });
     s.clock = TONIGHT;
-    s.phone.before = { ...MASTERY_INITIAL };
+    s.plans[0].baseline = { ...MASTERY_INITIAL };
     s.students[16].mastery.equivalence = 0.71;
     return s;
   };

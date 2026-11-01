@@ -1,6 +1,7 @@
 import { fmt } from '../../src/live/clock';
 import { planById, studentById } from '../../src/live/reducer';
 import type { AssistantMsg, ChatMsg, DemoState, LiveBlock, LivePanel, Plan } from '../../src/live/types';
+import { START_DAY, shortDate } from '../../src/scenario/course';
 import { CANNED_TOPICS, routePrompt } from '../../src/teacher/route';
 import { adaptMessages, adaptSpec, type AdaptResult } from './adapt';
 import { cannedAdapt, cannedAnswer, type Outcome } from './canned';
@@ -84,10 +85,13 @@ export async function answer(state: DemoState, history: ChatMsg[], conversationI
   }
 }
 
+/** A plain time on the story's first day, otherwise the date too. */
+const stampOf = (s: DemoState) => (s.day === START_DAY ? fmt(s.clock) : `${shortDate(s.day)} · ${fmt(s.clock)}`);
+
 /** After a mastery check: the unprompted update and, maybe, a follow-up plan. */
 export async function adaptAfterCheck(state: DemoState, planId: string, deps: Deps): Promise<{ msg: AssistantMsg; followUp: Plan | null }> {
   const plan = planById(state, planId)!;
-  const before = state.phone.before ?? studentById(state, plan.studentIds[0])!.mastery;
+  const before = plan.baseline ?? studentById(state, plan.studentIds[0])!.mastery;
   const followUpId = deps.newPlanId();
   let result: AdaptResult | null = null;
   let source: AssistantMsg['source'] = 'agents';
@@ -106,7 +110,7 @@ export async function adaptAfterCheck(state: DemoState, planId: string, deps: De
   }
   return {
     msg: {
-      role: 'assistant', source, blocks: result.blocks, canned: null, followUps: [], stamp: fmt(state.clock),
+      role: 'assistant', source, blocks: result.blocks, canned: null, followUps: [], stamp: stampOf(state),
       panel: { kind: 'student', studentId: plan.studentIds[0], planId: result.followUp?.id ?? plan.id, highlight: null },
     },
     followUp: result.followUp,

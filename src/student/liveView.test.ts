@@ -41,6 +41,7 @@ describe('phone views', () => {
   it('offers Skip to tonight only on a plan for today', () => {
     const s = sent();
     s.plans[0].day = 'Tomorrow';
+    s.plans[0].date = s.day + 1;
     expect(planView(s)?.canSkip).toBe(false);
   });
 });

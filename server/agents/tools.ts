@@ -2,6 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import { fmt } from '../../src/live/clock';
 import { classKpis, topicMastery } from '../../src/live/mastery';
 import type { DemoState, EvidenceKind, StudentProfile } from '../../src/live/types';
+import { fullDate } from '../../src/scenario/course';
 import { GROUPS } from '../../src/scenario/classroom';
 import { CONCEPTS, conceptById, type ConceptId } from '../../src/scenario/knowledgeGraph';
 import { TWIN_FOCUS } from '../../src/scenario/minhAnh';
@@ -54,6 +55,7 @@ function overview(state: DemoState) {
   return {
     course: 'Discrete Mathematics · DM-2026 · Week 6 (logical equivalence)',
     now: fmt(state.clock),
+    date: fullDate(state.day),
     students: k.students,
     needSupport: k.needSupport,
     highRisk: k.highRisk,

@@ -22,17 +22,17 @@ function say(s: DemoState, conversationId: string, text: string) {
 }
 
 /**
- * Puts `plan` on the phone. A fresh delivery shows the lock-screen notification and records the mastery baseline;
- * a follow-up keeps the current screen, the baseline and the finished plan, so the progress screen still tells tonight's story.
+ * Puts `plan` on the phone and records its baseline. A fresh delivery shows the lock-screen notification;
+ * a follow-up keeps the current screen and the finished plan, so the progress screen still shows that result.
  */
 export function deliver(s: DemoState, plan: Plan, updated: boolean): void {
   const student = studentById(s, plan.studentIds[0]);
+  plan.baseline = student ? { ...student.mastery } : null;
   s.phone = {
     ...IDLE_PHONE,
     done: [],
     planId: plan.id,
     screen: updated ? s.phone.screen : 'lock',
-    before: updated ? s.phone.before : student ? { ...student.mastery } : null,
     lastDone: updated ? s.phone.lastDone : null,
     updated,
   };
@@ -101,9 +101,14 @@ export function phoneShowPlan(state: DemoState): Result {
   return done(s);
 }
 
+/** Opening a session moves the story to it: forward to its date, then forward to its time. */
 function moveClockTo(s: DemoState, plan: Plan, time: string) {
+  if (plan.date > s.day) {
+    s.day = plan.date;
+    s.clock = 0;
+  }
   const t = parseTime(time);
-  if (plan.day === 'Today' && t !== null && t > s.clock) s.clock = t;
+  if (plan.date === s.day && t !== null && t > s.clock) s.clock = t;
 }
 
 export function phoneOpen(state: DemoState, index: number): Result {
