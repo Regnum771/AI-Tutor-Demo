@@ -90,6 +90,17 @@ describe('next question', () => {
     }
     expect(SELF_SESSION).toBe(5);
   });
+  it('skips a question attempted within 3 days, and falls back to the oldest when all are recent', () => {
+    const { s, rec } = setup();
+    const st = student(s);
+    const first = nextItem(rec, st, 40, ['conjunction'], []);
+    rec.attempts.push({ itemId: first.id, day: 39, correct: true, firstTry: true });
+    expect(nextItem(rec, st, 40, ['conjunction'], []).id).not.toBe(first.id);
+    expect(nextItem(rec, st, 42, ['conjunction'], []).id).toBe(first.id);
+    const ids = BANK.filter((i) => i.concept === 'conjunction').map((i) => i.id);
+    ids.forEach((id, i) => rec.attempts.push({ itemId: id, day: 38 + (i % 2) + (id === ids[2] ? -1 : 0), correct: true, firstTry: true }));
+    expect(nextItem(rec, st, 40, ['conjunction'], []).id).toBe(ids[2]);
+  });
   it('moves up after two first-try answers and down after a wrong one', () => {
     const rec = newRecord(student(seedState()));
     rec.bloom.CLO1 = 0;
@@ -184,6 +195,54 @@ describe('today', () => {
     s.day = 41;
     expect(todayList(s, 's17').budget).toBe(35);
   });
+  it('keeps carry-over within the day’s capacity after teacher sessions', () => {
+    const { s, rec } = setup();
+    s.day = 42;
+    rec.plan = { createdDay: 40, reason: 'r', leftOut: [], source: 'offline', days: [{ day: 42, minutes: 12, clo: 'CLO1', concepts: ['implication'] }] };
+    s.plans.push(planFor('pathway', { status: 'sent', date: 42, studentIds: ['s17'] }));
+    rec.days[41] = { planned: 30, done: 15, check: null };
+    expect(todayList(s, 's17').budget).toBe(12);
+  });
+  it('caps carry at capacity even without teacher sessions', () => {
+    const { s, rec } = setup();
+    s.day = 42;
+    rec.plan = { createdDay: 40, reason: 'r', leftOut: [], source: 'offline', days: [{ day: 42, minutes: 20, clo: 'CLO1', concepts: ['implication'] }] };
+    rec.days[41] = { planned: 30, done: 0, check: null };
+    expect(todayList(s, 's17').budget).toBe(30);
+  });
+  it('shows a student’s sent pathway for today whether or not the phone has a plan picked', () => {
+    const { s } = setup();
+    s.plans.push(planFor('pathway', { status: 'sent', date: 40, studentIds: ['s17'] }));
+    expect(s.phone.planId).toBeNull();
+    const plan = s.plans[s.plans.length - 1];
+    expect(todayList(s, 's17').rows.filter((r) => r.kind === 'plan')).toHaveLength(plan.sessions.length);
+    s.phone.done = [0];
+    expect(todayList(s, 's17').rows.filter((r) => r.kind === 'plan')).toHaveLength(plan.sessions.length);
+    s.phone.planId = plan.id;
+    expect(todayList(s, 's17').rows.filter((r) => r.kind === 'plan')).toHaveLength(plan.sessions.length - 1);
+  });
+  it('keeps teacher-session minutes out of self-study', () => {
+    const { s, rec } = setup();
+    rec.plan = { createdDay: 40, reason: 'r', leftOut: [], source: 'offline', days: [{ day: 40, minutes: 20, clo: 'CLO1', concepts: ['implication'] }, { day: 41, minutes: 5, clo: 'CLO1', concepts: ['implication'] }] };
+    const before = todayList(s, 's17').rows.find((r) => r.kind === 'practice')!;
+    const item = BANK.find((i) => i.clo === 'CLO1')!;
+    rec.days[40] = { planned: 20, done: 0, check: null };
+    for (let i = 0; i < 5; i++) noteAttempt(rec, item, 40, true, true, true);
+    expect(rec.days[40].done).toBe(7.5);
+    const after = todayList(s, 's17');
+    expect(after.done).toBe(0);
+    expect(after.rows.find((r) => r.kind === 'practice')).toEqual(before);
+    s.day = 41;
+    expect(todayList(s, 's17').budget).toBe(25);
+  });
+  it('takes the practice row’s CLO from the plan and rounds its minutes up', () => {
+    const { s, rec } = setup();
+    rec.plan = { createdDay: 40, reason: 'r', leftOut: [], source: 'offline', days: [{ day: 40, minutes: 20, clo: 'CLO2', concepts: ['implication'] }] };
+    rec.days[40] = { planned: 20, done: 0.5, check: null };
+    const row = todayList(s, 's17').rows.find((r) => r.kind === 'practice')!;
+    expect(row).toMatchObject({ clo: 'CLO2' });
+    expect(Number.isInteger(row.minutes)).toBe(true);
+  });
   it('puts today’s teacher sessions first', () => {
     const { s, rec } = setup();
     rec.plan = { createdDay: 40, reason: 'r', leftOut: [], source: 'offline', days: [{ day: 40, minutes: 20, clo: 'CLO1', concepts: ['implication'] }] };
@@ -200,6 +259,21 @@ describe('marks', () => {
     expect(markFor(student(s), quiz3)).toBe(markFor(student(s), quiz3));
     expect(markFor(student(s), quiz3)).toBeGreaterThanOrEqual(0);
     expect(markFor(student(s), quiz3)).toBeLessThanOrEqual(100);
+  });
+  it('is mastery on the assessment’s CLOs plus an offset of -6 to +6', () => {
+    const s = seedState();
+    const st = student(s, 's1');
+    setAll(st, 0.5);
+    const quiz1 = ASSESSMENTS.find((a) => a.id === 'quiz1')!;
+    expect(markFor(st, quiz1)).toBe(50 + (((st.index * 37 + 17 * 11) % 13) - 6));
+    const offsets = new Set<number>();
+    for (let i = 0; i < 40; i++) for (const a of ASSESSMENTS) {
+      const probe = { ...st, index: i };
+      setAll(probe, 0.5);
+      offsets.add(markFor(probe, a) - 50);
+    }
+    expect(Math.min(...offsets)).toBe(-6);
+    expect(Math.max(...offsets)).toBe(6);
   });
 });
 

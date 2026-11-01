@@ -9,7 +9,7 @@ const FIRST_INTERVAL: Record<CardRating, number> = { again: 1, hard: 1, good: 2,
 /** A simplified SM-2. Intervals round up and never run past the day before the exam. */
 export function reviewCard(card: CardState | undefined, rating: CardRating, today: number): CardState {
   const ease = card?.ease ?? 2.5;
-  const nextEase = Math.max(1.3, ease + { again: -0.2, hard: -0.15, good: 0, easy: 0.15 }[rating]);
+  const nextEase = Math.max(1.3, Math.round((ease + { again: -0.2, hard: -0.15, good: 0, easy: 0.15 }[rating]) * 100) / 100);
   let interval = FIRST_INTERVAL[rating];
   if (card) {
     if (rating === 'hard') interval = Math.max(1, Math.ceil(card.interval * 1.2));

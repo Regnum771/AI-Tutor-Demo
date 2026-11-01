@@ -118,6 +118,8 @@ export interface CardState {
 export interface StudyDay {
   planned: number;
   done: number;
+  /** Minutes of `done` spent in teacher sessions. Self-study is `done` minus this. */
+  teacher?: number;
   check: 'tooMuch' | 'right' | 'tooLittle' | null;
 }
 
@@ -148,7 +150,7 @@ export interface StudyRecord {
   cards: Record<string, CardState>;
   /** Index 0–2 into each CLO's Bloom levels. */
   bloom: Record<CloId, number>;
-  /** First-try correct answers in a row at the current level. */
+  /** First-try correct answers at the current level since the last wrong answer or level change. A correct answer after a hint leaves it alone. */
   streak: Record<CloId, number>;
   marks: { assessment: string; mark: number; day: number }[];
   plan: StudyPlan | null;

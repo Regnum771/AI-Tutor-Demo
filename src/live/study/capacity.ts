@@ -15,11 +15,14 @@ export function capacityFor(rec: StudyRecord, day: number, today = day): number 
   return Math.max(10, Math.round(base * rec.feel));
 }
 
+/** Teacher pathways sent to the student and still open. Their sessions are fixed. */
+export const openPathways = (state: DemoState, studentId: string) =>
+  state.plans.filter((p) => p.kind === 'pathway' && p.studentIds.includes(studentId) && ['sent', 'autoApproved'].includes(p.status));
+
 /** Minutes a teacher's pathway already takes, by day. Those sessions are fixed. */
 export function teacherMinutes(state: DemoState, studentId: string): Record<number, number> {
   const out: Record<number, number> = {};
-  for (const p of state.plans) {
-    if (p.kind !== 'pathway' || !p.studentIds.includes(studentId) || !['sent', 'autoApproved'].includes(p.status)) continue;
+  for (const p of openPathways(state, studentId)) {
     out[p.date] = (out[p.date] ?? 0) + p.sessions.reduce((a, s) => a + s.minutes, 0);
   }
   return out;
