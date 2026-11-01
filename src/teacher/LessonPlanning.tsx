@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fmt } from '../live/clock';
 import { useLive } from '../live/LiveContext';
 import { fullDate, type Lecture } from '../scenario/course';
@@ -21,6 +21,9 @@ export function LessonPlanning() {
     const r = live?.planningResource ? resourceById(live.planningResource) : undefined;
     return !!(live && r && pastLectures(live.state.day, fmt(live.state.clock), null).some((l) => l.n === r.lecture));
   });
+  // The chip's resource is focused once, when the tab opens; the lists remount as lectures move between slots and must not re-expand it.
+  const [focus, setFocus] = useState<string | null>(() => live?.planningResource ?? null);
+  useEffect(() => setFocus(null), []);
   if (!live) return null;
   const { state } = live;
   const time = fmt(state.clock);
@@ -36,7 +39,7 @@ export function LessonPlanning() {
         <span className="text-[12.5px] text-egg-mute">{fullDate(l.day)}</span>
       </div>
       <div className="mt-1 text-[12.5px] text-egg-mute">{l.concepts.length ? l.concepts.map((c) => conceptById(c).label).join(' · ') : 'Revision of the whole course'}</div>
-      <div className="mt-2"><ResourceList lecture={l.n} initialOpen={live.planningResource} /></div>
+      <div className="mt-2"><ResourceList lecture={l.n} initialOpen={focus} /></div>
     </section>
   );
 
@@ -62,8 +65,7 @@ export function LessonPlanning() {
 
         <section data-section="lectures" className="mt-8">
           <div className="flex items-baseline justify-between border-b border-egg-ink/80 pb-2">
-            <h3 className="font-serif text-[26px] leading-none">Upcoming lectures</h3>
-            {selected && <span className="text-[12px] text-egg-mute">{`Lectures with material on ${label}`}</span>}
+            <h3 className="font-serif text-[26px] leading-none">{selected ? `Lectures on ${label}` : 'Upcoming lectures'}</h3>
           </div>
           {upcoming.length ? upcoming.map(lecture) : <div className="mt-4 text-[14px] text-egg-mute">No lectures are left.</div>}
           <div className="mt-6">

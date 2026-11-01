@@ -1,3 +1,4 @@
+import { fmt } from '../../src/live/clock';
 import { classKpis, topicMastery } from '../../src/live/mastery';
 import { planProblems } from '../../src/live/plans';
 import { planById } from '../../src/live/reducer';
@@ -6,9 +7,9 @@ import { examOutlook } from '../../src/live/study/outlook';
 import type { AssistantMsg, Plan, StudyPlan } from '../../src/live/types';
 import { GROUPS } from '../../src/scenario/classroom';
 import { CONCEPTS, type ConceptId } from '../../src/scenario/knowledgeGraph';
-import { RESOURCES } from '../../src/scenario/materials';
+import { isReleased, RESOURCES } from '../../src/scenario/materials';
 import { TWIN_FOCUS } from '../../src/scenario/minhAnh';
-import { citableIds, evidenceIds } from '../agents/sas';
+import { citableIds } from '../agents/sas';
 import { studyPlanProblems } from '../agents/study';
 import { joinPhone, playPlan, practiseToday, textOf, type AnswerMode, type T, type Turn } from './harness';
 
@@ -119,7 +120,7 @@ export const CASES: Case[] = [
     t.check('Diagnose', 'names the converse mistake', /converse/i.test(a.answer), a.answer);
     t.check('Diagnose', 'cites at least 3 pieces of evidence', new Set(a.cites).size >= 3, a.cites.join(','));
     t.check('Diagnose', 'cites a Zalo message', a.cites.some((c) => c.startsWith('s17-zalo')), a.cites.join(','));
-    t.check('Diagnose', 'every cited id exists', a.cites.every((c) => evidenceIds(t.state).has(c)), a.cites.join(','));
+    t.check('Diagnose', 'every cited id exists', a.cites.every((c) => citableIds(t.state).has(c)), a.cites.join(','));
     t.check('Diagnose', 'stays under 140 words', a.answer.split(/\s+/).length <= 140, `${a.answer.split(/\s+/).length} words`);
     t.noPronouns('Diagnose', a.answer);
   } },
@@ -166,6 +167,7 @@ export const CASES: Case[] = [
     t.check('Diagnose', 'read the learning materials', a.steps.some((s) => s.includes('materials')), a.steps.join(' | '));
     const library = new Set(RESOURCES.map((r) => r.id));
     t.check('Diagnose', 'cites resources from the library', a.cites.some((c) => library.has(c)), a.cites.join(','));
+    t.check('Diagnose', 'recommends only released material', RESOURCES.filter((r) => a.cites.includes(r.id)).every((r) => isReleased(r, t.state.day, fmt(t.state.clock))), a.cites.join(','));
     t.check('Diagnose', 'every cited id exists', a.cites.every((c) => citableIds(t.state).has(c)), a.cites.join(','));
     t.check('Diagnose', 'puts no link in the answer', !/https?:\/\/|www\.|\.(com|org|edu|net)\b/i.test(a.answer), a.answer);
     t.noPronouns('Diagnose', a.answer);

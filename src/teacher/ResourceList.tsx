@@ -29,7 +29,7 @@ export function ResourceList({ lecture, initialOpen = null }: { lecture: number;
       {list.map((r) => {
         const released = isReleased(r, state.day, time);
         const expanded = open === r.id;
-        const missing = released ? notOpened(r.id, state.day).map((i) => state.students[i]) : [];
+        const missing = expanded && released ? notOpened(r.id, state.day).map((i) => state.students[i]) : [];
         return (
           <li key={r.id} data-resource={r.id} ref={r.id === initialOpen ? first : undefined}>
             <button

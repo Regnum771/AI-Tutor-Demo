@@ -41,7 +41,7 @@ export function ConceptGraph({ state, selected, onSelect }: { state: DemoState; 
             aria-pressed={on}
             title={lectured ? `${c.label}: class average ${v.toFixed(2)}` : `${c.label}: taught in Lecture ${l.n} on ${shortDate(l.day)}`}
             onClick={() => onSelect(on ? null : c.id)}
-            className={`absolute w-[128px] -translate-x-1/2 -translate-y-1/2 rounded-xl border px-2 py-1.5 text-center leading-tight ${on ? 'border-egg-ink ring-2 ring-egg-ink' : 'border-egg-line'} ${lectured ? 'text-egg-ink' : 'border-dashed bg-egg-paper text-egg-faint'}`}
+            className={`absolute w-[128px] -translate-x-1/2 -translate-y-1/2 rounded-xl border px-2 py-1.5 text-center leading-tight ${on ? 'border-egg-ink ring-2 ring-egg-ink' : 'border-egg-line'} ${lectured ? 'text-egg-ink' : 'border-dashed bg-egg-paper text-egg-mute'}`}
             style={{ left: `${(c.x / W) * 100}%`, top: `${(c.y / H) * 100}%`, ...(lectured ? { background: gapFill(v) } : {}) }}
           >
             <span className="block text-[12px] font-semibold">{c.label}</span>

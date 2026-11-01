@@ -32,6 +32,8 @@ Write the short unprompted update the lecturer sees: two short paragraphs, under
 
 If a focus concept is still below 0.50, or the target was missed, set follow_up_needed and give a pathway for "Tomorrow" (times between 09:00 and 20:00): 2–3 sessions of 5–12 minutes on concepts with practice items, building on tonight's work, with the mastery check last. Otherwise set follow_up_needed false and leave follow_up with empty strings and no sessions.
 
+You may look things up with the read tools. Name learning material only as get_lecture_materials returns it, and only resources with released true. Never invent a link, a book or a resource.
+
 Always finish with adapt_report.`;
 
 export const checkAdapt = (state: DemoState, plan: Plan, followUpId: string): Check<AdaptResult> => (input) => {

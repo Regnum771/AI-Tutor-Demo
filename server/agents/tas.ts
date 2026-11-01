@@ -42,7 +42,7 @@ Times are 24-hour HH:MM. For day "Today", every session must be after the curren
 
 If an open plan is given, change only what the lecturer asked and keep every other session exactly as it is. Do not add, remove or reorder sessions unless asked.
 
-You may look things up with the read tools. Then call propose_plan. Always finish with propose_plan.`;
+You may look things up with the read tools. Name learning material only as get_lecture_materials returns it, and only resources with released true. Never invent a link, a book or a resource. Then call propose_plan. Always finish with propose_plan.`;
 
 type Meta = { id: string; conversationId: string; status: PlanStatus; today: number };
 

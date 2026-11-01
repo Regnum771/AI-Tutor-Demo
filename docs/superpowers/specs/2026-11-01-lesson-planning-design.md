@@ -103,7 +103,7 @@ A lecture's details in the Calendar tab, which today list the student questions 
 ## 5. Agents
 
 - New read tool `get_lecture_materials { lecture: number (or -1), concept: string (or ""), student_id: string (or "") }`. It returns the matching resources with id, lecture and its date, kind, title, concepts, Bloom level, minutes, source, `released` and `classEngagement`; with a student id, each resource also carries that student's `opened` and `fraction`.
-- SAS prompt: "Cite learning material only by the ids get_lecture_materials returns. Never invent a link, a book or a resource."
+- SAS prompt: "Cite learning material only by the ids get_lecture_materials returns. Never invent a link, a book or a resource." The agents recommend only released resources, since nobody can open the others before their lecture.
 - **Citations:** `checkBlocks` accepts resource ids as well as evidence ids, so an unknown resource id is rejected like an unknown evidence id. In an answer, a resource chip reads "Slides · Lecture 7" (kind and lecture). Clicking it opens the Lesson planning tab with that resource's row expanded, through a new `LiveCtx.openPlanning(resourceId)`.
 - `get_evidence` is unchanged.
 - No new agent runs.
@@ -121,7 +121,7 @@ A lecture's details in the Calendar tab, which today list the student questions 
 - **Tab:** the graph renders 12 nodes and the edges, untaught concepts greyed with their lecture date, gaps marked; selecting a concept changes the chart's series and filters the lectures; engagement text matches `classEngagement`; expanding a resource lists exactly the students who have not opened it, and a name opens the pop-up. Live-only: the scripted sidebar has no "Lesson planning" item.
 - **Calendar:** a lecture's details show its resources.
 - **Agents:** tool tests for filters and the per-student fields; `checkBlocks` accepts a real resource id and rejects an unknown one; a resource chip opens the tab with its row expanded; the click audit gains a "lesson planning" scenario.
-- **Eval (real API):** new L2.8, "What should students read before Lecture 7?", expects cited resource ids that exist in the library and no URL in the answer.
+- **Eval (real API):** new L2.8, "What should students read before Lecture 7?", expects cited resource ids that exist in the library, all released at that point (nothing is recommended that nobody can open yet), and no URL in the answer.
 
 ## 8. Out of scope
 

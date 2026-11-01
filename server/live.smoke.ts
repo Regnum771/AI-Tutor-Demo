@@ -2,7 +2,7 @@ import './env';
 import { planProblems } from '../src/live/plans';
 import { sessionItems } from '../src/scenario/practiceBank';
 import { anthropicClient } from './agents/client';
-import { evidenceIds } from './agents/sas';
+import { citableIds } from './agents/sas';
 import { DemoSession } from './session';
 
 /**
@@ -28,7 +28,7 @@ const conv = session.state.conversations[0];
 const reply = conv.msgs[1];
 if (!reply || reply.role !== 'assistant') fail('no answer');
 if (reply.source !== 'agents') fail(`answered "${reply.source}" (see the [beyond] warning above for why)`);
-const known = evidenceIds(session.state);
+const known = citableIds(session.state);
 const cites = reply.blocks.flatMap((b) => b.cites);
 if (cites.length === 0) fail('the answer cites no evidence');
 const unknown = cites.filter((id) => !known.has(id));

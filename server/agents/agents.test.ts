@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { stateWithPlan } from '../../src/live/fixtures';
 import { MASTERY_INITIAL } from '../../src/scenario/minhAnh';
-import { adaptMessages, adaptSpec } from './adapt';
+import { ADAPT_SYSTEM, adaptMessages, adaptSpec } from './adapt';
 import { fakeClient } from './fakeClient';
 import { runAgent } from './loop';
 import { adaptInput, pathwaySessions, planInput, reportInput } from './samples';
@@ -145,6 +145,9 @@ describe('prompts carry the eval fixes', () => {
   });
   it('SAS cites learning material only by library id', () => {
     expect(SAS_SYSTEM).toContain('Cite learning material only by the ids get_lecture_materials returns. Never invent a link, a book or a resource.');
+    expect(SAS_SYSTEM).toContain('A resource with released false cannot be opened before its lecture, so only recommend released resources for students to use now.');
+    expect(TAS_SYSTEM).toContain('Name learning material only as get_lecture_materials returns it, and only resources with released true. Never invent a link, a book or a resource.');
+    expect(ADAPT_SYSTEM).toContain('Name learning material only as get_lecture_materials returns it, and only resources with released true. Never invent a link, a book or a resource.');
     const state = stateWithPlan();
     expect(checkBlocks(state, [{ kind: 'p', text: 'Set the slides.', cites: ['l7-slides', 's17-quiz2'] }])).toMatchObject({ ok: true });
     expect(checkBlocks(state, [{ kind: 'p', text: 'Set the handout.', cites: ['l7-handout'] }])).toEqual({ ok: false, error: 'These evidence ids do not exist: l7-handout. Cite only ids returned by the tools.' });

@@ -30,6 +30,17 @@ describe('mastery chart', () => {
     expect(out).toMatch(/data-marker-row="intervention"[^>]*>Pathway</);
     expect(out).toMatch(/data-marker-row="intervention"[^>]*>Check-ins</);
   });
+  it('stacks a marker above earlier ones that are close by, even on the next day, and not those far away', () => {
+    const ys = (days: number[]) => {
+      const out = html(<MasteryChart concept="implication" label="Implication" points={points} markers={days.map((day, i) => ({ day, label: `M${i}`, row: 'intervention' as const }))} />);
+      return [...out.matchAll(/data-marker-row="intervention"[^>]*? y="([^"]+)"/g)].map((m) => m[1]);
+    };
+    const adjacent = ys([45, 46]);
+    expect(adjacent).toHaveLength(2);
+    expect(adjacent[0]).not.toBe(adjacent[1]);
+    const far = ys([20, 45]);
+    expect(far[0]).toBe(far[1]);
+  });
 });
 
 describe('the chart’s data', () => {

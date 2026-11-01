@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ctxFor, stateWithPlan } from '../live/fixtures';
 import { LiveProvider } from '../live/LiveContext';
 import type { DemoSource } from '../live/source';
@@ -75,9 +75,11 @@ describe('lesson planning tab', () => {
     expect(series(m.el)).toBe('implication');
     expect(m.el.querySelector('[data-chart-title]')?.textContent).toBe('Mastery over time · Implication');
     expect(lectures(m.el)).toEqual(['5', '9']);
+    expect(m.el.querySelector('[data-section="lectures"] h3')?.textContent).toBe('Lectures on Implication');
     await click(m.el.querySelector('[data-node="implication"]')!);
     expect(series(m.el)).toBe('equivalence');
     expect(lectures(m.el)).toEqual(['7', '8', '9']);
+    expect(m.el.querySelector('[data-section="lectures"] h3')?.textContent).toBe('Upcoming lectures');
     expect(m.calls).toEqual([]);
   });
   it('shows class engagement for past lectures, newest first, and "Not released yet" before a lecture', async () => {
@@ -120,5 +122,24 @@ describe('lesson planning tab', () => {
     expect(row(m.el, 'l7-slides').getAttribute('aria-expanded')).toBe('true');
     expect(m.el.querySelector('[data-not-opened="l5-recording"]')).toBeNull();
     expect(m.calls).toEqual([]);
+  });
+  it('focuses a chip’s row once: a lecture moving between slots does not re-expand it or scroll again', async () => {
+    const original = Element.prototype.scrollIntoView;
+    const spy = vi.fn();
+    Element.prototype.scrollIntoView = spy;
+    try {
+      const s = stateWithPlan();
+      const answer = s.conversations[0].msgs[1];
+      if (answer.role === 'assistant') answer.blocks[1].cites = ['l5-recording'];
+      const m = await mount(s);
+      await click(m.el.querySelector('[data-cite="l5-recording"]')!);
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(row(m.el, 'l5-recording').getAttribute('aria-expanded')).toBe('true');
+      await click(m.el.querySelector('[data-node="implication"]')!);
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(row(m.el, 'l5-recording').getAttribute('aria-expanded')).toBe('false');
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
   });
 });

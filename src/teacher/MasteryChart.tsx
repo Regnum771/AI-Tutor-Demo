@@ -11,6 +11,8 @@ const RIGHT = 70;
 const TOP = 36;
 const BOTTOM = 30;
 const x = (day: number) => LEFT + (day / EXAM_DAY) * (W - LEFT - RIGHT);
+/** Labels are up to about 60 wide and a day is about 10, so markers closer than this (in viewBox units) would overlap and stack. */
+const LABEL_CLEARANCE = 60;
 const y = (v: number) => TOP + (1 - v) * (H - TOP - BOTTOM);
 
 /** Class average mastery (0–1) on one concept from Week 1 to the exam: the 0.50 gap line, a tick on each lecture day and the interventions on their own row along the top, as on the forecast chart. */
@@ -31,8 +33,8 @@ export function MasteryChart({ concept, label, points, markers }: { concept: Con
       ))}
       <text x={x(EXAM_DAY)} y={H - BOTTOM + 16} fontSize="10" textAnchor="middle" fill={egg('mute')}>Exam</text>
       {markers.map((m, i) => {
-        // Markers on the same day stack upwards instead of overlapping.
-        const stack = markers.slice(0, i).filter((o) => o.day === m.day).length;
+        // A marker near an earlier one (the same day or the next few) stacks above it instead of overlapping.
+        const stack = markers.slice(0, i).filter((o) => Math.abs(x(o.day) - x(m.day)) < LABEL_CLEARANCE).length;
         return (
           <g key={i}>
             <line x1={x(m.day)} x2={x(m.day)} y1={TOP - 6} y2={y(0)} stroke={egg('line')} strokeDasharray="3 3" />
