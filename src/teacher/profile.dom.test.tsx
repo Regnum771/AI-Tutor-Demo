@@ -82,3 +82,20 @@ describe('quotes in answers', () => {
     expect(dialog(m.el)!.querySelector('[data-entry="s17-zalo-1"]')!.getAttribute('style')).toContain('background');
   });
 });
+
+describe('what students are asking', () => {
+  it('sits above the heatmap, expands one entry into its log, and opens a student from it', async () => {
+    const m = await mount();
+    await click([...m.el.querySelectorAll('button')].find((b) => b.textContent?.startsWith('Classroom'))!);
+    const html = m.el.innerHTML;
+    expect(html.indexOf('What students are asking')).toBeGreaterThan(-1);
+    expect(html.indexOf('What students are asking')).toBeLessThan(html.indexOf('data-heatmap'));
+    const row = [...m.el.querySelectorAll('button')].find((b) => b.textContent?.includes('Why is p → q not the same as q → p?'))!;
+    expect(row.textContent).toContain('13 students · 16 messages');
+    expect(row.textContent).toContain('mostly within 2 days of Lecture 5');
+    await click(row);
+    expect(m.el.querySelectorAll('[data-log-entry]')).toHaveLength(16);
+    await click([...m.el.querySelectorAll('[data-log-entry] button')].find((b) => b.textContent === 'Nguyễn Minh Anh')!);
+    expect(dialog(m.el)!.querySelector('[data-entry="s17-zalo-1"]')).not.toBeNull();
+  });
+});

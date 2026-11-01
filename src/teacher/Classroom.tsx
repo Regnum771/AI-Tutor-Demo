@@ -7,6 +7,7 @@ import { MASTERY_INITIAL, MASTERY_POST, MINH_ANH, TWIN_FOCUS } from '../scenario
 import { DEMO_ONLY, useLive } from '../live/LiveContext';
 import { liveStudents, twinConcepts } from '../live/mastery';
 import type { StudentProfile } from '../live/types';
+import { ClassQuestions } from './ClassQuestions';
 import type { FrameClassroom } from './frame';
 import type { TeacherActions } from './TeacherScreen';
 import { Avatar, Button, Eyebrow, LevelChip, Mark, Meter, type Level } from './parts';
@@ -207,6 +208,7 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
                 </section>
               )
             )}
+            {live && cls.kpi > 0 && <ClassQuestions />}
             {cls.kpi > 0 && <Heatmap compact={scripted} {...(live ? liveHeatmap(live.state.students) : {})} />}
           </aside>
         </div>
@@ -232,7 +234,7 @@ const liveHeatmap = (students: StudentProfile[]) => ({
 function Heatmap({ compact, topics = TOPICS, rows = HEATMAP }: { compact: boolean; topics?: string[]; rows?: number[][] }) {
   const tint = (v: number) => Math.max(0, Math.min(1, (0.9 - v) / 0.5)) * 100;
   return (
-    <section>
+    <section data-heatmap>
       <div className="flex items-baseline justify-between border-b border-egg-ink/80 pb-2">
         <h3 className="font-serif text-[26px] leading-none">Topics × groups</h3>
         <span className="text-[12px] text-egg-mute">more orange = bigger gap</span>
