@@ -12,6 +12,10 @@ export interface LiveCtx {
   openProfile(studentId: string, entryId?: string | null): void;
   /** The student whose profile pop-up is open, if any. */
   profileId?: string | null;
+  /** Opens the Lesson planning tab with a library resource's row expanded. Local to this window. */
+  openPlanning(resourceId: string): void;
+  /** The resource the Lesson planning tab opens on, if any. */
+  planningResource?: string | null;
   toast(text: string): void;
 }
 

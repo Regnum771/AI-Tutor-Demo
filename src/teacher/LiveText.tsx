@@ -1,22 +1,26 @@
 import { useLive } from '../live/LiveContext';
 import type { LiveBlock, LivePanel } from '../live/types';
+import { resourceById, resourceChip } from '../scenario/materials';
 import { QuoteCard } from './voiceParts';
 
 /** Where a cited evidence id opens: the class panel, or the student's panel with that entry highlighted. */
 export const panelForEvidence = (id: string): LivePanel =>
   id.startsWith('class-') ? { kind: 'class', planId: null, highlight: id } : { kind: 'student', studentId: id.split('-')[0], planId: null, highlight: id };
 
-/** A live answer block: `**bold**` spans, then one chip per cited evidence entry. */
+/** A live answer block: `**bold**` spans, then one chip per cited evidence entry or library resource. */
 /** `quoted` lists evidence ids already quoted in earlier blocks of the same answer; they get no second card. */
 export function LiveText({ block, quoted = [] }: { block: LiveBlock; quoted?: string[] }) {
   const live = useLive();
   const source = (id: string) => {
+    const r = resourceById(id);
+    if (r) return resourceChip(r);
     const list = id.startsWith('class-') ? live?.state.classEvidence : live?.state.students.find((s) => s.id === id.split('-')[0])?.evidence;
     return list?.find((e) => e.id === id)?.source ?? 'Evidence';
   };
   const open = (id: string) => {
     if (!live) return;
-    if (id.startsWith('class-')) live.showPanel(panelForEvidence(id));
+    if (resourceById(id)) live.openPlanning(id);
+    else if (id.startsWith('class-')) live.showPanel(panelForEvidence(id));
     else live.openProfile(id.split('-')[0], id);
   };
   const studentOf = (id: string) => live?.state.students.find((s) => s.id === id.split('-')[0]);

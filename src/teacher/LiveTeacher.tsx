@@ -32,6 +32,7 @@ export function LiveTeacherView({ source }: { source: DemoSource }) {
   const [draft, setDraft] = useState('');
   const [toast, setToast] = useState<{ text: string; at: number } | null>(null);
   const [profile, setProfile] = useState<{ studentId: string; entryId: string | null } | null>(null);
+  const [planning, setPlanning] = useState<string | null>(null);
 
   if (state && state.epoch !== epoch) {
     // First snapshot (a refresh reopens the latest conversation) or a reset on the server (a fresh chat).
@@ -40,6 +41,7 @@ export function LiveTeacherView({ source }: { source: DemoSource }) {
     setActiveId(epoch === null ? state.conversations.at(-1)?.id ?? null : null);
     setLocal([]);
     setProfile(null);
+    setPlanning(null);
   }
   if (!state) {
     return <div className="flex h-full items-center justify-center bg-egg-bg font-sans text-[15px] text-egg-mute">Connecting to the booth server… (start it with npm run booth)</div>;
@@ -91,7 +93,10 @@ export function LiveTeacherView({ source }: { source: DemoSource }) {
       if (activeId === null && frame.view === 'chat') showToast('Already a new conversation');
       else switchTo(null);
     },
-    setView: (v: View) => pushLocal({ at: t, type: 'view', view: v }),
+    setView: (v: View) => {
+      setPlanning(null);
+      pushLocal({ at: t, type: 'view', view: v });
+    },
     approve: () => undefined, // the live plan card posts directly
     edit: () => undefined,
     showPanel: (id) => { if (id === null) showPanel(null); },
@@ -103,6 +108,11 @@ export function LiveTeacherView({ source }: { source: DemoSource }) {
     state, activeId, post, openConversation: switchTo, showPanel, toast: showToast,
     openProfile: (studentId, entryId = null) => setProfile({ studentId, entryId }),
     profileId: profile?.studentId ?? null,
+    openPlanning: (resourceId) => {
+      setPlanning(resourceId);
+      pushLocal({ at: t, type: 'view', view: 'planning' });
+    },
+    planningResource: planning,
   };
 
   return (

@@ -65,5 +65,5 @@ export function stateWithPlan(kind: PlanKind = 'pathway', over: Partial<Plan> = 
 
 /** A live context over `state` whose actions do nothing (tests). */
 export const ctxFor = (state: DemoState, activeId: string | null = 'c1'): LiveCtx => ({
-  state, activeId, post: async () => ({ ok: true }), openConversation: () => {}, showPanel: () => {}, openProfile: () => {}, toast: () => {},
+  state, activeId, post: async () => ({ ok: true }), openConversation: () => {}, showPanel: () => {}, openProfile: () => {}, openPlanning: () => {}, toast: () => {},
 });

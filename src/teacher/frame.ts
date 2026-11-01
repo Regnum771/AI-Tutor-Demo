@@ -2,7 +2,7 @@ import { clamp, easeInOut, lerp, prog, typed } from '../engine/anim';
 import { TOPICS, type ContextId } from './conversations';
 import type { AssistantMsg, LivePanel } from '../live/types';
 
-export type View = 'chat' | 'classroom' | 'calendar';
+export type View = 'chat' | 'classroom' | 'calendar' | 'planning';
 export type AssistantKind = 'answer' | 'approved' | 'fallback' | 'brief' | 'adapt' | 'live';
 
 /** Far enough before any scene that every animation keyed to it has finished. */
