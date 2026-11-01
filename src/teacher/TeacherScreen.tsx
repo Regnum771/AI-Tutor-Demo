@@ -288,7 +288,7 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto flex max-w-[760px] flex-col px-8 pt-[97px]">
-        <Eyebrow>{live ? `Saturday, 31 October · ${fmt(live.state.clock)}` : 'Saturday, 31 October'}</Eyebrow>
+        <Eyebrow>{live ? `${fullDate(live.state.day)} · ${fmt(live.state.clock)}` : 'Saturday, 31 October'}</Eyebrow>
         <h2 className="mt-3 font-serif text-[84px] leading-[0.92] tracking-[-0.01em]">
           {line1}<br /><span className="italic">{line2}</span>
         </h2>

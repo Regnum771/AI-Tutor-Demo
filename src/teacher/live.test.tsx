@@ -97,6 +97,13 @@ describe('live teacher screen', () => {
     expect(out).toContain('75→42');
     expect(out).toContain('12/55');
   });
+  it('the landing eyebrow follows the story day', () => {
+    const s = stateWithPlan();
+    s.day = 43;
+    const out = render(s, null);
+    expect(out).toContain('Tuesday, 3 November · 15:00');
+    expect(out).not.toContain('Saturday, 31 October');
+  });
   it('the sidebar badge follows live need-support counts', () => {
     const s = stateWithPlan();
     s.students[16].status = 'onTrack';
