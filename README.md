@@ -45,13 +45,7 @@ A live version of the demo for visitors to use: two real Claude agents answer th
 1. Copy `.env.local.example` to `.env.local` and set `ANTHROPIC_API_KEY` (the file is git-ignored). Without usable credentials, or with `BEYOND_OFFLINE=1`, the booth runs on canned answers and every answer carries an "Offline answer" tag.
 2. `npm run booth` starts Vite on the LAN and the booth server (port 8787). It prints the phone URL.
 3. Open the Director (`http://localhost:5173/controller.html`): **Open live teacher**, and let visitors scan the QR code with a phone on the same Wi-Fi (or open `student.html?live` in a narrow window).
-4. Press **Reset demo** (Director or teacher header) between visitors.
-
-### The student's own loop
-
-On the phone, tap the lock-screen notification and choose a student. Enter the minutes you have, and the Study Planning Agent writes a plan from today to the exam (24 November). Today shows the day's cards and practice; Practise picks 5 questions at the right Bloom level; Cards are self-rated flip cards; Semester shows the weeks to the exam and why the plan changed. **Next day** asks how the day felt and lands on the next morning's notification; **Next week** skips ahead without asking.
-
-Plans change only on a drastic signal (a 15-point mark swing, three days with no practice, a change of pass band, or a teacher's plan) and at most once every 5 story days, except for marks and teacher plans. Replans run in the background, so the phone never waits. The Director's **Simulate a Quiz 3 drop** shows one on demand.
+4. Press **Reset demo** (Director or teacher header) between visitors. It also clears the chosen student, plan, marks and day, so it is how the next visitor starts.
 
 Settings: `BEYOND_MODEL` (default `claude-sonnet-5-5`), `BEYOND_EFFORT` (`low` · `medium` · `high`, default `medium`), `BEYOND_HOST` (the laptop address for the phone, if the printed one is wrong).
 
@@ -65,6 +59,12 @@ The Classroom tile shows logical equivalence, so a plan that never practises it 
 
 Run the booth on a private hotspot if you can: venue Wi-Fi often blocks devices from seeing each other (client isolation). Windows Firewall may prompt for Node on first run; allow it on Private networks. Anyone on that network can reach the booth, including **Reset demo** and questions that spend the API key, so set a spend limit in the Anthropic Console.
 
+### The student's own loop
+
+On the phone, tap the lock-screen notification and choose a student. Enter the minutes you have, and the Study Planning Agent writes a plan from today to the exam (24 November). Today shows the day's cards and practice; Practise picks 5 questions at the right Bloom level; Cards are self-rated flip cards; Semester shows the weeks to the exam and why the plan changed. **Next day** asks how the day felt and lands on the next morning's notification; **Next week** skips ahead without asking. Both are the booth's clock: they move the story date for both screens, not just the phone.
+
+Plans change only on a drastic signal (a 15-point mark swing, three days with no practice, a change of pass band, or a teacher's plan) and at most once every 5 story days, except for marks and teacher plans. Replans run in the background, so the phone never waits. The Director's **Simulate a Quiz 3 drop** shows one on demand.
+
 ### Booth checklist
 
 - [ ] `npm run booth` prints `agents online` and a phone URL.
@@ -75,10 +75,10 @@ Run the booth on a private hotspot if you can: venue Wi-Fi often blocks devices 
 - [ ] Ask about the class and about who needs you personally: approve the class activity and the check-ins (nothing reaches the phone).
 - [ ] **Export** shows "Not part of this demo".
 - [ ] Stop the server, set `BEYOND_OFFLINE=1`, restart: the Minh Anh story still works with "Offline answer" tags.
-- [ ] **Reset demo** returns both screens to the start.
 - [ ] Phone: tap in, choose Minh Anh, set your minutes: the plan's thinking lines appear, then Today.
 - [ ] Practise a set, flip some cards, **Next day**: the morning notification lands and opens Today.
 - [ ] **Simulate a Quiz 3 drop**: Semester shows "Why this changed", and the teacher's panel shows the new reason under Road to the exam.
+- [ ] **Reset demo** returns both screens to the start.
 - [ ] Rehearse touch and scrolling on the real phone.
 
 ## Standalone frames

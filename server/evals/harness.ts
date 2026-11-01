@@ -170,8 +170,10 @@ export async function playPlan(t: T, mode: AnswerMode): Promise<Plan> {
 
 /** The phone joins as a student and waits for the first plan. */
 export async function joinPhone(t: T, studentId: string, weekday: number, weekend: number): Promise<void> {
-  t.session.studyOpen();
-  t.session.studyPick(studentId);
+  const opened = t.session.studyOpen();
+  if (!opened.ok) throw new Error(`studyOpen: ${opened.error}`);
+  const picked = t.session.studyPick(studentId);
+  if (!picked.ok) throw new Error(`studyPick: ${picked.error}`);
   const set = t.session.studySetup(weekday, weekend);
   if (!set.ok) throw new Error(`studySetup: ${set.error}`);
   await t.session.settled();

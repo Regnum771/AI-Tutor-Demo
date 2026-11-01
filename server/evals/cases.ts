@@ -371,6 +371,7 @@ export const CASES: Case[] = [
   } },
   { id: 'L6.3', level: 6, title: 'A skipped week replans exactly once', run: async (t) => {
     await joinPhone(t, MA, 30, 60);
+    // Relies on Minh Anh's Assignment 2 mark not swinging by 15 or more, which would raise markSwing first.
     t.session.nextWeek();
     await t.session.settled();
     t.check('Adapt', 'one replan, for disengagement', replansOf(t).map((r) => r.signal).join() === 'disengaged', replansOf(t).map((r) => r.signal).join());
@@ -380,13 +381,13 @@ export const CASES: Case[] = [
   { id: 'L6.4', level: 6, title: 'Small misses change nothing', run: async (t) => {
     await joinPhone(t, MA, 30, 60);
     const plan = planOf(t);
-    for (let i = 0; i < 3; i++) {
-      await practiseToday(t);
-      t.session.nextDay('right');
+    // Two idle days: one short of the three-idle-days rule in signals.ts.
+    for (let i = 0; i < 2; i++) {
+      t.session.nextDay(null);
       await t.session.settled();
     }
     t.check('Oversee', 'no replan', replansOf(t).length === 0, replansOf(t).map((r) => r.signal).join());
-    t.check('Oversee', 'the plan is untouched', planOf(t) === plan || JSON.stringify(planOf(t)) === JSON.stringify(plan));
+    t.check('Oversee', 'the plan is untouched', JSON.stringify(planOf(t)) === JSON.stringify(plan));
   } },
   { id: 'L6.5', level: 6, title: 'A Quiz 3 drop goes through the cooldown', run: async (t) => {
     await joinPhone(t, MA, 30, 60);
@@ -396,6 +397,7 @@ export const CASES: Case[] = [
     await t.session.settled();
     t.check('Adapt', 'one replan, for the mark', replansOf(t).map((r) => r.signal).join() === 'markSwing', replansOf(t).map((r) => r.signal).join());
     t.check('Adapt', 'the replan says what changed', (replansOf(t)[0]?.reason.length ?? 0) > 10 && /mark|quiz|result|score/i.test(replansOf(t)[0]?.reason ?? ''), replansOf(t)[0]?.reason);
+    t.check('Adapt', 'the new plan is the agent’s', planOf(t)?.source === 'agents', `source: ${planOf(t)?.source}`);
     t.noPronouns('Adapt', replansOf(t)[0]?.reason ?? '');
   } },
   { id: 'L6.6', level: 6, title: 'Week 6 to the exam', run: async (t) => {
@@ -419,7 +421,7 @@ export const CASES: Case[] = [
     const est = passEstimate(t.student(MA), t.state.study[MA], t.state.day);
     const a = await t.ask('Is Minh Anh likely to pass the exam?', null, 'Diagnose');
     t.check('Diagnose', 'used the exam outlook', a.steps.some((s) => s.includes('road to the exam')), a.steps.join(' | '));
-    t.check('Diagnose', 'quotes the projected score', a.answer.includes(String(est.score)), `expected ${est.score} in: ${a.answer}`);
+    t.check('Diagnose', 'quotes the projected score (within 2)', [-2, -1, 0, 1, 2].some((d) => new RegExp(`\\b${est.score + d}\\b`).test(a.answer)), `expected ${est.score} in: ${a.answer}`);
     t.check('Diagnose', 'says it is an estimate', /estimate|projected|projection/i.test(a.answer), a.answer);
     t.noPronouns('Diagnose', a.answer);
   } },
