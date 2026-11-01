@@ -125,6 +125,12 @@ const SCENARIOS: [string, (el: HTMLElement) => Promise<void>][] = [
     await click(byText(el, 'Calendar'));
     await click(el.querySelector('[data-event="lecture-6"]')!);
   }],
+  ['lesson planning', async (el) => click(byText(el, 'Lesson planning'))],
+  ['lesson planning with past lectures and a resource open', async (el) => {
+    await click(byText(el, 'Lesson planning'));
+    await click(byText(el, 'Past lectures'));
+    await click(el.querySelector('[data-resource="l6-worksheet"] > button')!);
+  }],
 ];
 
 describe('live teacher click audit (spec §2.6)', () => {

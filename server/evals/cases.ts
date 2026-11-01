@@ -6,8 +6,9 @@ import { examOutlook } from '../../src/live/study/outlook';
 import type { AssistantMsg, Plan, StudyPlan } from '../../src/live/types';
 import { GROUPS } from '../../src/scenario/classroom';
 import { CONCEPTS, type ConceptId } from '../../src/scenario/knowledgeGraph';
+import { RESOURCES } from '../../src/scenario/materials';
 import { TWIN_FOCUS } from '../../src/scenario/minhAnh';
-import { evidenceIds } from '../agents/sas';
+import { citableIds, evidenceIds } from '../agents/sas';
 import { studyPlanProblems } from '../agents/study';
 import { joinPhone, playPlan, practiseToday, textOf, type AnswerMode, type T, type Turn } from './harness';
 
@@ -158,6 +159,15 @@ export const CASES: Case[] = [
     const messages = new Set(t.state.students.flatMap((s) => s.evidence.filter((e) => e.kind === 'message').map((e) => e.id)));
     t.check('Diagnose', 'cites a student message', a.cites.some((c) => messages.has(c)), a.cites.join(','));
     t.check('Diagnose', 'names the converse confusion', /converse|q → p|both ways/i.test(a.answer), a.answer);
+    t.noPronouns('Diagnose', a.answer);
+  } },
+  { id: 'L2.8', level: 2, title: 'Recommends reading from the library', run: async (t) => {
+    const a = await t.ask('What should students read before Lecture 7?', null, 'Diagnose');
+    t.check('Diagnose', 'read the learning materials', a.steps.some((s) => s.includes('materials')), a.steps.join(' | '));
+    const library = new Set(RESOURCES.map((r) => r.id));
+    t.check('Diagnose', 'cites resources from the library', a.cites.some((c) => library.has(c)), a.cites.join(','));
+    t.check('Diagnose', 'every cited id exists', a.cites.every((c) => citableIds(t.state).has(c)), a.cites.join(','));
+    t.check('Diagnose', 'puts no link in the answer', !/https?:\/\/|www\.|\.(com|org|edu|net)\b/i.test(a.answer), a.answer);
     t.noPronouns('Diagnose', a.answer);
   } },
 
