@@ -1,3 +1,4 @@
+import type { SubjectGrade } from '../scenario/grades';
 import type { Status } from '../scenario/classroom';
 import type { CloId } from '../scenario/course';
 import type { ConceptId } from '../scenario/knowledgeGraph';
@@ -36,6 +37,10 @@ export interface StudentProfile {
   evidence: Evidence[];
   /** Seeded forecast points (out of 10) on the days of Quiz 1 and Quiz 2. */
   pastForecast: { day: number; value: number }[];
+  /** Previous subjects, 10-point grades. */
+  history: SubjectGrade[];
+  /** 4-point GPA from `history`. */
+  gpa: number;
 }
 
 export type PlanKind = 'pathway' | 'classActivity' | 'checkIns';

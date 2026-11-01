@@ -1,5 +1,6 @@
 import type { Evidence, Mastery, StudentProfile } from '../live/types';
 import { standing } from '../live/study/estimate';
+import { gpaOf, historyFor, letterOf } from './grades';
 import { COMPLEX, STUDENTS, groupOf, type Status } from './classroom';
 import { CONCEPTS, type ConceptId } from './knowledgeGraph';
 import { MASTERY_INITIAL, MINH_ANH } from './minhAnh';
@@ -137,6 +138,8 @@ export function buildRoster(): StudentProfile[] {
       });
     }
     for (const { slug, ...e } of quirk?.extra ?? []) evidence.push({ ...e, id: `${s.id}-${slug}` });
+    const history = historyFor(s.index, s.mastery).map((h) =>
+      isMinhAnh && h.subject === 'Introduction to Logic' ? { ...h, grade: 6.8, letter: letterOf(6.8) } : h);
     return {
       index: s.index,
       id: s.id,
@@ -150,6 +153,8 @@ export function buildRoster(): StudentProfile[] {
       practicePerWeek: isMinhAnh ? 1.5 : quirk?.practicePerWeek ?? Math.round((1 + s.mastery * 3) * 10) / 10,
       evidence,
       pastForecast: [{ day: 17, value: standing({ mastery }, quiz.q1) }, { day: 38, value: standing({ mastery }, quiz.q2) }],
+      history,
+      gpa: gpaOf(history),
     };
   });
 }
