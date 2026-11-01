@@ -52,7 +52,7 @@ const ROWS: Row[] = [
   // The converse, after Lecture 5 (day 29) and Quiz 2 (day 38)
   ['zalo-1', MA, 'zalo', 30, '21:40', m('m1').vi, m('m1').evidence, 'implication', 'f-converse'],
   ['voice-8', 4, 'zalo', 29, '12:15', 'Sao p → q lại không giống q → p vậy thầy?', 'Why is p → q different from q → p?', 'implication', 'f-converse'],
-  ['voice-9', 7, 'forum', 29, '19:50', null, 'If p → q is true, does q → p have to be true too?', 'implication', 'f-converse'],
+  ['voice-9', 25, 'forum', 29, '19:50', null, 'If p → q is true, does q → p have to be true too?', 'implication', 'f-converse'],
   ['voice-10', 11, 'zalo', 30, '09:05', 'Em tưởng “nếu p thì q” cũng có nghĩa là “nếu q thì p”.', 'Thought “if p then q” also means “if q then p”', 'implication', 'f-converse'],
   ['voice-11', 19, 'email', 30, '14:30', null, 'Question about the converse and the contrapositive in Lecture 5', 'implication', 'f-converse'],
   ['voice-12', 24, 'zalo', 30, '22:20', 'Mệnh đề đảo và mệnh đề phản đảo khác nhau thế nào ạ?', 'How do the converse and the contrapositive differ?', 'implication', 'f-converse'],
