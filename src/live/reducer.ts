@@ -32,6 +32,7 @@ export function deliver(s: DemoState, plan: Plan, updated: boolean): void {
     ...IDLE_PHONE,
     done: [],
     planId: plan.id,
+    studentId: plan.studentIds[0],
     screen: updated ? s.phone.screen : 'lock',
     lastDone: updated ? s.phone.lastDone : null,
     updated,

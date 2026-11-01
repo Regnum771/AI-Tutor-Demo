@@ -1,4 +1,5 @@
 import type { Status } from '../scenario/classroom';
+import type { CloId } from '../scenario/course';
 import type { ConceptId } from '../scenario/knowledgeGraph';
 
 export type Mastery = Record<ConceptId, number>;
@@ -102,7 +103,68 @@ export interface Conversation {
   pending: { steps: string[] } | null;
 }
 
-export type PhoneScreen = 'lock' | 'plan' | 'practice' | 'progress';
+export type CardRating = 'again' | 'hard' | 'good' | 'easy';
+
+export interface CardState {
+  /** Days until the next review. */
+  interval: number;
+  ease: number;
+  due: number;
+  reps: number;
+  /** The day this card was first seen. */
+  introduced: number;
+}
+
+export interface StudyDay {
+  planned: number;
+  done: number;
+  check: 'tooMuch' | 'right' | 'tooLittle' | null;
+}
+
+export interface Attempt { itemId: string; day: number; correct: boolean; firstTry: boolean }
+
+export interface StudyPlanDay { day: number; minutes: number; clo: CloId; concepts: ConceptId[] }
+
+export interface StudyPlan {
+  createdDay: number;
+  /** One sentence for the student. */
+  reason: string;
+  /** What is deliberately dropped because time cannot cover everything. */
+  leftOut: string[];
+  source: 'agents' | 'offline';
+  days: StudyPlanDay[];
+}
+
+export type ReplanSignal = 'setup' | 'markSwing' | 'disengaged' | 'bandChange' | 'teacherPlan';
+export type PassBand = 'Likely' | 'At risk' | 'Unlikely';
+
+export interface StudyRecord {
+  /** Minutes per day the student said they have. */
+  reported: { weekday: number; weekend: number } | null;
+  /** End-of-day factor, starts at 1, clamped 0.6–1.3. */
+  feel: number;
+  days: Record<number, StudyDay>;
+  attempts: Attempt[];
+  cards: Record<string, CardState>;
+  /** Index 0–2 into each CLO's Bloom levels. */
+  bloom: Record<CloId, number>;
+  /** First-try correct answers in a row at the current level. */
+  streak: Record<CloId, number>;
+  marks: { assessment: string; mark: number; day: number }[];
+  plan: StudyPlan | null;
+  /** The band when the plan was last made. */
+  band: PassBand | null;
+  pendingSignal: ReplanSignal | null;
+  lastReplanDay: number | null;
+  replans: { day: number; signal: ReplanSignal; reason: string }[];
+  /** Agent steps while a plan is being written. */
+  planning: { steps: string[] } | null;
+}
+
+/** A self-started practice session. */
+export interface SelfSession { clo: CloId | null; concepts: ConceptId[]; served: string[] }
+
+export type PhoneScreen = 'lock' | 'plan' | 'practice' | 'progress' | 'pick' | 'setup' | 'today' | 'choosePractice' | 'cards' | 'semester' | 'checkIn';
 
 export interface PhoneState {
   planId: string | null;
@@ -117,6 +179,11 @@ export interface PhoneState {
   lastDone: string | null;
   /** The plan was replaced by an auto-approved follow-up. */
   updated: boolean;
+  /** The student on this phone. A teacher plan switches it to that student. */
+  studentId: string | null;
+  /** The lock screen shows the morning "Today's calendar". */
+  morning: boolean;
+  self: SelfSession | null;
 }
 
 export interface DemoState {
@@ -131,5 +198,6 @@ export interface DemoState {
   plans: Plan[];
   conversations: Conversation[];
   phone: PhoneState;
+  study: Record<string, StudyRecord>;
   busy: boolean;
 }

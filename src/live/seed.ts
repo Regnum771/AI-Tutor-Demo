@@ -5,7 +5,7 @@ import type { DemoState, PhoneState } from './types';
 
 export const IDLE_PHONE: PhoneState = {
   planId: null, screen: 'lock', session: null, item: 0, hinted: false, result: null, lastOption: null,
-  done: [], lastDone: null, updated: false,
+  done: [], lastDone: null, updated: false, studentId: null, morning: false, self: null,
 };
 
 /** The demo as a visitor first sees it: 15:00, no conversations, no plans, idle phone. */
@@ -20,6 +20,7 @@ export function seedState(epoch = 0): DemoState {
     plans: [],
     conversations: [],
     phone: { ...IDLE_PHONE, done: [] },
+    study: {},
     busy: false,
   };
 }
