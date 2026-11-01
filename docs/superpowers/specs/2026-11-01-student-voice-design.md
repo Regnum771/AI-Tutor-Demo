@@ -163,6 +163,7 @@ Everything that shows or reads the 0–100 estimate moves to the 10-point foreca
   - **Practice:** phone sessions as a timeline: date, session title, concept, questions right, and tries per question once the quiz attempts spec is built (until then: right first try or not). Empty state: "No practice on the phone yet".
   - **Interventions:** pathways and check-ins naming this student (and focus plans, once the quiz attempts spec adds them), with status, date and outcome. Pathways also show the mastery change against their baseline.
   - **Record:** previous subjects, with term, grade and letter, and the GPA.
+  - **All evidence:** every entry, newest first, as in the student panel. A citation of a quiz, LMS, attendance or TA-note entry opens here, since no other tab holds those.
 - Opened with an entry id, the pop-up shows the tab that holds the entry, scrolled to it and highlighted. An entry id that no longer exists (after a reset) opens the first tab.
 
 ## 6. Agents

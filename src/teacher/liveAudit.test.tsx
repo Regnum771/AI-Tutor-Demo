@@ -111,6 +111,15 @@ const SCENARIOS: [string, (el: HTMLElement) => Promise<void>][] = [
     await click(byText(el, 'Classroom12'));
     await click(el.querySelector('button[title^="Nguyễn Minh Anh"]')!);
   }],
+  ['profile pop-up on the Record tab', async (el) => {
+    await click(byText(el, 'Classroom12'));
+    await click(el.querySelector('button[title^="Nguyễn Minh Anh"]')!);
+    await click(byText(el, 'Record'));
+  }],
+  ['classroom with a question open', async (el) => {
+    await click(byText(el, 'Classroom12'));
+    await click(buttons(el).find((b) => b.textContent?.includes('Why is p → q not the same as q → p?'))!);
+  }],
 ];
 
 describe('live teacher click audit (spec §2.6)', () => {
