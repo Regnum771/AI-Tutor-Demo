@@ -85,6 +85,17 @@ describe('live panels', () => {
     const cls = render(stateWithPlan('classActivity'), { kind: 'class', planId: 'p1' });
     expect(cls).toMatch(/font-serif[^>]*>Group recap</);
   });
+  it('puts the student’s own words above concept mastery, and hides the section when there are none', () => {
+    const out = render(stateWithPlan(), student());
+    expect(out).toContain('In their words');
+    expect(out.indexOf('In their words')).toBeLessThan(out.indexOf('Concept mastery'));
+    expect(out).toContain('See all');
+    expect(out.indexOf('data-entry="s17-zalo-2"')).toBeLessThan(out.indexOf('data-entry="s17-zalo-1"'));
+    const quiet = stateWithPlan();
+    const st = quiet.students.find((x) => x.id === 's17')!;
+    st.evidence = st.evidence.filter((e) => e.kind !== 'message' && e.kind !== 'taNote');
+    expect(render(quiet, student())).not.toContain('In their words');
+  });
 });
 
 describe('road to the exam', () => {

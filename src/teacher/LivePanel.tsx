@@ -7,7 +7,7 @@ import { GROUPS } from '../scenario/classroom';
 import { shortDate } from '../scenario/course';
 import { conceptById } from '../scenario/knowledgeGraph';
 import { Avatar, Button, Eyebrow, LevelChip, Mark, Meter, Section } from './parts';
-import { LIT } from './voiceParts';
+import { LIT, MessageRow } from './voiceParts';
 
 const APPROVE: Record<Plan['kind'], string> = { pathway: 'Approve & send', classActivity: 'Approve plan', checkIns: 'Book all' };
 const EYEBROW: Record<Plan['kind'], string> = { pathway: 'Proposed pathway', classActivity: 'Proposed class activity', checkIns: 'Proposed check-ins' };
@@ -106,6 +106,18 @@ export function EvidenceList({ entries, highlight }: { entries: Evidence[]; high
   );
 }
 
+/** The latest three messages and TA notes, so practice rows never push the student's own words out of sight. */
+function TheirWords({ s }: { s: StudentProfile }) {
+  const live = useLive();
+  const words = [...s.evidence].reverse().filter((e) => e.kind === 'message' || e.kind === 'taNote').slice(0, 3);
+  if (words.length === 0) return null;
+  return (
+    <Section title="In their words" aside={<button type="button" onClick={() => live?.openProfile(s.id)} className="hover:text-egg-ink hover:underline">See all</button>}>
+      <ul className="divide-y divide-egg-line">{words.map((e) => <MessageRow key={e.id} e={e} lit={false} />)}</ul>
+    </Section>
+  );
+}
+
 function StudentLive({ s, plan, highlight, bars, state }: { s: StudentProfile; plan: Plan | null; highlight: string | null; bars: number; state: DemoState }) {
   const level = s.status === 'onTrack' ? null : s.escalated ? 'personal' : s.status;
   const classPractice = (Math.round(mean(state.students.map((x) => x.practicePerWeek)) * 10) / 10).toFixed(1);
@@ -137,6 +149,7 @@ function StudentLive({ s, plan, highlight, bars, state }: { s: StudentProfile; p
           </div>
         </div>
       </div>
+      <TheirWords s={s} />
       <Section title="Concept mastery" aside="gap below 0.50">
         {twinConcepts(state, s.id).map((c) => <Meter key={c} label={conceptById(c).label} value={s.mastery[c]} grow={bars} />)}
       </Section>
