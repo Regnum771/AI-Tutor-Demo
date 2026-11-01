@@ -12,6 +12,11 @@ export function LiveText({ block }: { block: LiveBlock }) {
     const list = id.startsWith('class-') ? live?.state.classEvidence : live?.state.students.find((s) => s.id === id.split('-')[0])?.evidence;
     return list?.find((e) => e.id === id)?.source ?? 'Evidence';
   };
+  const open = (id: string) => {
+    if (!live) return;
+    if (id.startsWith('class-')) live.showPanel(panelForEvidence(id));
+    else live.openProfile(id.split('-')[0], id);
+  };
   return (
     <>
       {block.text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((part, i) =>
@@ -24,7 +29,7 @@ export function LiveText({ block }: { block: LiveBlock }) {
           key={id}
           type="button"
           data-cite={id}
-          onClick={() => live?.showPanel(panelForEvidence(id))}
+          onClick={() => open(id)}
           className="mx-0.5 inline-flex translate-y-[-1px] items-center gap-1 rounded-full border border-egg-line bg-egg-card px-2 py-px align-middle font-mono text-[10.5px] uppercase tracking-wide text-egg-mute hover:border-egg-ink hover:text-egg-ink"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-egg-accent" />

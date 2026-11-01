@@ -8,6 +8,10 @@ export interface LiveCtx {
   post(path: string, body?: unknown): Promise<unknown>;
   openConversation(id: string): void;
   showPanel(panel: LivePanel | null): void;
+  /** Opens a student's profile pop-up, at an evidence entry when one is given. Local to this window. */
+  openProfile(studentId: string, entryId?: string | null): void;
+  /** The student whose profile pop-up is open, if any. */
+  profileId?: string | null;
   toast(text: string): void;
 }
 

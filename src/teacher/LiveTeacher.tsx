@@ -3,11 +3,12 @@ import { useNow } from '../engine/useNow';
 import { keysOf, liveEvents, panelId, SeenClock } from '../live/events';
 import { LiveProvider, type LiveCtx } from '../live/LiveContext';
 import { useServerSource, type DemoSource } from '../live/source';
-import type { LivePanel } from '../live/types';
+import type { LivePanel, StudentProfile as Profile } from '../live/types';
 import type { Student } from '../scenario/classroom';
 import { MINH_ANH } from '../scenario/minhAnh';
 import { PAST, teacherFrame, type TeacherEvent, type View } from './frame';
 import { CANNED_TOPICS } from './route';
+import { StudentProfile } from './StudentProfile';
 import { TeacherScreen, type TeacherActions } from './TeacherScreen';
 
 const TOAST_MS = 2000;
@@ -30,6 +31,7 @@ export function LiveTeacherView({ source }: { source: DemoSource }) {
   const [local, setLocal] = useState<TeacherEvent[]>([]);
   const [draft, setDraft] = useState('');
   const [toast, setToast] = useState<{ text: string; at: number } | null>(null);
+  const [profile, setProfile] = useState<{ studentId: string; entryId: string | null } | null>(null);
 
   if (state && state.epoch !== epoch) {
     // First snapshot (a refresh reopens the latest conversation) or a reset on the server (a fresh chat).
@@ -37,6 +39,7 @@ export function LiveTeacherView({ source }: { source: DemoSource }) {
     setEpoch(state.epoch);
     setActiveId(epoch === null ? state.conversations.at(-1)?.id ?? null : null);
     setLocal([]);
+    setProfile(null);
   }
   if (!state) {
     return <div className="flex h-full items-center justify-center bg-egg-bg font-sans text-[15px] text-egg-mute">Connecting to the booth server… (start it with npm run booth)</div>;
@@ -77,6 +80,9 @@ export function LiveTeacherView({ source }: { source: DemoSource }) {
     setLocal((l) => [...l.filter(keepUi), { at: t, type: 'view', view: 'chat' }]);
   };
 
+  const askAbout = (s: { index: number; name: string }) =>
+    void ask(s.index === MINH_ANH.index ? CANNED_TOPICS.student.prompt : `How is ${s.name} doing?`, null);
+
   const actions: TeacherActions = {
     send: (text) => void ask(text, activeId),
     open: () => undefined, // canned topics are not listed in live mode
@@ -90,13 +96,27 @@ export function LiveTeacherView({ source }: { source: DemoSource }) {
     edit: () => undefined,
     showPanel: (id) => { if (id === null) showPanel(null); },
     select: (index) => pushLocal({ at: t, type: 'select', index }),
-    askStudent: (s: Student) => void ask(s.index === MINH_ANH.index ? CANNED_TOPICS.student.prompt : `How is ${s.name} doing?`, null),
+    askStudent: (s: Student) => askAbout(s),
     askClass: () => void ask(CANNED_TOPICS.class.prompt, null),
   };
-  const ctx: LiveCtx = { state, activeId, post, openConversation: switchTo, showPanel, toast: showToast };
+  const ctx: LiveCtx = {
+    state, activeId, post, openConversation: switchTo, showPanel, toast: showToast,
+    openProfile: (studentId, entryId = null) => setProfile({ studentId, entryId }),
+    profileId: profile?.studentId ?? null,
+  };
 
   return (
     <LiveProvider value={ctx}>
+      {/* A fixed overlay: first in the DOM so its Close is the first one a script or reader meets; it stacks above the screen by z-index. */}
+      {profile && (
+        <StudentProfile
+          studentId={profile.studentId}
+          entryId={profile.entryId}
+          onClose={() => setProfile(null)}
+          onAsk={(s: Profile) => { setProfile(null); askAbout(s); }}
+          onOpenChat={(id) => { setProfile(null); switchTo(id); }}
+        />
+      )}
       <TeacherScreen frame={frame} actions={actions} composer={{ value: draft, onChange: setDraft, disabled: state.busy }} />
       {toast && t - toast.at < TOAST_MS && (
         <div role="status" className="pointer-events-none fixed bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-egg-ink px-4 py-2 font-sans text-[13.5px] font-semibold text-egg-card">

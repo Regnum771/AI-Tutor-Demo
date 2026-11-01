@@ -88,13 +88,13 @@ export function LivePlanCard({ plan }: { plan: Plan }) {
 }
 
 /** Evidence entries, newest first; the highlighted one is scrolled into view. */
-function EvidenceList({ entries, highlight }: { entries: Evidence[]; highlight: string | null }) {
+export function EvidenceList({ entries, highlight }: { entries: Evidence[]; highlight: string | null }) {
   const hi = useRef<HTMLLIElement>(null);
   useEffect(() => { hi.current?.scrollIntoView?.({ block: 'center' }); }, [highlight]);
   return (
     <ul className="divide-y divide-egg-line">
       {[...entries].reverse().map((e) => (
-        <li key={e.id} ref={e.id === highlight ? hi : undefined} className="grid grid-cols-[96px_1fr] gap-3 py-2" style={e.id === highlight ? { background: egg('accent', 0.18) } : undefined} data-evidence={e.id}>
+        <li key={e.id} ref={e.id === highlight ? hi : undefined} className="grid grid-cols-[96px_1fr] gap-3 py-2" style={e.id === highlight ? { background: egg('accent', 0.18), backgroundColor: egg('accent', 0.18) } : undefined} data-evidence={e.id}>
           <span className="font-mono text-[10.5px] uppercase leading-[18px] tracking-wide text-egg-mute">{e.source}</span>
           <span className="text-[13.5px] text-egg-ink">
             {e.text}
