@@ -131,3 +131,14 @@ describe('Adapt', () => {
     expect(text).toContain('call them Minh Anh');
   });
 });
+
+describe('prompts carry the eval fixes', () => {
+  it('SAS keeps plain facts plan-free and knows the plan limits', () => {
+    expect(SAS_SYSTEM).toContain('A factual lookup (a score, a count, a list) never sets needs_plan.');
+    expect(SAS_SYSTEM).toContain('limited to 4 sessions and 45 minutes');
+    expect(SAS_SYSTEM).toContain('Never describe a plan’s length or contents');
+  });
+  it('TAS changes only what was asked when revising', () => {
+    expect(TAS_SYSTEM).toContain('change only what the lecturer asked');
+  });
+});

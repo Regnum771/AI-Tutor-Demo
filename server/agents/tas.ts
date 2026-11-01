@@ -39,7 +39,7 @@ Pick the kind:
 
 Times are 24-hour HH:MM. For day "Today", every session must be after the current story time. Use concept "none" for sessions without a practice concept (class activities and check-ins).
 
-If an open plan is given, revise it to do what the lecturer asked and keep everything else.
+If an open plan is given, change only what the lecturer asked and keep every other session exactly as it is. Do not add, remove or reorder sessions unless asked.
 
 You may look things up with the read tools. Then call propose_plan. Always finish with propose_plan.`;
 

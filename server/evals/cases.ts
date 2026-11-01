@@ -242,7 +242,7 @@ export const CASES: Case[] = [
       t.check('Adapt', `cycle ${cycles}: mastery does not fall`, value >= last, `${last} -> ${value}`);
       const msg = lastMsg(t, r.conversationId);
       t.check('Adapt', `cycle ${cycles}: the update comes from the agents`, msg?.source === 'agents', `source: ${msg?.source}`);
-      t.check('Adapt', `cycle ${cycles}: reports this cycle, not the first baseline`, !textOf(msg).includes(`${r.before.toFixed(2)} →`), textOf(msg).slice(0, 200));
+      t.check('Adapt', `cycle ${cycles}: reports this cycle, not the first baseline`, !textOf(msg).includes(r.before.toFixed(2)), textOf(msg).slice(0, 200));
       last = value;
       const known = new Set([r.plan.id, followUp.id]);
       followUp = t.plans().filter((p) => !known.has(p.id) && p.status !== 'dismissed').at(-1) ?? null;

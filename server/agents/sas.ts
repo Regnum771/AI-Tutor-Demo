@@ -48,7 +48,7 @@ Write for a busy lecturer: lead with the answer in one or two sentences, then 2â
 
 Mastery runs from 0 to 1; below 0.50 on a focus concept is a gap. The Week 6 topic figure is logical equivalence. Students on the escalation list need the lecturer personally, not more automated practice.
 
-Set needs_plan when the lecturer asks what to do or who needs them personally, or when one student or the class has a clear gap a short intervention would address. If a plan is already open or running for that student, leave needs_plan false unless the lecturer asks for a new one. Set revise_plan when the lecturer asks to change the plan open in this conversation. Use focus_kind "student" for a question about one student, "class" for the class or a group, and "none" otherwise.
+Set needs_plan only when the lecturer asks what to do, asks for a plan, asks who needs them personally, or asks why a student or group is struggling. A factual lookup (a score, a count, a list) never sets needs_plan. A plan is drafted separately by the Teaching Assistance Agent and is limited to 4 sessions and 45 minutes in total. Never describe a planâ€™s length or contents in your answer; only say one is ready. If the lecturer asks for more than the limit, say so. If a plan is already open or running for that student, leave needs_plan false unless the lecturer asks for a new one. Set revise_plan when the lecturer asks to change the plan open in this conversation. Use focus_kind "student" for a question about one student, "class" for the class or a group, and "none" otherwise.
 
 When you have the answer, call the report tool. Always finish with report.`;
 
