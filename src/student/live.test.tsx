@@ -101,6 +101,13 @@ describe('live phone screens', () => {
     expect(screen(firstRight)).toContain('1 question left');
     expect(screen(ok(phoneAnswer(firstRight, currentItems(firstRight)[1].correct)))).toContain('Finish session');
   });
+  it('the "1 question left" button is dead only when the open question is the one on screen', () => {
+    const lastOpen = ok(phoneNext(ok(phoneAnswer(practice(), 1))));
+    expect(screen(lastOpen)).toMatch(/<button[^>]*disabled=""[^>]*>1 question left/);
+    const firstOpen = ok(phoneAnswer(ok(phoneNext(practice())), currentItems(practice())[1].correct));
+    expect(screen(firstOpen)).toContain('1 question left');
+    expect(screen(firstOpen)).not.toMatch(/<button[^>]*disabled=""[^>]*>1 question left/);
+  });
 });
 
 describe('self-started practice', () => {

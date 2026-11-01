@@ -46,7 +46,7 @@ export function deliver(s: DemoState, plan: Plan, updated: boolean): void {
     done: [],
     planId: plan.id,
     studentId: plan.studentIds[0],
-    screen: updated ? s.phone.screen : 'lock',
+    screen: updated ? (s.phone.screen === 'practice' ? 'plan' : s.phone.screen) : 'lock',
     lastDone: updated ? s.phone.lastDone : null,
     updated,
   };
@@ -212,7 +212,7 @@ export function phoneAgain(state: DemoState): Result {
 export const phoneNext = (state: DemoState): Result => phoneGoto(state, state.phone.item + 1);
 
 /** The first slot with no right answer yet, or null when every slot has one. */
-function firstOpen(s: DemoState): number | null {
+export function firstOpen(s: DemoState): number | null {
   for (let i = 0; i < slotCount(s); i++) if ((s.phone.sheet[i]?.rightOn ?? null) === null) return i;
   return null;
 }
@@ -220,6 +220,7 @@ function firstOpen(s: DemoState): number | null {
 /** With open questions, moves to the first of them. Otherwise opens the review and completes the session: marks it done and, after a mastery check, closes the plan. */
 export function phoneFinish(state: DemoState): Result {
   if (state.phone.screen !== 'practice') return fail('No practice open.');
+  if (!state.phone.self && state.phone.session === null) return fail('No practice open.');
   const open = firstOpen(state);
   if (open !== null) return phoneGoto(state, open);
   const s = structuredClone(state);

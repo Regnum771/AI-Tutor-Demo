@@ -292,8 +292,8 @@ describe('review follow-ups', () => {
   });
   it('opening Pick or the check-in clears a self session', () => {
     const s = ok(startSelf(ready(), 'CLO1'));
-    expect(ok(openPick(s)).phone.self).toBeNull();
-    expect(ok(openCheckIn(s)).phone.self).toBeNull();
+    expect(ok(openPick(s)).phone).toMatchObject({ self: null, sheet: [] });
+    expect(ok(openCheckIn(s)).phone).toMatchObject({ self: null, sheet: [] });
   });
   it('a fresh teacher approval during a self session goes to the lock screen and keeps the answers', () => {
     let s = ok(startSelf(ready(), 'CLO1'));

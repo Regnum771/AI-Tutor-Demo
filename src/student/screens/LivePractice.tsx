@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { currentItems, planById, slotCount } from '../../live/reducer';
+import { currentItems, firstOpen, planById, slotCount } from '../../live/reducer';
 import type { DemoState } from '../../live/types';
 import { conceptById } from '../../scenario/knowledgeGraph';
 import { Mark } from '../../teacher/parts';
@@ -128,7 +128,7 @@ export function LivePractice({ state, onAnswer, onNext, onGoto, onAgain, onFinis
         {ph.item + 1 < total ? (
           <button type="button" onClick={onNext} className={PRIMARY}>Next</button>
         ) : (
-          <button type="button" onClick={onFinish} className={PRIMARY}>{left === 0 ? finish : `${left} question${left === 1 ? '' : 's'} left`}</button>
+          <button type="button" onClick={onFinish} disabled={left > 0 && firstOpen(state) === ph.item} className={`${PRIMARY} disabled:opacity-50`}>{left === 0 ? finish : `${left} question${left === 1 ? '' : 's'} left`}</button>
         )}
       </div>
     </div>

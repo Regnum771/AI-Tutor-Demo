@@ -193,6 +193,17 @@ describe('phone flow', () => {
     expect(s.phone.sheet).toHaveLength(3);
     expect(ok(phoneContinue(s)).phone).toMatchObject({ screen: 'progress', planId: 'p2', sheet: [] });
   });
+  it('a follow-up landing mid-session sends the phone to the plan', () => {
+    const s = ok(phoneOpen(sent(), 1));
+    s.plans.push(planFor('pathway', { id: 'p2', status: 'autoApproved' }));
+    deliver(s, s.plans[1], true);
+    expect(s.phone).toMatchObject({ screen: 'plan', session: null, sheet: [], updated: true, planId: 'p2' });
+  });
+  it('finishing with no session and no self session fails instead of throwing', () => {
+    const s = ok(phoneOpen(sent(), 1));
+    s.phone = { ...s.phone, screen: 'practice', session: null, self: null };
+    expect(phoneFinish(s)).toEqual({ ok: false, error: 'No practice open.' });
+  });
   it('skip to tonight marks earlier sessions done with seeded results', () => {
     const s = ok(phoneSkip(ok(phoneShowPlan(sent()))));
     expect(s.phone.done).toEqual([0]);

@@ -30,7 +30,7 @@ const done = (state: DemoState, signal: ReplanSignal | null = null): StudyResult
 
 export function openPick(state: DemoState): StudyResult {
   const s = structuredClone(state);
-  s.phone = { ...s.phone, screen: 'pick', morning: false, self: null };
+  s.phone = { ...s.phone, ...NO_PRACTICE, screen: 'pick', morning: false };
   return done(s);
 }
 
@@ -104,7 +104,7 @@ export function rateCard(state: DemoState, cardId: string, rating: CardRating): 
 export function openCheckIn(state: DemoState): StudyResult {
   if (!state.phone.studentId) return fail('Choose a student first.');
   const s = structuredClone(state);
-  s.phone = { ...s.phone, self: null, screen: 'checkIn' };
+  s.phone = { ...s.phone, ...NO_PRACTICE, screen: 'checkIn' };
   return done(s);
 }
 
