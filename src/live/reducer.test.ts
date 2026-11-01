@@ -73,7 +73,7 @@ describe('phone flow', () => {
     expect(phoneNext(s).ok).toBe(false);
     s = ok(phoneAnswer(s, 1));
     expect(s.phone.result).toBe('right');
-    expect(ma(s).mastery.implication).toBe(afterAnswer(0.31, true, true));
+    expect(ma(s).mastery.implication).toBe(afterAnswer(0.31, true, 2));
     expect(ma(s).evidence.at(-1)).toMatchObject({ kind: 'practice', concept: 'implication', when: '15:30' });
     expect(phoneAnswer(s, 1).ok).toBe(false);
   });

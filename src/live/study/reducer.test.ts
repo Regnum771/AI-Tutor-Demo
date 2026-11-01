@@ -171,7 +171,7 @@ describe('a returning student', () => {
   it('counts teacher session answers apart from self-study', () => {
     const s = ok(approvePlan(stateWithPlan(), 'p1'));
     ensureRecord(s, 's17').reported = { weekday: 30, weekend: 30 };
-    noteAttempt(s.study.s17, BANK[0], s.day, true, true, true);
+    noteAttempt(s.study.s17, BANK[0], s.day, true, 1, true);
     expect(s.study.s17.days[s.day]).toMatchObject({ done: 1.5, teacher: 1.5 });
     expect(todayList(s, 's17').done).toBe(0);
   });
@@ -363,7 +363,7 @@ describe('a new week', () => {
   it('a Monday forgets once, then re-picks the week from the lectures', () => {
     const s = structuredClone(ready());
     Object.assign(s.students[16].mastery, { implication: 0.3, biconditional: 0.29, expressions: 0.295 });
-    s.study.s17.attempts.push({ itemId: item('biconditional').id, day: 41, correct: true, firstTry: true });
+    s.study.s17.attempts.push({ itemId: item('biconditional').id, day: 41, correct: true, firstTry: true, tries: 1 });
     const after = ok(advance(s, 7, null)); // Saturday 40 → Saturday 47, through Monday 42
     expect(after.students[16].mastery).toMatchObject({ negation: 0.68, implication: 0.28, biconditional: 0.29, expressions: 0.275 });
     const plan = after.study.s17.plan!;

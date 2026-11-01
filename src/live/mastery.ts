@@ -4,15 +4,17 @@ import { TWIN_FOCUS } from '../scenario/minhAnh';
 import type { DemoState, Mastery, StudentProfile } from './types';
 
 export const TARGET = 0.9;
-export const GAIN_FIRST_TRY = 0.3;
-export const GAIN_AFTER_HINT = 0.15;
+/** The share of the gap to TARGET a right answer closes, by try. Later tries earn nothing. */
+const GAIN_BY_TRY = [0.3, 0.15, 0.05];
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
-/** A correct answer moves the item's concept part of the way toward TARGET; a wrong one leaves it. */
-export function afterAnswer(value: number, correct: boolean, hinted: boolean): number {
+export const gainFor = (tryNumber: number): number => GAIN_BY_TRY[tryNumber - 1] ?? 0;
+
+/** A correct answer moves the item's concept part of the way toward TARGET, by the try it came on; a wrong one leaves it. */
+export function afterAnswer(value: number, correct: boolean, tryNumber: number): number {
   if (!correct) return value;
-  return Math.max(value, round2(value + (TARGET - value) * (hinted ? GAIN_AFTER_HINT : GAIN_FIRST_TRY)));
+  return Math.max(value, round2(value + (TARGET - value) * gainFor(tryNumber)));
 }
 
 /** Week 6 is logical equivalence: the Classroom's per-student figure. */

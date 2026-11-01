@@ -153,8 +153,9 @@ export function phoneAnswer(state: DemoState, option: number): Result {
   const student = studentById(s, s.phone.self ? s.phone.studentId! : planById(s, s.phone.planId)!.studentIds[0])!;
   const correct = option === item.correct;
   const rec = s.study[student.id];
-  if (rec) noteAttempt(rec, item, s.day, correct, correct && !s.phone.hinted, !s.phone.self);
-  student.mastery[item.concept] = afterAnswer(student.mastery[item.concept], correct, s.phone.hinted);
+  const tryNumber = s.phone.hinted ? 2 : 1;
+  if (rec) noteAttempt(rec, item, s.day, correct, tryNumber, !s.phone.self);
+  student.mastery[item.concept] = afterAnswer(student.mastery[item.concept], correct, tryNumber);
   student.status = statusFor(student.mastery);
   record(s, student, item, correct ? (s.phone.hinted ? 'correct after a hint' : 'correct first try') : `chose ${item.options[option]}`, { result: correct ? 'correct' : 'wrong', planId: s.phone.self ? undefined : s.phone.planId ?? undefined });
   s.phone = { ...s.phone, result: correct ? 'right' : 'wrong', lastOption: option, hinted: s.phone.hinted || !correct };
@@ -201,7 +202,7 @@ export function phoneSkip(state: DemoState): Result {
   plan.sessions.forEach((session, i) => {
     if (i >= checkIndex || s.phone.done.includes(i) || !session.concept) return;
     for (const item of sessionItems(session.concept, false)) {
-      student.mastery[item.concept] = afterAnswer(student.mastery[item.concept], true, true);
+      student.mastery[item.concept] = afterAnswer(student.mastery[item.concept], true, 2);
       record(s, student, item, 'correct after a hint (skipped ahead)', { result: 'skipped', planId: plan.id });
     }
     s.phone.done = [...s.phone.done, i];

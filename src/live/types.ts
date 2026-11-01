@@ -137,7 +137,8 @@ export interface StudyDay {
   check: 'tooMuch' | 'right' | 'tooLittle' | null;
 }
 
-export interface Attempt { itemId: string; day: number; correct: boolean; firstTry: boolean }
+/** One question answered, written at its first right answer. `tries` is the try that was right; `firstTry` means `tries === 1`. */
+export interface Attempt { itemId: string; day: number; correct: boolean; firstTry: boolean; tries: number }
 
 export interface StudyPlanDay { day: number; minutes: number; clo: CloId; concepts: ConceptId[] }
 
