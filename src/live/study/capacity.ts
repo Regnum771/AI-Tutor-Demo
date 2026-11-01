@@ -19,12 +19,12 @@ export function capacityFor(rec: StudyRecord, day: number, today = day): number 
 export const openPathways = (state: DemoState, studentId: string) =>
   state.plans.filter((p) => p.kind === 'pathway' && p.studentIds.includes(studentId) && ['sent', 'autoApproved'].includes(p.status));
 
-/** Minutes a teacher's pathway already takes, by day. Those sessions are fixed. */
+/** Minutes a teacher's pathway already takes, by day. Those sessions are fixed. An overdue session stays on Today but takes no capacity. */
 export function teacherMinutes(state: DemoState, studentId: string): Record<number, number> {
   const out: Record<number, number> = {};
   for (const p of openPathways(state, studentId)) {
-    const at = Math.max(p.date, state.day);
-    out[at] = (out[at] ?? 0) + p.sessions.reduce((a, s) => a + s.minutes, 0);
+    if (p.date < state.day) continue;
+    out[p.date] = (out[p.date] ?? 0) + p.sessions.reduce((a, s) => a + s.minutes, 0);
   }
   return out;
 }

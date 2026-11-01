@@ -284,13 +284,24 @@ describe('an overdue teacher session stays on Today', () => {
     s.day = 40;
     return s;
   };
-  it('shows its rows, takes its minutes off capacity and opens, once its date has passed', () => {
+  it('shows its rows and opens, once its date has passed, without taking capacity', () => {
     const s = { ...overdue(), day: 41 };
     expect(todayList(s, 's17').rows.some((r) => r.kind === 'plan')).toBe(true);
     const minutes = s.plans[0].sessions.reduce((a, x) => a + x.minutes, 0);
     expect(minutes).toBeGreaterThan(0);
-    expect(capacityLeft(s, 's17', 41)).toBe(Math.max(0, capacityFor(s.study.s17, 41, 41) - minutes));
+    expect(capacityLeft(s, 's17', 41)).toBe(capacityFor(s.study.s17, 41, 41));
     expect(ok(phoneOpen(s, 0)).phone.screen).toBe('practice');
+  });
+  it('a 33-minute plan ignored for three days leaves the budget unchanged and its rows on Today', () => {
+    const s = overdue();
+    s.plans[0].sessions = [{ ...s.plans[0].sessions[0], minutes: 33 }];
+    const before = capacityLeft(s, 's17', 40);
+    s.day = 43;
+    const day = s.study.s17.plan!.days.find((d) => d.day === 43)!;
+    expect(capacityLeft(s, 's17', 43)).toBe(capacityFor(s.study.s17, 43, 43));
+    expect(capacityLeft(s, 's17', 43)).toBeGreaterThanOrEqual(Math.min(before, day.minutes));
+    expect(todayList(s, 's17').budget).toBe(Math.min(capacityFor(s.study.s17, 43, 43), day.minutes));
+    expect(todayList(s, 's17').rows.some((r) => r.kind === 'plan')).toBe(true);
   });
   it('picking prefers the newest plan dated today or earlier over a later one', () => {
     const s = seedState();
