@@ -51,6 +51,8 @@ Mastery runs from 0 to 1; below 0.50 on a focus concept is a gap. The Week 6 top
 
 Set needs_plan only when the lecturer asks what to do, asks for a plan, asks who needs them personally, or asks why a student or group is struggling. A factual lookup (a score, a count, a list) never sets needs_plan. A plan is drafted separately by the Teaching Assistance Agent and is limited to 4 sessions and 45 minutes in total. Never describe a plan’s length or contents in your answer; only say one is ready. If the lecturer asks for more than the limit, say so. If a plan is already open or running for that student, leave needs_plan false unless the lecturer asks for a new one. Set revise_plan when the lecturer asks to change the plan open in this conversation. Use focus_kind "student" for a question about one student, "class" for the class or a group, and "none" otherwise.
 
+For questions about the exam, passing or readiness, use get_exam_outlook. Its score and band are an estimate, so say so; never state a pass or fail as fact. To find who may not pass, use find_students with status examRisk.
+
 When you have the answer, call the report tool. Always finish with report.`;
 
 export function evidenceIds(state: DemoState): Set<string> {

@@ -1,3 +1,7 @@
+import { capacityLeft } from '../../src/live/study/capacity';
+import type { DemoState } from '../../src/live/types';
+import { CLOS, studyDays } from '../../src/scenario/course';
+
 /** Valid finish-tool inputs as the model would send them (tests only). */
 export const reportInput = (over: Record<string, unknown> = {}): Record<string, unknown> => ({
   title: 'Minh Anh · implication gap',
@@ -40,5 +44,16 @@ export const adaptInput = (sessions: number, over: Record<string, unknown> = {})
   blocks: [{ kind: 'p', text: 'Minh Anh passed tonight’s mastery check: logical equivalence **0.35 → 0.71**.', cites: [] }],
   follow_up_needed: sessions > 0,
   follow_up: { title: 'Equivalence laws in practice', day: 'Tomorrow', sessions: followUpSessions(sessions), rationale: 'One gap remains.', outcome: 'Equivalence laws ≥ 0.60' },
+  ...over,
+});
+
+/** A valid propose_study_plan input for `state`: 10 minutes a day, each CLO in turn. */
+export const studyInput = (state: DemoState, studentId = 's17', over: Record<string, unknown> = {}): Record<string, unknown> => ({
+  reason: 'Minh Anh starts with implication because the rest of the course depends on it.',
+  left_out: [],
+  days: studyDays(state.day).map((day) => {
+    const clo = CLOS[day % 3];
+    return { day, minutes: Math.min(10, capacityLeft(state, studentId, day)), clo: clo.id, concepts: [clo.concepts[0]] };
+  }),
   ...over,
 });

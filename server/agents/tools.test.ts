@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { seedState } from '../../src/live/seed';
+import { ensureRecord } from '../../src/live/study/record';
 import { READ_TOOLS, readLabel, readTool } from './tools';
 
 const state = seedState();
@@ -8,7 +9,7 @@ const find = (input: Record<string, unknown>) =>
 
 describe('read tools', () => {
   it('are strict object schemas', () => {
-    expect(READ_TOOLS.map((t) => t.name)).toEqual(['get_class_overview', 'find_students', 'get_student', 'get_evidence', 'compare_students']);
+    expect(READ_TOOLS.map((t) => t.name)).toEqual(['get_class_overview', 'find_students', 'get_student', 'get_evidence', 'compare_students', 'get_exam_outlook']);
     for (const t of READ_TOOLS) {
       expect(t.strict).toBe(true);
       expect(t.input_schema.additionalProperties).toBe(false);
@@ -46,5 +47,28 @@ describe('read tools', () => {
     expect(readLabel(state, 'find_students', { status: 'escalated', concept: '', below: -1, name: '' })).toBe('Student Analysis Agent · searching the class');
     expect(readLabel(state, 'compare_students', { student_ids: ['s1', 's2', 's3'] })).toBe('Student Analysis Agent · comparing 3 learning twins');
     expect(readLabel(state, 'report', {})).toBeNull();
+  });
+});
+
+describe('exam outlook', () => {
+  it('reports the road to the exam, and says when a student has not set up', () => {
+    const state = seedState();
+    expect(readTool(state, 'get_exam_outlook', { student_id: 's17' })).toMatchObject({ setUp: false, passMark: 50, nextAssessment: { title: 'Assignment 2' } });
+    const rec = ensureRecord(state, 's17');
+    rec.reported = { weekday: 30, weekend: 60 };
+    rec.plan = { createdDay: 40, reason: 'Implication first.', leftOut: [], source: 'agents', days: [{ day: 41, minutes: 20, clo: 'CLO1', concepts: ['implication'] }] };
+    rec.days[40] = { planned: 20, done: 12, check: null };
+    rec.replans.push({ day: 40, signal: 'setup', reason: 'Implication first.' });
+    expect(readTool(state, 'get_exam_outlook', { student_id: 's17' })).toMatchObject({
+      setUp: true, band: 'At risk', minutesPlanned: 20, minutesDone: 12, lastChange: { reason: 'Implication first.' },
+    });
+    expect(readLabel(state, 'get_exam_outlook', { student_id: 's17' })).toBe('Student Analysis Agent · reading Minh Anh’s road to the exam');
+  });
+  it('finds students who may not pass, among those with a plan', () => {
+    const state = seedState();
+    expect(readTool(state, 'find_students', { status: 'examRisk', concept: '', below: -1, name: '' })).toEqual([]);
+    const rec = ensureRecord(state, 's17');
+    rec.plan = { createdDay: 40, reason: '', leftOut: [], source: 'offline', days: [] };
+    expect(readTool(state, 'find_students', { status: 'examRisk', concept: '', below: -1, name: '' })).toMatchObject([{ id: 's17' }]);
   });
 });

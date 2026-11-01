@@ -2,6 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import { fmt } from '../../src/live/clock';
 import { classKpis, topicMastery } from '../../src/live/mastery';
 import type { DemoState, EvidenceKind, StudentProfile } from '../../src/live/types';
+import { examOutlook, examRisk } from '../../src/live/study/outlook';
 import { fullDate } from '../../src/scenario/course';
 import { GROUPS } from '../../src/scenario/classroom';
 import { CONCEPTS, conceptById, type ConceptId } from '../../src/scenario/knowledgeGraph';
@@ -22,8 +23,8 @@ const EVIDENCE_KINDS: EvidenceKind[] = ['quiz', 'activity', 'attendance', 'messa
 
 export const READ_TOOLS: Anthropic.Beta.BetaTool[] = [
   tool('get_class_overview', 'Class KPIs, average mastery per concept, Week 6 topic mastery per tutorial group, the escalation list and class-level evidence (with ids you can cite).', {}),
-  tool('find_students', 'List students matching filters (use "" or -1 to leave a filter out). Returns id, name, group, status, escalation and topic mastery, plus the filtered concept value.', {
-    status: { type: 'string', enum: ['', 'onTrack', 'support', 'highRisk', 'escalated'] },
+  tool('find_students', 'List students matching filters (use "" or -1 to leave a filter out). Returns id, name, group, status, escalation and topic mastery, plus the filtered concept value. "examRisk" means students with a study plan whose exam estimate is At risk or Unlikely.', {
+    status: { type: 'string', enum: ['', 'onTrack', 'support', 'highRisk', 'escalated', 'examRisk'] },
     concept: { type: 'string', enum: ['', ...CONCEPT_IDS] },
     below: { type: 'number', description: 'With concept: only students below this mastery (0–1). -1 for no limit.' },
     name: { type: 'string', description: 'Part of a name (accents optional), or "".' },
@@ -37,6 +38,9 @@ export const READ_TOOLS: Anthropic.Beta.BetaTool[] = [
   }),
   tool('compare_students', 'Mastery per concept for several students side by side.', {
     student_ids: { type: 'array', items: { type: 'string' } },
+  }),
+  tool('get_exam_outlook', "A student's road to the final exam: projected score and band (estimates), mastery per learning outcome (CLO), minutes planned and done, the next assessment, and the last change to the study plan with its reason. setUp is false until the student has set up on the phone.", {
+    student_id: { type: 'string' },
   }),
 ];
 
@@ -71,6 +75,7 @@ function find(state: DemoState, input: Record<string, unknown>) {
   let list = state.students;
   const status = String(input.status ?? '');
   if (status === 'escalated') list = list.filter((s) => s.escalated);
+  else if (status === 'examRisk') list = examRisk(state);
   else if (status) list = list.filter((s) => s.status === status);
   const name = fold(String(input.name ?? ''));
   if (name) list = list.filter((s) => fold(s.name).includes(name));
@@ -103,6 +108,7 @@ export function readTool(state: DemoState, name: string, input: Record<string, u
       const s = studentOf(state, input.student_id);
       return s.evidence.filter((e) => !input.kind || e.kind === input.kind);
     }
+    case 'get_exam_outlook': return examOutlook(state, studentOf(state, input.student_id));
     case 'compare_students':
       return (Array.isArray(input.student_ids) ? input.student_ids : []).map((id) => {
         const s = studentOf(state, id);
@@ -129,6 +135,7 @@ export function readLabel(state: DemoState, name: string, input: Record<string, 
     case 'get_student': return `${p} reading ${who(input.student_id)}’s learning twin`;
     case 'get_evidence': return `${p} reading ${who(input.student_id)}’s ${KIND_LABEL[input.kind as EvidenceKind] ?? 'evidence'}`;
     case 'compare_students': return `${p} comparing ${Array.isArray(input.student_ids) ? input.student_ids.length : 0} learning twins`;
+    case 'get_exam_outlook': return `${p} reading ${who(input.student_id)}’s road to the exam`;
     default: return null;
   }
 }
