@@ -4,9 +4,9 @@ import { itemById, sessionItems, type BankItem } from '../scenario/practiceBank'
 import { fmt, parseTime, TONIGHT } from './clock';
 import { afterAnswer, statusFor } from './mastery';
 import { IDLE_PHONE } from './seed';
-import { noteAttempt } from './study/record';
+import { logMinutes, MINUTES, noteAttempt } from './study/record';
 import { nextItem, SELF_SESSION } from './study/select';
-import type { AssistantMsg, DemoState, Evidence, Plan, StudentProfile } from './types';
+import type { AssistantMsg, DemoState, Evidence, Plan, QuestionSheet, StudentProfile } from './types';
 
 export type Result = { ok: true; state: DemoState; finishedCheck?: boolean } | { ok: false; error: string };
 
@@ -40,6 +40,7 @@ export function deliver(s: DemoState, plan: Plan, updated: boolean): void {
   }
   s.phone = {
     ...IDLE_PHONE,
+    sheet: [],
     done: [],
     planId: plan.id,
     studentId: plan.studentIds[0],
@@ -104,12 +105,15 @@ export function currentItems(s: DemoState): BankItem[] {
   return session?.concept ? sessionItems(session.concept, session.isMasteryCheck) : [];
 }
 
-const clearItem = { hinted: false, result: null, lastOption: null } as const;
+/** How many question slots the open session has. */
+export const slotCount = (s: DemoState): number => (s.phone.self ? SELF_SESSION : currentItems(s).length);
+
+export const blankQuestion = (itemId: string): QuestionSheet => ({ itemId, tries: [], rightOn: null, reopened: false });
 
 export function phoneShowPlan(state: DemoState): Result {
   if (!state.phone.planId) return fail('No plan on the phone.');
   const s = structuredClone(state);
-  s.phone = { ...s.phone, ...clearItem, self: null, screen: 'plan', session: null, item: 0 };
+  s.phone = { ...s.phone, sheet: [], self: null, screen: 'plan', session: null, item: 0 };
   return done(s);
 }
 
@@ -130,11 +134,12 @@ export function phoneOpen(state: DemoState, index: number): Result {
   if (!plan || !session) return fail('No such session.');
   if (s.phone.done.includes(index)) return fail('That session is already done.');
   moveClockTo(s, plan, session.time);
-  s.phone = { ...s.phone, ...clearItem, self: null, screen: 'practice', session: index, item: 0 };
+  s.phone = { ...s.phone, self: null, screen: 'practice', session: index, item: 0 };
+  s.phone.sheet = currentItems(s).map((item) => blankQuestion(item.id));
   return done(s);
 }
 
-function record(s: DemoState, student: StudentProfile, item: BankItem, outcome: string, mark: Pick<Evidence, 'result' | 'planId'>) {
+function record(s: DemoState, student: StudentProfile, item: BankItem, outcome: string, mark: Pick<Evidence, 'result' | 'tries' | 'planId'>) {
   const n = student.evidence.filter((e) => e.kind === 'practice').length + 1;
   student.evidence.push({
     id: `${student.id}-practice-${n}`, kind: 'practice', source: 'Beyond practice', when: fmt(s.clock), day: s.day, concept: item.concept,
@@ -146,45 +151,75 @@ export function phoneAnswer(state: DemoState, option: number): Result {
   const s = structuredClone(state);
   if (s.phone.screen !== 'practice') return fail('No practice open.');
   const item = currentItems(s)[s.phone.item];
-  if (!item) return fail('No item to answer.');
-  if (s.phone.result === 'right') return fail('Already answered.');
-  if (s.phone.result === 'wrong' && s.phone.lastOption === option) return fail('Already tried that one.');
+  const q = s.phone.sheet[s.phone.item];
+  if (!item || !q) return fail('No item to answer.');
+  if (q.rightOn !== null && !q.reopened) return fail('Already answered.');
+  if (!q.reopened && q.tries.at(-1) === option) return fail('Already tried that one.');
   if (!Number.isInteger(option) || option < 0 || option >= item.options.length) return fail('No such option.');
+  const reanswer = q.reopened;
+  q.reopened = false;
+  // Answer again, then the option just tapped: nothing new happened.
+  if (reanswer && q.tries.at(-1) === option) return done(s);
+  q.tries.push(option);
+  const tryNumber = q.tries.length;
   const student = studentById(s, s.phone.self ? s.phone.studentId! : planById(s, s.phone.planId)!.studentIds[0])!;
   const correct = option === item.correct;
   const rec = s.study[student.id];
-  const tryNumber = s.phone.hinted ? 2 : 1;
+  const planId = s.phone.self ? undefined : s.phone.planId ?? undefined;
+  if (reanswer) {
+    if (rec) logMinutes(rec, s.day, MINUTES.question, !s.phone.self);
+    record(s, student, item, `answered again: ${item.options[option]}`, { planId });
+    return done(s);
+  }
   if (rec) noteAttempt(rec, item, s.day, correct, tryNumber, !s.phone.self);
+  if (correct) q.rightOn = tryNumber;
   student.mastery[item.concept] = afterAnswer(student.mastery[item.concept], correct, tryNumber);
   student.status = statusFor(student.mastery);
-  record(s, student, item, correct ? (s.phone.hinted ? 'correct after a hint' : 'correct first try') : `chose ${item.options[option]}`, { result: correct ? 'correct' : 'wrong', planId: s.phone.self ? undefined : s.phone.planId ?? undefined });
-  s.phone = { ...s.phone, result: correct ? 'right' : 'wrong', lastOption: option, hinted: s.phone.hinted || !correct };
+  record(s, student, item, correct ? `correct on try ${tryNumber}` : `chose ${item.options[option]}`, { result: correct ? 'correct' : 'wrong', tries: correct ? tryNumber : undefined, planId });
+  return done(s);
+}
+
+/** Opens a slot. In self practice an empty slot picks its question now and keeps it; slots fill in order, so a jump also picks the ones it passes. */
+export function phoneGoto(state: DemoState, item: number): Result {
+  if (state.phone.screen !== 'practice') return fail('No practice open.');
+  if (!Number.isInteger(item) || item < 0 || item >= slotCount(state)) return fail('No such question.');
+  const s = structuredClone(state);
+  const self = s.phone.self;
+  if (self) {
+    const student = studentById(s, s.phone.studentId!)!;
+    while (self.served.length <= item) {
+      const { id } = nextItem(s.study[student.id], student, s.day, self.concepts, self.served);
+      self.served.push(id);
+      s.phone.sheet.push(blankQuestion(id));
+    }
+  }
+  s.phone.item = item;
+  return done(s);
+}
+
+/** Answer again: clears the options of a question that already has a right answer. */
+export function phoneAgain(state: DemoState): Result {
+  if (state.phone.screen !== 'practice') return fail('No practice open.');
+  const s = structuredClone(state);
+  const q = s.phone.sheet[s.phone.item];
+  if (!q || q.rightOn === null) return fail('Answer the item first.');
+  q.reopened = true;
   return done(s);
 }
 
 export function phoneNext(state: DemoState): Result {
-  if (state.phone.result !== 'right') return fail('Answer the item first.');
+  if (state.phone.screen !== 'practice') return fail('No practice open.');
+  if (state.phone.item + 1 < slotCount(state)) return phoneGoto(state, state.phone.item + 1);
+  if ((state.phone.sheet[state.phone.item]?.rightOn ?? null) === null) return fail('Answer the item first.');
   const s = structuredClone(state);
   if (s.phone.self) {
-    const self = s.phone.self;
-    if (self.served.length < SELF_SESSION) {
-      const student = studentById(s, s.phone.studentId!)!;
-      self.served.push(nextItem(s.study[student.id], student, s.day, self.concepts, self.served).id);
-      s.phone = { ...s.phone, ...clearItem, item: self.served.length - 1 };
-    } else {
-      s.phone = { ...s.phone, ...clearItem, self: null, item: 0, screen: 'today' };
-    }
-    return done(s);
-  }
-  const next = s.phone.item + 1;
-  if (next < currentItems(s).length) {
-    s.phone = { ...s.phone, ...clearItem, item: next };
+    s.phone = { ...s.phone, sheet: [], self: null, item: 0, screen: 'today' };
     return done(s);
   }
   const plan = planById(s, s.phone.planId)!;
   const index = s.phone.session!;
   const isCheck = plan.sessions[index].isMasteryCheck;
-  s.phone = { ...s.phone, ...clearItem, done: [...s.phone.done, index], session: null, item: 0, screen: isCheck ? 'progress' : 'plan' };
+  s.phone = { ...s.phone, sheet: [], done: [...s.phone.done, index], session: null, item: 0, screen: isCheck ? 'progress' : 'plan' };
   if (!isCheck) return done(s);
   s.clock = Math.max(s.clock, TONIGHT);
   plan.status = 'done';

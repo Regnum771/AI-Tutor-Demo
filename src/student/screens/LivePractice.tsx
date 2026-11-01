@@ -15,7 +15,9 @@ export function LivePractice({ state, onAnswer, onNext }: { state: DemoState; on
   const item = items[ph.item];
   const session = !ph.self && plan && ph.session !== null ? plan.sessions[ph.session] : null;
   if (!item || (!ph.self && !session)) return null;
-  const right = ph.result === 'right';
+  const q = ph.sheet[ph.item];
+  const right = q !== undefined && q.rightOn !== null;
+  const lastWrong = !right && q?.tries.length ? q.tries.at(-1)! : null;
   const guided = right ? item.guided : undefined;
   const total = ph.self ? SELF_SESSION : items.length;
   const last = ph.item + 1 >= total;
@@ -32,7 +34,7 @@ export function LivePractice({ state, onAnswer, onNext }: { state: DemoState; on
       <div className="mt-6 font-display text-[21px] font-bold leading-snug text-egg-ink [text-wrap:balance]">{item.prompt}</div>
       <div className="mt-4 space-y-2.5">
         {item.options.map((o, i) => {
-          const look = right && i === item.correct ? 'right' : ph.result === 'wrong' && i === ph.lastOption ? 'wrong' : 'idle';
+          const look = right && i === item.correct ? 'right' : i === lastWrong ? 'wrong' : 'idle';
           return (
             <button
               key={i}
@@ -48,10 +50,10 @@ export function LivePractice({ state, onAnswer, onNext }: { state: DemoState; on
           );
         })}
       </div>
-      {ph.result === 'wrong' && ph.lastOption !== null && (
+      {lastWrong !== null && (
         <div className="mt-4 rounded-2xl border border-egg-accent/40 bg-egg-tint p-4">
           <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-egg-ink"><Mark size={12} />Hint</div>
-          <div className="mt-1 text-[14px] leading-snug text-egg-ink">{item.hints[ph.lastOption]}</div>
+          <div className="mt-1 text-[14px] leading-snug text-egg-ink">{item.hints[lastWrong]}</div>
         </div>
       )}
       {guided && (

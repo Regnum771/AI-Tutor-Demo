@@ -5,7 +5,7 @@ import { emptyHistory } from './history';
 import type { DemoState, PhoneState } from './types';
 
 export const IDLE_PHONE: PhoneState = {
-  planId: null, screen: 'lock', session: null, item: 0, hinted: false, result: null, lastOption: null,
+  planId: null, screen: 'lock', session: null, item: 0, sheet: [],
   done: [], lastDone: null, updated: false, studentId: null, morning: false, self: null,
 };
 
@@ -20,7 +20,7 @@ export function seedState(epoch = 0): DemoState {
     classEvidence: classEvidence(students),
     plans: [],
     conversations: [],
-    phone: { ...IDLE_PHONE, done: [] },
+    phone: { ...IDLE_PHONE, sheet: [], done: [] },
     study: {},
     masteryHistory: emptyHistory(),
     busy: false,

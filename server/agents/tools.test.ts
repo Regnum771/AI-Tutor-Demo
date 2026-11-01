@@ -47,12 +47,13 @@ describe('read tools', () => {
     expect(readTool(state, 'get_evidence', { student_id: 's17', kind: '' })).toHaveLength(8);
     expect(readTool(state, 'compare_students', { student_ids: ['s17', 's29'] })).toHaveLength(2);
   });
-  it('evidence for agents leaves out the phone-only result and planId', () => {
-    const s = ok(phoneAnswer(ok(phoneOpen(ok(approvePlan(stateWithPlan(), 'p1')), 0)), 0));
+  it('evidence for agents leaves out the phone-only result, tries and planId', () => {
+    const s = ok(phoneAnswer(ok(phoneOpen(ok(approvePlan(stateWithPlan(), 'p1')), 0)), 1));
     const practice = readTool(s, 'get_evidence', { student_id: 's17', kind: 'practice' }) as Record<string, unknown>[];
     expect(practice.length).toBeGreaterThan(0);
     for (const e of practice) {
       expect(e).not.toHaveProperty('result');
+      expect(e).not.toHaveProperty('tries');
       expect(e).not.toHaveProperty('planId');
     }
   });

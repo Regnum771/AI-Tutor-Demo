@@ -136,6 +136,8 @@ export class DemoSession {
   phonePlan(): Done { return this.run(R.phoneShowPlan(this.state)); }
   phoneOpen(index: number): Done { return this.run(R.phoneOpen(this.state, index)); }
   phoneAnswer(option: number): Done { return this.run(R.phoneAnswer(this.state, option)); }
+  phoneGoto(item: number): Done { return this.run(R.phoneGoto(this.state, item)); }
+  phoneAgain(): Done { return this.run(R.phoneAgain(this.state)); }
   phoneSkip(): Done { return this.run(R.phoneSkip(this.state)); }
 
   /** Moves on after a correct answer; finishing a mastery check starts the adapt run. */

@@ -139,10 +139,10 @@ export function readTool(state: DemoState, name: string, input: Record<string, u
     case 'get_student': return twin(state, studentOf(state, input.student_id));
     case 'get_evidence': {
       const s = studentOf(state, input.student_id);
-      // The phone's result and planId stay out of what agents read.
+      // The phone's result, tries and planId stay out of what agents read; the text says the same.
       return s.evidence
         .filter((e) => !input.kind || e.kind === input.kind)
-        .map(({ result: _result, planId: _planId, ...e }) => (e.day !== undefined && e.time ? { ...e, lecture: lectureLabel(e.day, e.time) } : e));
+        .map(({ result: _result, tries: _tries, planId: _planId, ...e }) => (e.day !== undefined && e.time ? { ...e, lecture: lectureLabel(e.day, e.time) } : e));
     }
     case 'get_exam_outlook': return examOutlook(state, studentOf(state, input.student_id));
     case 'compare_students':

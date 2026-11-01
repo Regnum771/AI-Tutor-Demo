@@ -172,7 +172,7 @@ describe('DemoSession', () => {
   it('reports reducer errors', () => {
     const session = new DemoSession(null);
     expect(session.approve('nope')).toEqual({ ok: false, error: 'Only a proposed plan can be approved.' });
-    expect(session.phoneNext()).toEqual({ ok: false, error: 'Answer the item first.' });
+    expect(session.phoneNext()).toEqual({ ok: false, error: 'No practice open.' });
   });
   it('drops a failing subscriber without failing the command or the others', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});

@@ -2,7 +2,7 @@ import { CARDS } from '../../scenario/cards';
 import { ASSESSMENTS, CLOS, EXAM_DAY, START_DAY, type CloId } from '../../scenario/course';
 import { noteClassMastery } from '../history';
 import { statusFor } from '../mastery';
-import { studentById } from '../reducer';
+import { blankQuestion, studentById } from '../reducer';
 import { IDLE_PHONE } from '../seed';
 import type { CardRating, DemoState, ReplanSignal, StudyDay, StudyPlan } from '../types';
 import { applyCheck, openPathways } from './capacity';
@@ -23,7 +23,7 @@ const TABS: StudyTab[] = ['today', 'choosePractice', 'cards', 'semester'];
 const RATINGS: CardRating[] = ['again', 'hard', 'good', 'easy'];
 const CHECKS: StudyDay['check'][] = ['tooMuch', 'right', 'tooLittle', null];
 const MORNING = 7 * 60 + 30;
-const NO_PRACTICE = { self: null, session: null, item: 0, hinted: false, result: null, lastOption: null } as const;
+const NO_PRACTICE = { self: null, session: null, item: 0, sheet: [] };
 
 const fail = (error: string): StudyResult => ({ ok: false, error });
 const done = (state: DemoState, signal: ReplanSignal | null = null): StudyResult => ({ ok: true, state, signal });
@@ -41,7 +41,7 @@ export function pickStudent(state: DemoState, id: string): StudyResult {
   const rec = ensureRecord(s, id);
   const open = openPathways(s, id);
   const plan = open.filter((p) => p.date <= s.day).at(-1) ?? open.at(-1) ?? null;
-  s.phone = { ...IDLE_PHONE, done: plan && plan.id === s.phone.planId ? s.phone.done : [], planId: plan?.id ?? null, studentId: id, screen: rec.reported ? 'today' : 'setup' };
+  s.phone = { ...IDLE_PHONE, sheet: [], done: plan && plan.id === s.phone.planId ? s.phone.done : [], planId: plan?.id ?? null, studentId: id, screen: rec.reported ? 'today' : 'setup' };
   return done(s);
 }
 
@@ -77,7 +77,7 @@ export function startSelf(state: DemoState, clo: CloId | null): StudyResult {
   const focus = chosen?.concepts ?? todayList(s, id).concepts;
   const concepts = focus.length ? focus : CLOS.flatMap((c) => c.concepts);
   const first = nextItem(s.study[id], studentById(s, id)!, s.day, concepts, []);
-  s.phone = { ...s.phone, ...NO_PRACTICE, screen: 'practice', self: { clo, concepts, served: [first.id] } };
+  s.phone = { ...s.phone, ...NO_PRACTICE, screen: 'practice', self: { clo, concepts, served: [first.id] }, sheet: [blankQuestion(first.id)] };
   return done(s);
 }
 

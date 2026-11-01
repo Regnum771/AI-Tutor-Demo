@@ -20,8 +20,9 @@ export interface Evidence {
   day?: number;
   /** HH:MM, log messages only. */
   time?: string;
-  /** Live practice only: how the answer went, and the teacher plan it belonged to (none for self-practice). Scripted screens never read these. Agents do not see these two (get_evidence strips them); they do see day and time. */
+  /** Live practice only: how the answer went, the try a right answer came on, and the teacher plan it belonged to (none for self-practice). A re-answer has no `result`. Scripted screens never read these. Agents do not see these three (get_evidence strips them); they do see day and time. */
   result?: 'correct' | 'wrong' | 'skipped';
+  tries?: number;
   planId?: string;
 }
 
@@ -183,6 +184,17 @@ export interface StudyRecord {
 /** One point of the class's average mastery on a concept. */
 export interface MasteryPoint { day: number; value: number }
 
+/** One question slot of the session open on the phone. */
+export interface QuestionSheet {
+  itemId: string;
+  /** Options tapped, in order. A repeat of the option just tapped is not added. */
+  tries: number[];
+  /** The try number of the first correct answer, or null until there is one. */
+  rightOn: number | null;
+  /** True after Answer again: the options are cleared until the next tap. */
+  reopened: boolean;
+}
+
 /** A self-started practice session. */
 export interface SelfSession { clo: CloId | null; concepts: ConceptId[]; served: string[] }
 
@@ -192,10 +204,10 @@ export interface PhoneState {
   planId: string | null;
   screen: PhoneScreen;
   session: number | null;
+  /** The slot on screen. */
   item: number;
-  hinted: boolean;
-  result: 'right' | 'wrong' | null;
-  lastOption: number | null;
+  /** One entry per question slot opened so far; a teacher session fills all of them when it opens. */
+  sheet: QuestionSheet[];
   done: number[];
   /** The plan whose mastery check finished last (the progress screen's subject). */
   lastDone: string | null;
