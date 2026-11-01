@@ -6,6 +6,7 @@ import { stateWithPlan } from '../live/fixtures';
 import type { DemoSource } from '../live/source';
 import type { DemoState } from '../live/types';
 import { ensureRecord } from '../live/study/record';
+import { notOpened } from '../scenario/materials';
 import { lectureQuestions } from './calendar';
 import { LiveTeacherView } from './LiveTeacher';
 
@@ -77,6 +78,19 @@ describe('teacher calendar', () => {
     expect(detail.textContent).toContain('Thursday, 29 October');
     expect(detail.textContent).toContain('CLO2 Establish logical equivalence');
     expect(detail.textContent).toContain('55 marks');
+  });
+  it('shows a lecture’s materials above its questions, and a row lists who has not opened it', async () => {
+    const m = await mount();
+    await click(button(m.el, 'Calendar'));
+    await click(button(m.el, '‹ Prev week'));
+    await click(event(m.el, 'lecture-5'));
+    const detail = () => m.el.querySelector('[data-detail="lecture-5"]')!;
+    expect([...detail().querySelectorAll('[data-resource]')].map((r) => r.getAttribute('data-resource'))).toEqual(['l5-slides', 'l5-recording', 'l5-worksheet', 'l5-reading']);
+    expect(detail().querySelector('[data-resources]')!.compareDocumentPosition(detail().querySelector('[data-question]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(detail().querySelector('[data-resource="l5-recording"] [data-engagement]')!.textContent).toBe('31 of 55 opened · 46% watched on average');
+    await click(detail().querySelector('[data-resource="l5-recording"] button')!);
+    expect(detail().querySelectorAll('[data-not-opened="l5-recording"] [data-student]')).toHaveLength(notOpened('l5-recording').length);
+    expect(m.calls).toEqual([]);
   });
   it('a stopped flag opens the student’s pop-up and a session opens its conversation', async () => {
     const m = await mount();

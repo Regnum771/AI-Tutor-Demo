@@ -5,6 +5,7 @@ import { ASSESSMENTS, CLOS, fullDate, LECTURES, shortDate, weekOf } from '../sce
 import { CHANNEL_LABEL, voiceEvidenceId } from '../scenario/voice';
 import { assessmentMarks, calendarWeek, FIRST_WEEK, LAST_WEEK, lectureQuestions, sessionLabel, type CalendarEvent } from './calendar';
 import { Eyebrow } from './parts';
+import { ResourceList } from './ResourceList';
 import { Words } from './voiceParts';
 
 const NAV = 'rounded-full border border-egg-line px-3 py-1 text-[12.5px] text-egg-ink hover:border-egg-ink disabled:opacity-40 disabled:hover:border-egg-line';
@@ -98,7 +99,7 @@ export function Calendar() {
   );
 }
 
-/** The student questions placed after a lecture, from the FAQ log. */
+/** A lecture's materials, then the student questions placed after it, from the FAQ log. */
 function LectureDetail({ n, state }: { n: number; state: DemoState }) {
   const l = LECTURES.find((x) => x.n === n)!;
   const questions = lectureQuestions(n);
@@ -106,6 +107,9 @@ function LectureDetail({ n, state }: { n: number; state: DemoState }) {
     <section data-detail={`lecture-${n}`} className="mt-6 border-t border-egg-ink/80 pt-3">
       <div className="font-serif text-[26px] leading-none">{`Lecture ${l.n} · ${l.title}`}</div>
       <div className="mt-1 text-[12.5px] text-egg-mute">{`${fullDate(l.day)} · 09:00–11:00 · ${questions.length} student question${questions.length === 1 ? '' : 's'} after it`}</div>
+      <div className="mt-4"><Eyebrow>Materials</Eyebrow></div>
+      <div className="mt-1"><ResourceList lecture={n} /></div>
+      <div className="mt-5"><Eyebrow>Student questions</Eyebrow></div>
       {questions.length ? (
         <ul className="mt-3 divide-y divide-egg-line">
           {questions.map((v) => {
