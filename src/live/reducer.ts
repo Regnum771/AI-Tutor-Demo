@@ -30,6 +30,8 @@ function say(s: DemoState, conversationId: string, text: string) {
 export function deliver(s: DemoState, plan: Plan, updated: boolean): void {
   const student = studentById(s, plan.studentIds[0]);
   plan.baseline = student ? { ...student.mastery } : null;
+  // A follow-up for someone else waits until that student is picked.
+  if (updated && s.phone.studentId && s.phone.studentId !== plan.studentIds[0]) return;
   // A follow-up can land while the student is in a self-started session.
   if (updated && s.phone.self) {
     s.phone = { ...s.phone, planId: plan.id, done: [], updated };
@@ -106,7 +108,7 @@ const clearItem = { hinted: false, result: null, lastOption: null } as const;
 export function phoneShowPlan(state: DemoState): Result {
   if (!state.phone.planId) return fail('No plan on the phone.');
   const s = structuredClone(state);
-  s.phone = { ...s.phone, ...clearItem, screen: 'plan', session: null, item: 0 };
+  s.phone = { ...s.phone, ...clearItem, self: null, screen: 'plan', session: null, item: 0 };
   return done(s);
 }
 
@@ -127,7 +129,7 @@ export function phoneOpen(state: DemoState, index: number): Result {
   if (!plan || !session) return fail('No such session.');
   if (s.phone.done.includes(index)) return fail('That session is already done.');
   moveClockTo(s, plan, session.time);
-  s.phone = { ...s.phone, ...clearItem, screen: 'practice', session: index, item: 0 };
+  s.phone = { ...s.phone, ...clearItem, self: null, screen: 'practice', session: index, item: 0 };
   return done(s);
 }
 

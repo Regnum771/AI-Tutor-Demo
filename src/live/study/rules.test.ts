@@ -211,16 +211,24 @@ describe('today', () => {
     rec.days[41] = { planned: 30, done: 0, check: null };
     expect(todayList(s, 's17').budget).toBe(30);
   });
-  it('shows a student’s sent pathway for today whether or not the phone has a plan picked', () => {
+  it('shows the phone’s plan for today, and only that plan’s unfinished sessions', () => {
     const { s } = setup();
     s.plans.push(planFor('pathway', { status: 'sent', date: 40, studentIds: ['s17'] }));
-    expect(s.phone.planId).toBeNull();
     const plan = s.plans[s.plans.length - 1];
+    expect(todayList(s, 's17').rows.filter((r) => r.kind === 'plan')).toHaveLength(0);
+    s.phone.planId = plan.id;
     expect(todayList(s, 's17').rows.filter((r) => r.kind === 'plan')).toHaveLength(plan.sessions.length);
     s.phone.done = [0];
-    expect(todayList(s, 's17').rows.filter((r) => r.kind === 'plan')).toHaveLength(plan.sessions.length);
-    s.phone.planId = plan.id;
     expect(todayList(s, 's17').rows.filter((r) => r.kind === 'plan')).toHaveLength(plan.sessions.length - 1);
+  });
+  it('lists the phone’s plan when two open pathways are dated today', () => {
+    const { s } = setup();
+    s.plans.push(planFor('pathway', { id: 'pa', status: 'sent', date: 40, studentIds: ['s17'] }));
+    s.plans.push(planFor('pathway', { id: 'pb', status: 'sent', date: 40, studentIds: ['s17'], sessions: [{ time: '09:00', title: 'Only this', minutes: 5, concept: 'implication', isMasteryCheck: false, studentId: null }] }));
+    s.phone.planId = 'pb';
+    const rows = todayList(s, 's17').rows.filter((r) => r.kind === 'plan');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ title: 'Only this' });
   });
   it('keeps teacher-session minutes out of self-study', () => {
     const { s, rec } = setup();

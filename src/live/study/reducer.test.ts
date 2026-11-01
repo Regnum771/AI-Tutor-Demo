@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CARDS } from '../../scenario/cards';
 import { BANK } from '../../scenario/practiceBank';
 import { planFor, stateWithPlan } from '../fixtures';
-import { approvePlan, currentItems, deliver, phoneAnswer, phoneNext, type Result } from '../reducer';
+import { approvePlan, currentItems, deliver, phoneAnswer, phoneNext, phoneOpen, phoneShowPlan, type Result } from '../reducer';
 import { seedState } from '../seed';
 import type { DemoState } from '../types';
 import { ensureRecord, noteAttempt } from './record';
@@ -187,5 +187,89 @@ describe('tabs', () => {
   it('sends a student who has only had teacher plans to setup', () => {
     const s = ok(approvePlan(stateWithPlan(), 'p1'));
     expect(ok(showTab(s, 'today')).phone).toMatchObject({ screen: 'setup', planId: 'p1' });
+  });
+});
+
+describe('review follow-ups', () => {
+  const join = (id: string, setup: boolean) => {
+    let s = ok(pickStudent(ok(openPick(seedState())), id));
+    if (setup) s = ok(saveSetup(s, 30, 60));
+    return s;
+  };
+  const followUp = (s: DemoState) => {
+    s.plans.push(planFor('pathway', { id: 'p2', status: 'autoApproved', studentIds: ['s17'], date: s.day }));
+    const plan = s.plans[s.plans.length - 1];
+    deliver(s, plan, true);
+    return plan;
+  };
+
+  it('a follow-up for another student leaves a self session alone and waits', () => {
+    const s = structuredClone(ok(startSelf(join('s8', true), 'CLO1')));
+    const before = structuredClone(s.phone);
+    const plan = followUp(s);
+    expect(s.phone).toEqual(before);
+    expect(plan.baseline).not.toBeNull();
+    expect(ok(pickStudent(s, 's17')).phone).toMatchObject({ studentId: 's17', planId: 'p2' });
+  });
+  it('a follow-up for another student leaves setup and Today alone', () => {
+    for (const setup of [false, true]) {
+      const s = structuredClone(join('s8', setup));
+      const before = structuredClone(s.phone);
+      followUp(s);
+      expect(s.phone).toEqual(before);
+    }
+  });
+  it('a follow-up still reaches a phone with no student', () => {
+    const s = seedState();
+    followUp(s);
+    expect(s.phone).toMatchObject({ planId: 'p2', studentId: 's17', updated: true });
+  });
+
+  it('a mark swing survives a long jump', () => {
+    const s = ok(saveSetup(ok(pickStudent(seedState(), 's4')), 30, 60));
+    s.day = 46;
+    const next = advance(s, 7, null);
+    expect(next.ok && next.signal).toBe('markSwing');
+  });
+
+  it('opening a teacher session clears a self session', () => {
+    const s = ok(startSelf(ready(), 'CLO1'));
+    s.plans.push(planFor('pathway', { id: 'p2', status: 'sent', studentIds: ['s17'] }));
+    s.phone.planId = 'p2';
+    expect(ok(phoneOpen(s, 0)).phone.self).toBeNull();
+    expect(ok(phoneShowPlan(s)).phone.self).toBeNull();
+  });
+  it('opening Pick or the check-in clears a self session', () => {
+    const s = ok(startSelf(ready(), 'CLO1'));
+    expect(ok(openPick(s)).phone.self).toBeNull();
+    expect(ok(openCheckIn(s)).phone.self).toBeNull();
+  });
+  it('a fresh teacher approval during a self session goes to the lock screen and keeps the answers', () => {
+    let s = ok(startSelf(ready(), 'CLO1'));
+    s = ok(phoneAnswer(s, currentItems(s)[0].correct));
+    const logged = s.study.s17.attempts.length;
+    expect(logged).toBe(1);
+    s.plans.push(planFor('pathway', { id: 'p2', studentIds: ['s17'] }));
+    const sent = ok(approvePlan(s, 'p2'));
+    expect(sent.phone).toMatchObject({ screen: 'lock', self: null });
+    expect(sent.study.s17.attempts).toHaveLength(logged);
+  });
+  it('advancing during a self session ends it', () => {
+    const s = ok(advance(ok(startSelf(ready(), 'CLO1')), 1, null));
+    expect(s.phone).toMatchObject({ self: null, session: null, screen: 'lock' });
+  });
+
+  it('simulate drop twice leaves one Quiz 3 mark', () => {
+    const s = ok(simulateDrop(ok(simulateDrop(ready()))));
+    expect(s.study.s17.marks.filter((m) => m.assessment === 'quiz3')).toHaveLength(1);
+  });
+});
+
+describe('picking a student chooses the plan for today', () => {
+  it('prefers the plan dated today over a newer one dated later', () => {
+    const s = seedState();
+    s.plans.push(planFor('pathway', { id: 'pa', status: 'sent', date: s.day, studentIds: ['s17'] }));
+    s.plans.push(planFor('pathway', { id: 'pb', status: 'sent', date: s.day + 1, studentIds: ['s17'] }));
+    expect(ok(pickStudent(s, 's17')).phone.planId).toBe('pa');
   });
 });

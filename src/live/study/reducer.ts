@@ -27,7 +27,7 @@ const done = (state: DemoState, signal: ReplanSignal | null = null): StudyResult
 
 export function openPick(state: DemoState): StudyResult {
   const s = structuredClone(state);
-  s.phone = { ...s.phone, screen: 'pick', morning: false };
+  s.phone = { ...s.phone, screen: 'pick', morning: false, self: null };
   return done(s);
 }
 
@@ -36,8 +36,9 @@ export function pickStudent(state: DemoState, id: string): StudyResult {
   if (!studentById(state, id)) return fail('No such student.');
   const s = structuredClone(state);
   const rec = ensureRecord(s, id);
-  const open = openPathways(s, id).at(-1) ?? null;
-  s.phone = { ...IDLE_PHONE, done: open && open.id === s.phone.planId ? s.phone.done : [], planId: open?.id ?? null, studentId: id, screen: rec.reported ? 'today' : 'setup' };
+  const open = openPathways(s, id);
+  const plan = open.find((p) => p.date === s.day) ?? open.at(-1) ?? null;
+  s.phone = { ...IDLE_PHONE, done: plan && plan.id === s.phone.planId ? s.phone.done : [], planId: plan?.id ?? null, studentId: id, screen: rec.reported ? 'today' : 'setup' };
   return done(s);
 }
 
@@ -100,7 +101,7 @@ export function rateCard(state: DemoState, cardId: string, rating: CardRating): 
 export function openCheckIn(state: DemoState): StudyResult {
   if (!state.phone.studentId) return fail('Choose a student first.');
   const s = structuredClone(state);
-  s.phone.screen = 'checkIn';
+  s.phone = { ...s.phone, self: null, screen: 'checkIn' };
   return done(s);
 }
 
@@ -113,8 +114,7 @@ export function advance(state: DemoState, days: number, check: StudyDay['check']
   const s = structuredClone(state);
   const rec = s.study[id];
   const student = studentById(s, id)!;
-  let newMark: number | null = null;
-  let previousMark: number | null = null;
+  let swing = null as { mark: number; previous: number } | null;
   for (let i = 0; i < days && s.day < EXAM_DAY; i++) {
     const budget = todayList(s, id).budget;
     const entry = rec.days[s.day] ?? { planned: 0, done: 0, check: null };
@@ -122,9 +122,10 @@ export function advance(state: DemoState, days: number, check: StudyDay['check']
     if (i === 0 && check) rec.feel = applyCheck(rec.feel, check);
     for (const a of ASSESSMENTS) {
       if (a.day < START_DAY || a.day > s.day || rec.marks.some((m) => m.assessment === a.id)) continue;
-      previousMark = rec.marks.at(-1)?.mark ?? student.quiz.q2;
-      newMark = markFor(student, a);
-      rec.marks.push({ assessment: a.id, mark: newMark, day: a.day });
+      const previous = rec.marks.at(-1)?.mark ?? student.quiz.q2;
+      const mark = markFor(student, a);
+      rec.marks.push({ assessment: a.id, mark, day: a.day });
+      if (!swing || Math.abs(mark - previous) > Math.abs(swing.mark - swing.previous)) swing = { mark, previous };
     }
     s.day += 1;
   }
@@ -132,7 +133,7 @@ export function advance(state: DemoState, days: number, check: StudyDay['check']
   s.phone = { ...s.phone, ...NO_PRACTICE, screen: 'lock', morning: true };
   const { band } = passEstimate(student, rec, s.day);
   rec.band ??= band;
-  return done(s, detectSignal(rec, s.day, band, newMark, previousMark));
+  return done(s, detectSignal(rec, s.day, band, swing?.mark ?? null, swing?.previous ?? null));
 }
 
 /** Director control: a Quiz 3 result 20 points below the last mark, so the demo can show a drastic signal. */
@@ -142,6 +143,7 @@ export function simulateDrop(state: DemoState): StudyResult {
   const s = structuredClone(state);
   const rec = s.study[id];
   const previous = rec.marks.at(-1)?.mark ?? studentById(s, id)!.quiz.q2;
+  rec.marks = rec.marks.filter((m) => m.assessment !== 'quiz3');
   rec.marks.push({ assessment: 'quiz3', mark: Math.max(0, previous - 20), day: s.day });
   return done(s, 'markSwing');
 }

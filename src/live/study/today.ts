@@ -22,9 +22,9 @@ export function todayList(state: DemoState, studentId: string): { budget: number
   const done = selfDone(rec.days[day]);
   const rows: TodayRow[] = [];
 
-  const teacher = openPathways(state, studentId).find((p) => p.date === day);
+  const teacher = openPathways(state, studentId).find((p) => p.id === state.phone.planId && p.date === day);
   teacher?.sessions.forEach((s, index) => {
-    if (!(teacher.id === state.phone.planId && state.phone.done.includes(index))) rows.push({ kind: 'plan', index, title: s.title, minutes: s.minutes });
+    if (!state.phone.done.includes(index)) rows.push({ kind: 'plan', index, title: s.title, minutes: s.minutes });
   });
 
   const { due, fresh } = cardsToday(rec, day, concepts);
