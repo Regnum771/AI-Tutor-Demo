@@ -140,6 +140,14 @@ describe('a finished plan', () => {
     expect(s.study.s17.plan?.reason).toBe('Lighter for now.');
     expect(s.study.s17.replans).toEqual([{ day: 40, signal: 'disengaged', reason: 'Lighter for now.' }]);
   });
+  it('records a forecast point when a plan lands and at each day’s close', () => {
+    const s = structuredClone(ready());
+    applyPlan(s, 's17', { createdDay: 40, reason: 'Lighter for now.', leftOut: [], source: 'offline', days: [] }, 'disengaged');
+    expect(s.study.s17.forecasts.map((p) => p.day)).toEqual([40]);
+    const r = advance(s, 2, null);
+    if (!r.ok) throw new Error(r.error);
+    expect(r.state.study.s17.forecasts.map((p) => p.day)).toEqual([40, 41, 42]);
+  });
 });
 
 describe('teacher plans stay intact', () => {

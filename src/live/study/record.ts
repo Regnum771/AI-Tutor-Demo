@@ -1,7 +1,7 @@
 import { cloOf } from '../../scenario/course';
 import type { BankItem } from '../../scenario/practiceBank';
 import type { DemoState, StudentProfile, StudyDay, StudyRecord } from '../types';
-import { cloMastery } from './estimate';
+import { cloMastery, forecast } from './estimate';
 
 /** Nominal study time: story time is not real time. */
 export const MINUTES = { question: 1.5, card: 0.5 };
@@ -15,7 +15,7 @@ export function newRecord(student: StudentProfile): StudyRecord {
     reported: null, feel: 1, days: {}, attempts: [], cards: {}, marks: [], plan: null, band: null,
     bloom: { CLO1: startLevel(cloMastery(student, 'CLO1')), CLO2: startLevel(cloMastery(student, 'CLO2')), CLO3: startLevel(cloMastery(student, 'CLO3')) },
     streak: { CLO1: 0, CLO2: 0, CLO3: 0 },
-    pendingSignal: null, lastReplanDay: null, replans: [], planning: null,
+    pendingSignal: null, lastReplanDay: null, replans: [], forecasts: [], planning: null,
   };
 }
 
@@ -46,4 +46,11 @@ export function noteAttempt(rec: StudyRecord, item: BankItem, day: number, corre
       rec.streak[clo] = 0;
     }
   }
+}
+
+/** Adds the day's forecast point, replacing one already there for that day. Mutates `rec`. */
+export function noteForecast(rec: StudyRecord, student: StudentProfile, day: number): void {
+  const point = { day, value: forecast(student, rec).value };
+  if (rec.forecasts.at(-1)?.day === day) rec.forecasts[rec.forecasts.length - 1] = point;
+  else rec.forecasts.push(point);
 }

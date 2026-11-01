@@ -1,4 +1,5 @@
 import type { Evidence, Mastery, StudentProfile } from '../live/types';
+import { standing } from '../live/study/estimate';
 import { COMPLEX, STUDENTS, groupOf, type Status } from './classroom';
 import { CONCEPTS, type ConceptId } from './knowledgeGraph';
 import { MASTERY_INITIAL, MINH_ANH } from './minhAnh';
@@ -148,6 +149,7 @@ export function buildRoster(): StudentProfile[] {
       quiz,
       practicePerWeek: isMinhAnh ? 1.5 : quirk?.practicePerWeek ?? Math.round((1 + s.mastery * 3) * 10) / 10,
       evidence,
+      pastForecast: [{ day: 17, value: standing({ mastery }, quiz.q1) }, { day: 38, value: standing({ mastery }, quiz.q2) }],
     };
   });
 }

@@ -8,7 +8,7 @@ import { applyCheck, openPathways } from './capacity';
 import { reviewCard } from './cards';
 import { forecast } from './estimate';
 import { markFor } from './marks';
-import { ensureRecord, logMinutes, MINUTES } from './record';
+import { ensureRecord, logMinutes, MINUTES, noteForecast } from './record';
 import { nextItem } from './select';
 import { detectSignal } from './signals';
 import { todayList } from './today';
@@ -128,6 +128,7 @@ export function advance(state: DemoState, days: number, check: StudyDay['check']
       if (!swing || Math.abs(mark - previous) > Math.abs(swing.mark - swing.previous)) swing = { mark, previous };
     }
     s.day += 1;
+    noteForecast(rec, student, s.day);
   }
   s.clock = MORNING;
   s.phone = { ...s.phone, ...NO_PRACTICE, screen: 'lock', morning: true };
@@ -154,5 +155,6 @@ export function applyPlan(s: DemoState, studentId: string, plan: StudyPlan, sign
   const rec = s.study[studentId];
   Object.assign(rec, { plan, planning: null, lastReplanDay: s.day });
   rec.band = forecast(studentById(s, studentId)!, rec).band;
+  noteForecast(rec, studentById(s, studentId)!, s.day);
   rec.replans.push({ day: s.day, signal, reason: plan.reason });
 }

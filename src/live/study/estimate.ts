@@ -59,3 +59,10 @@ export function projection(student: StudentProfile, rec: StudyRecord | null | un
   const cover = need > 0 ? Math.min(1, planned / need) : 0;
   return round1(Math.min(10, now + MAX_GAIN * cover * doneRate(rec, today)));
 }
+
+/** Seeded points, then the recorded ones; a recorded point wins on the same day. */
+export function forecastSeries(student: StudentProfile, rec?: StudyRecord | null): { day: number; value: number }[] {
+  const byDay = new Map(student.pastForecast.map((p) => [p.day, p.value]));
+  for (const p of rec?.forecasts ?? []) byDay.set(p.day, p.value);
+  return [...byDay].sort((a, b) => a[0] - b[0]).map(([day, value]) => ({ day, value }));
+}

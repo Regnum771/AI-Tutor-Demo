@@ -34,6 +34,8 @@ export interface StudentProfile {
   quiz: { q1: number; q2: number };
   practicePerWeek: number;
   evidence: Evidence[];
+  /** Seeded forecast points (out of 10) on the days of Quiz 1 and Quiz 2. */
+  pastForecast: { day: number; value: number }[];
 }
 
 export type PlanKind = 'pathway' | 'classActivity' | 'checkIns';
@@ -162,6 +164,8 @@ export interface StudyRecord {
   pendingSignal: ReplanSignal | null;
   lastReplanDay: number | null;
   replans: { day: number; signal: ReplanSignal; reason: string }[];
+  /** Forecast points (out of 10): one per plan applied and per closed day. */
+  forecasts: { day: number; value: number }[];
   /** Agent steps while a plan is being written. */
   planning: { steps: string[] } | null;
 }

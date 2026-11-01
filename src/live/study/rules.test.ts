@@ -7,9 +7,9 @@ import { seedState } from '../seed';
 import type { DemoState, StudentProfile } from '../types';
 import { applyCheck, capacityFor, capacityLeft, shortOfTime, teacherMinutes } from './capacity';
 import { NEW_PER_DAY, cardsToday, reviewCard } from './cards';
-import { bandOf, cloMastery, forecast, minutesNeeded, projection } from './estimate';
+import { bandOf, cloMastery, forecast, forecastSeries, minutesNeeded, projection } from './estimate';
 import { markFor } from './marks';
-import { ensureRecord, newRecord, noteAttempt } from './record';
+import { ensureRecord, newRecord, noteAttempt, noteForecast } from './record';
 import { SELF_SESSION, nextItem } from './select';
 import { detectSignal, mayReplan, nextReplan } from './signals';
 import { todayList } from './today';
@@ -376,5 +376,22 @@ describe('replan signals', () => {
 describe('start', () => {
   it('uses the story start day', () => {
     expect(seedState().day).toBe(START_DAY);
+  });
+});
+
+describe('forecast history', () => {
+  it('every student starts with Quiz 1 and Quiz 2 points', () => {
+    const st = student(seedState(), 's2');
+    expect(st.pastForecast.map((p) => p.day)).toEqual([17, 38]);
+    expect(forecastSeries(st)).toEqual(st.pastForecast);
+  });
+  it('a recorded point replaces one already there for the day', () => {
+    const { s, rec } = setup();
+    const st = student(s);
+    noteForecast(rec, st, 40);
+    st.mastery.implication = 0.9;
+    noteForecast(rec, st, 40);
+    expect(rec.forecasts).toEqual([{ day: 40, value: forecast(st, rec).value }]);
+    expect(forecastSeries(st, rec).map((p) => p.day)).toEqual([17, 38, 40]);
   });
 });
