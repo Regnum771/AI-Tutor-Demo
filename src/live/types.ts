@@ -15,7 +15,7 @@ export interface Evidence {
   /** Story-time label, e.g. "Week 6" or "17:04". */
   when: string;
   concept?: ConceptId;
-  /** Live practice only: how the answer went, and the teacher plan it belonged to (none for self-practice). Scripted screens never read these. */
+  /** Live practice only: how the answer went, and the teacher plan it belonged to (none for self-practice). Scripted screens never read these, and agents do not see them (get_evidence strips them). */
   result?: 'correct' | 'wrong' | 'skipped';
   planId?: string;
 }

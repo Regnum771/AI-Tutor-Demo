@@ -124,6 +124,15 @@ describe('the story stops at the exam', () => {
     s.plans[0].date = 67;
     expect(ok(phoneOpen(s, 0)).day).toBe(64);
   });
+  it('a second open on the exam day keeps the clock', () => {
+    const s = ok(approvePlan(stateWithPlan(), 'p1'));
+    s.plans[0].date = 67;
+    const first = ok(phoneOpen(s, 0));
+    first.clock = 10 * 60;
+    const again = ok(phoneOpen(first, 0));
+    expect(again.day).toBe(64);
+    expect(again.clock).toBe(10 * 60);
+  });
 });
 
 describe('dates', () => {

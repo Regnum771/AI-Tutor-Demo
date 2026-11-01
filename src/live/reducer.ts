@@ -115,7 +115,7 @@ export function phoneShowPlan(state: DemoState): Result {
 
 /** Opening a session moves the story to it: forward to its date, then forward to its time. */
 function moveClockTo(s: DemoState, plan: Plan, time: string) {
-  if (plan.date > s.day) {
+  if (plan.date > s.day && s.day < EXAM_DAY) {
     s.day = Math.min(EXAM_DAY, plan.date);
     s.clock = 0;
   }

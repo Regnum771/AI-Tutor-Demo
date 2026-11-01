@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { seedState } from '../../src/live/seed';
 import { ensureRecord } from '../../src/live/study/record';
+import { approvePlan, phoneAnswer, phoneOpen, type Result } from '../../src/live/reducer';
+import { stateWithPlan } from '../../src/live/fixtures';
+import type { DemoState } from '../../src/live/types';
 import { READ_TOOLS, readLabel, readTool } from './tools';
+
+const ok = (r: Result): DemoState => {
+  if (!r.ok) throw new Error(r.error);
+  return r.state;
+};
 
 const state = seedState();
 const find = (input: Record<string, unknown>) =>
@@ -38,6 +46,15 @@ describe('read tools', () => {
     expect(readTool(state, 'get_evidence', { student_id: 's17', kind: 'message' })).toHaveLength(2);
     expect(readTool(state, 'get_evidence', { student_id: 's17', kind: '' })).toHaveLength(8);
     expect(readTool(state, 'compare_students', { student_ids: ['s17', 's29'] })).toHaveLength(2);
+  });
+  it('evidence for agents leaves out the phone-only result and planId', () => {
+    const s = ok(phoneAnswer(ok(phoneOpen(ok(approvePlan(stateWithPlan(), 'p1')), 0)), 0));
+    const practice = readTool(s, 'get_evidence', { student_id: 's17', kind: 'practice' }) as Record<string, unknown>[];
+    expect(practice.length).toBeGreaterThan(0);
+    for (const e of practice) {
+      expect(e).not.toHaveProperty('result');
+      expect(e).not.toHaveProperty('planId');
+    }
   });
   it('labels each call as a thinking line', () => {
     expect(readLabel(state, 'get_class_overview', {})).toBe('Student Analysis Agent · reading the class overview');
