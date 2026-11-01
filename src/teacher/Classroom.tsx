@@ -52,6 +52,8 @@ const BAND: Record<Band, { label: string; cell: string; mark: string }> = {
 };
 /** Fixed risk colour (egg-risk, #FF5B1F) for the High risk pulse ring and the gap heatmap. */
 const risk = (a: number) => `rgb(255 91 31 / ${a})`;
+/** The heatmap's scale: the more orange, the bigger the gap (none at 0.90, full at 0.40 and below). */
+export const gapFill = (v: number): string => `color-mix(in oklab, ${risk(1)} ${Math.max(0, Math.min(1, (0.9 - v) / 0.5)) * 100}%, ${egg('card')})`;
 const BANDS: Band[] = ['highRisk', 'personal', 'support', 'onTrack'];
 /** Every student on a routine, adaptive or teacher-led track. */
 const RUNNING_TOTAL = STUDENTS.filter((s) => s.track !== 'none').length;
@@ -232,7 +234,6 @@ const liveHeatmap = (students: StudentProfile[]) => ({
 
 /** Topic × group mastery. One fixed hue in every theme: the more orange, the bigger the gap. Values are always printed. */
 function Heatmap({ compact, topics = TOPICS, rows = HEATMAP }: { compact: boolean; topics?: string[]; rows?: number[][] }) {
-  const tint = (v: number) => Math.max(0, Math.min(1, (0.9 - v) / 0.5)) * 100;
   return (
     <section data-heatmap>
       <div className="flex items-baseline justify-between border-b border-egg-ink/80 pb-2">
@@ -255,7 +256,7 @@ function Heatmap({ compact, topics = TOPICS, rows = HEATMAP }: { compact: boolea
                   key={c}
                   title={`${t} · ${GROUPS[c]}: ${v.toFixed(2)} mastery`}
                   className={`${compact ? 'h-7' : 'h-8'} rounded-md text-center font-mono tabular-nums text-egg-ink ${v < 0.5 ? 'font-bold' : ''}`}
-                  style={{ background: `color-mix(in oklab, ${risk(1)} ${tint(v)}%, ${egg('card')})` }}
+                  style={{ background: gapFill(v) }}
                 >
                   {v.toFixed(2)}
                 </td>
