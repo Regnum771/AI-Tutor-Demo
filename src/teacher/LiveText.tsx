@@ -7,7 +7,8 @@ export const panelForEvidence = (id: string): LivePanel =>
   id.startsWith('class-') ? { kind: 'class', planId: null, highlight: id } : { kind: 'student', studentId: id.split('-')[0], planId: null, highlight: id };
 
 /** A live answer block: `**bold**` spans, then one chip per cited evidence entry. */
-export function LiveText({ block }: { block: LiveBlock }) {
+/** `quoted` lists evidence ids already quoted in earlier blocks of the same answer; they get no second card. */
+export function LiveText({ block, quoted = [] }: { block: LiveBlock; quoted?: string[] }) {
   const live = useLive();
   const source = (id: string) => {
     const list = id.startsWith('class-') ? live?.state.classEvidence : live?.state.students.find((s) => s.id === id.split('-')[0])?.evidence;
@@ -19,7 +20,8 @@ export function LiveText({ block }: { block: LiveBlock }) {
     else live.openProfile(id.split('-')[0], id);
   };
   const studentOf = (id: string) => live?.state.students.find((s) => s.id === id.split('-')[0]);
-  const quotes = block.cites
+  const quotes = [...new Set(block.cites)]
+    .filter((id) => !quoted.includes(id))
     .flatMap((id) => {
       const e = id.startsWith('class-') ? undefined : studentOf(id)?.evidence.find((x) => x.id === id);
       return e?.kind === 'message' ? [e] : [];
@@ -32,9 +34,9 @@ export function LiveText({ block }: { block: LiveBlock }) {
           ? <strong key={i} className="font-semibold text-egg-ink">{part.slice(2, -2)}</strong>
           : <span key={i}>{part}</span>,
       )}
-      {block.cites.map((id) => (
+      {block.cites.map((id, i) => (
         <button
-          key={id}
+          key={`${id}:${i}`}
           type="button"
           data-cite={id}
           onClick={() => open(id)}

@@ -99,3 +99,16 @@ describe('what students are asking', () => {
     expect(dialog(m.el)!.querySelector('[data-entry="s17-zalo-1"]')).not.toBeNull();
   });
 });
+
+describe('quotes across blocks', () => {
+  it('quotes a message once per answer, in the first block that cites it', async () => {
+    const s = stateWithPlan();
+    const answer = s.conversations[0].msgs[1];
+    if (answer.role === 'assistant') {
+      answer.blocks[0].cites = ['s17-zalo-1', 's17-zalo-1'];
+      answer.blocks[1].cites = ['s17-zalo-1'];
+    }
+    const m = await mount(s);
+    expect(m.el.querySelectorAll('[data-quote="s17-zalo-1"]')).toHaveLength(1);
+  });
+});

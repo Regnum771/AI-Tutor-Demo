@@ -66,7 +66,7 @@ const blocksOf = (m: FrameMsg): Block[] => {
 const liveBlocks = (m: LiveAssistant): Block[] =>
   m.canned === 'fallback' ? FALLBACK
     : m.canned ? TOPICS[m.canned].answer
-    : m.blocks.map((b) => ({ kind: b.kind, body: <LiveText block={b} /> }));
+    : m.blocks.map((b, i) => ({ kind: b.kind, body: <LiveText block={b} quoted={m.blocks.slice(0, i).flatMap((p) => p.cites)} /> }));
 
 /** The opening screen's three figures, from live state. */
 const liveFigures = (s: DemoState): string[] => {
