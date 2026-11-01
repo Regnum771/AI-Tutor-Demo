@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup as html } from 'react-dom/server';
 import { stateWithPlan } from '../live/fixtures';
+import { seedState } from '../live/seed';
+import { ensureRecord } from '../live/study/record';
+import { startSelf } from '../live/study/reducer';
 import { approvePlan, phoneAnswer, phoneOpen, type Result } from '../live/reducer';
 import type { DemoState } from '../live/types';
 import { Q1 } from '../scenario/practice';
@@ -56,5 +59,22 @@ describe('live phone screens', () => {
     expect(right).toContain('>Next<');
     expect(right).toContain('Show the next step');
     expect(right).toContain('¬(p → q)');
+  });
+});
+
+describe('self-started practice', () => {
+  const self = () => {
+    const s = seedState();
+    const rec = ensureRecord(s, 's17');
+    rec.reported = { weekday: 30, weekend: 60 };
+    s.phone.studentId = 's17';
+    const r = startSelf(s, 'CLO1');
+    if (!r.ok) throw new Error(r.error);
+    return r.state;
+  };
+  it('shows the Bloom level and counts to 5', () => {
+    const out = html(<LivePractice state={self()} onAnswer={() => {}} onNext={() => {}} />);
+    expect(out).toContain('Practice · Understand');
+    expect(out).toContain('1 / 5');
   });
 });

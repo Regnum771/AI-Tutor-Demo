@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SELF_SESSION } from '../../live/study/select';
 import { currentItems, planById } from '../../live/reducer';
 import type { DemoState } from '../../live/types';
 import { conceptById } from '../../scenario/knowledgeGraph';
@@ -12,19 +13,21 @@ export function LivePractice({ state, onAnswer, onNext }: { state: DemoState; on
   const plan = planById(state, ph.planId);
   const items = currentItems(state);
   const item = items[ph.item];
-  if (!plan || ph.session === null || !item) return null;
-  const session = plan.sessions[ph.session];
+  const session = !ph.self && plan && ph.session !== null ? plan.sessions[ph.session] : null;
+  if (!item || (!ph.self && !session)) return null;
   const right = ph.result === 'right';
   const guided = right ? item.guided : undefined;
-  const last = ph.item + 1 >= items.length;
+  const total = ph.self ? SELF_SESSION : items.length;
+  const last = ph.item + 1 >= total;
+  const heading = session ? (session.isMasteryCheck ? 'Mastery check' : 'Guided practice') : `Practice · ${item.bloom}`;
   return (
     <div className="absolute inset-0 overflow-y-auto bg-egg-bg px-5 pb-8 pt-14 font-sans text-egg-ink">
       <div className="flex items-center justify-between text-[13px] text-egg-mute">
-        <span>{`${session.isMasteryCheck ? 'Mastery check' : 'Guided practice'} · ${conceptById(item.concept).label}`}</span>
-        <span>{`${ph.item + 1} / ${items.length}`}</span>
+        <span>{`${heading} · ${conceptById(item.concept).label}`}</span>
+        <span>{`${ph.item + 1} / ${total}`}</span>
       </div>
       <div className="mt-2 h-1.5 rounded-full bg-egg-line">
-        <div className="h-full rounded-full bg-egg-accent" style={{ width: `${((ph.item + (right ? 1 : 0)) / items.length) * 100}%` }} />
+        <div className="h-full rounded-full bg-egg-accent" style={{ width: `${((ph.item + (right ? 1 : 0)) / total) * 100}%` }} />
       </div>
       <div className="mt-6 font-display text-[21px] font-bold leading-snug text-egg-ink [text-wrap:balance]">{item.prompt}</div>
       <div className="mt-4 space-y-2.5">
@@ -32,7 +35,7 @@ export function LivePractice({ state, onAnswer, onNext }: { state: DemoState; on
           const look = right && i === item.correct ? 'right' : ph.result === 'wrong' && i === ph.lastOption ? 'wrong' : 'idle';
           return (
             <button
-              key={o}
+              key={i}
               type="button"
               disabled={right}
               onClick={() => onAnswer(i)}
@@ -73,7 +76,7 @@ export function LivePractice({ state, onAnswer, onNext }: { state: DemoState; on
       )}
       {right && (
         <button type="button" onClick={onNext} className="mt-5 w-full rounded-full bg-egg-ink py-3 text-[15px] font-semibold text-egg-card">
-          {last ? (session.isMasteryCheck ? 'Finish mastery check' : 'Finish session') : 'Next'}
+          {last ? (session ? (session.isMasteryCheck ? 'Finish mastery check' : 'Finish session') : 'Finish practice') : 'Next'}
         </button>
       )}
     </div>

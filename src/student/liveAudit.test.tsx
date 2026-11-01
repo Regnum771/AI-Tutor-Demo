@@ -3,6 +3,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { stateWithPlan } from '../live/fixtures';
+import { seedState } from '../live/seed';
+import { ensureRecord } from '../live/study/record';
 import { approvePlan, phoneAnswer, phoneNext, phoneOpen, phoneShowPlan, phoneSkip, type Result } from '../live/reducer';
 import type { DemoSource } from '../live/source';
 import type { DemoState } from '../live/types';
@@ -22,6 +24,17 @@ const progress = () => {
   for (const item of sessionItems('equivalence', true)) s = ok(phoneNext(ok(phoneAnswer(s, item.correct))));
   return s;
 };
+const study = (screen: DemoState['phone']['screen'], over: Partial<DemoState['phone']> = {}) => () => {
+  const s = seedState();
+  const rec = ensureRecord(s, 's17');
+  rec.reported = { weekday: 30, weekend: 60 };
+  rec.plan = {
+    createdDay: 40, reason: 'Implication first.', leftOut: [], source: 'agents',
+    days: Array.from({ length: 24 }, (_, i) => ({ day: 40 + i, minutes: 20, clo: 'CLO1' as const, concepts: ['implication' as const] })),
+  };
+  s.phone = { ...s.phone, studentId: 's17', screen, ...over };
+  return s;
+};
 const STATES: [string, () => DemoState][] = [
   ['lock with a plan', sent],
   ['plan', () => ok(phoneShowPlan(sent()))],
@@ -29,6 +42,15 @@ const STATES: [string, () => DemoState][] = [
   ['practice after a wrong answer', () => ok(phoneAnswer(practice(), 0))],
   ['practice after a right answer', () => ok(phoneAnswer(practice(), 1))],
   ['progress', progress],
+  ['idle lock', seedState],
+  ['morning lock', study('lock', { morning: true })],
+  ['pick', () => ({ ...seedState(), phone: { ...seedState().phone, screen: 'pick' as const } })],
+  ['setup', () => { const s = study('setup')(); s.study.s17.reported = null; return s; }],
+  ['today', study('today')],
+  ['choose practice', study('choosePractice')],
+  ['cards', study('cards')],
+  ['semester', study('semester')],
+  ['check-in', study('checkIn')],
 ];
 
 let root: Root | null = null;
