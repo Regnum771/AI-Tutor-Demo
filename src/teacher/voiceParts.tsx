@@ -3,6 +3,9 @@ import { lectureLabel, shortDate } from '../scenario/course';
 import { voiceFor } from '../scenario/voice';
 import { egg } from '../ui/theme';
 
+/** The highlight on a cited entry. Both properties: happy-dom drops the `background` shorthand, and the SSR tests match `style="background:`. */
+export const LIT = { background: egg('accent', 0.18), backgroundColor: egg('accent', 0.18) };
+
 /** "Zalo · Wed 21 Oct · 21:40 · 1 day after Lecture 5": where and when an entry came from. */
 export function metaOf(e: Evidence): string {
   const when = e.day !== undefined && e.time ? `${shortDate(e.day)} · ${e.time} · ${lectureLabel(e.day, e.time)}` : e.when;
@@ -23,7 +26,7 @@ export function Words({ e }: { e: Evidence }) {
 
 export function MessageRow({ e, lit, rowRef }: { e: Evidence; lit: boolean; rowRef?: (el: HTMLLIElement | null) => void }) {
   return (
-    <li ref={rowRef} data-entry={e.id} className="py-2.5" style={lit ? { background: egg('accent', 0.18) } : undefined}>
+    <li ref={rowRef} data-entry={e.id} className="py-2.5" style={lit ? LIT : undefined}>
       <span className="block font-mono text-[10.5px] uppercase tracking-wide text-egg-mute">{metaOf(e)}</span>
       <Words e={e} />
     </li>

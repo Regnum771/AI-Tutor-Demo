@@ -3,12 +3,11 @@ import { useLive } from '../live/LiveContext';
 import { forecast, forecastSeries, projection } from '../live/study/estimate';
 import type { StudentProfile as Profile } from '../live/types';
 import { ASSESSMENTS, EXAM_DAY, shortDate } from '../scenario/course';
-import { egg } from '../ui/theme';
 import { ForecastChart, type ChartMarker } from './ForecastChart';
 import { EvidenceList } from './LivePanel';
 import { Avatar, Button, Eyebrow } from './parts';
 import { chatsAbout, interventionsOf, messagesOf, practiceSessions, PROFILE_TABS, tabFor, type ProfileTab } from './profile';
-import { MessageRow } from './voiceParts';
+import { LIT, MessageRow } from './voiceParts';
 
 const SHORT: Record<string, string> = { quiz1: 'Quiz 1', a1: 'A1', quiz2: 'Quiz 2', a2: 'A2', quiz3: 'Quiz 3', exam: 'Exam' };
 
@@ -76,7 +75,7 @@ export function StudentProfile({ studentId, entryId, onClose, onAsk, onOpenChat 
             {list.map((p) => {
               const on = entryId !== null && p.entryIds.includes(entryId);
               return (
-                <li key={p.key} ref={on ? (el) => { hi.current = el; } : undefined} data-entry={on ? entryId : undefined} className="py-2.5" style={on ? { background: egg('accent', 0.18) } : undefined}>
+                <li key={p.key} ref={on ? (el) => { hi.current = el; } : undefined} data-entry={on ? entryId : undefined} className="py-2.5" style={on ? LIT : undefined}>
                   <span className="block font-mono text-[10.5px] uppercase tracking-wide text-egg-mute">{`${shortDate(p.day)} · ${p.concepts.join(', ')}`}</span>
                   <span className="block text-[14px] font-semibold text-egg-ink">{p.title}</span>
                   <span className="block text-[12.5px] text-egg-mute">{`${p.right} right · ${p.wrong} wrong tr${p.wrong === 1 ? 'y' : 'ies'}${p.skipped ? ` · ${p.skipped} skipped` : ''}`}</span>

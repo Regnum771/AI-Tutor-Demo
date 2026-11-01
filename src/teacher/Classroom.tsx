@@ -156,6 +156,7 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
                     type="button"
                     onClick={() => pick(s.index)}
                     title={`${s.name} · ${BAND[b].label} · mastery ${mastery.toFixed(2)}`}
+                    // Marks the student whose pop-up is open; also keeps the click audit from re-clicking it behind the modal.
                     aria-current={live?.profileId === s.id ? 'true' : undefined}
                     className={`flex ${tileH} flex-col justify-between rounded-xl border p-2 text-left ${BAND[b].cell} ${dim ? 'opacity-20' : ''} ${cls.selected === s.index ? 'outline outline-2 outline-offset-2 outline-egg-ink' : ''}`}
                     style={glow ? { boxShadow: `0 0 0 ${2 + 6 * cls.pulse}px ${risk(0.35 + 0.4 * cls.pulse)}` } : undefined}
@@ -187,6 +188,7 @@ export function Classroom({ cls, studentApproved = false, actions }: ClassroomPr
                       const s = students[r.index];
                       return (
                         <li key={r.index}>
+                          {/* aria-current marks the student whose pop-up is open; also keeps the click audit from re-clicking it behind the modal. */}
                           <button type="button" onClick={() => pick(r.index)} aria-current={live?.profileId === s.id ? 'true' : undefined} className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-egg-card/60">
                             <Avatar name={s.name} size={30} accent={r.index === MINH_ANH.index} />
                             <span className="min-w-0 flex-1">

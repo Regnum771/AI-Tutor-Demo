@@ -6,8 +6,8 @@ import type { DemoState, Evidence, LivePanel, Plan, StudentProfile } from '../li
 import { GROUPS } from '../scenario/classroom';
 import { shortDate } from '../scenario/course';
 import { conceptById } from '../scenario/knowledgeGraph';
-import { egg } from '../ui/theme';
 import { Avatar, Button, Eyebrow, LevelChip, Mark, Meter, Section } from './parts';
+import { LIT } from './voiceParts';
 
 const APPROVE: Record<Plan['kind'], string> = { pathway: 'Approve & send', classActivity: 'Approve plan', checkIns: 'Book all' };
 const EYEBROW: Record<Plan['kind'], string> = { pathway: 'Proposed pathway', classActivity: 'Proposed class activity', checkIns: 'Proposed check-ins' };
@@ -94,7 +94,7 @@ export function EvidenceList({ entries, highlight }: { entries: Evidence[]; high
   return (
     <ul className="divide-y divide-egg-line">
       {[...entries].reverse().map((e) => (
-        <li key={e.id} ref={e.id === highlight ? hi : undefined} className="grid grid-cols-[96px_1fr] gap-3 py-2" style={e.id === highlight ? { background: egg('accent', 0.18), backgroundColor: egg('accent', 0.18) } : undefined} data-evidence={e.id}>
+        <li key={e.id} ref={e.id === highlight ? hi : undefined} className="grid grid-cols-[96px_1fr] gap-3 py-2" style={e.id === highlight ? LIT : undefined} data-evidence={e.id}>
           <span className="font-mono text-[10.5px] uppercase leading-[18px] tracking-wide text-egg-mute">{e.source}</span>
           <span className="text-[13.5px] text-egg-ink">
             {e.text}
