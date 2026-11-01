@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { stateWithPlan } from '../live/fixtures';
-import { approvePlan } from '../live/reducer';
+import { approvePlan, type Result } from '../live/reducer';
 import { seedState } from '../live/seed';
 import { ensureRecord } from '../live/study/record';
 import { reviewCard } from '../live/study/cards';
@@ -8,6 +8,10 @@ import type { DemoState, StudyPlan } from '../live/types';
 import { CARDS } from '../scenario/cards';
 import { cardsView, morningCopy, pickList, practiseView, rowLabel, semesterView, todayView } from './studyView';
 
+const ok = (r: Result): DemoState => {
+  if (!r.ok) throw new Error(r.error);
+  return r.state;
+};
 const PLAN: StudyPlan = {
   createdDay: 40, reason: 'Implication first.', leftOut: ['Evaluate-level questions'], source: 'agents',
   days: Array.from({ length: 24 }, (_, i) => ({ day: 40 + i, minutes: 20, clo: 'CLO1' as const, concepts: ['implication' as const] })),
@@ -45,6 +49,18 @@ describe('study views', () => {
     expect(morningCopy(s)?.body).toContain('Quiz 3 tomorrow');
     s.phone.morning = false;
     expect(morningCopy(s)).toBeNull();
+  });
+  it('morning copy shows no minutes on the exam day and puts a lecturer session first', () => {
+    const s = ready();
+    s.phone.morning = true;
+    s.day = 64;
+    expect(morningCopy(s)?.body).toBe('Final exam today');
+    const t = ok(approvePlan(stateWithPlan(), 'p1'));
+    ensureRecord(t, 's17').reported = { weekday: 30, weekend: 60 };
+    t.study.s17.plan = PLAN;
+    t.plans[0].date = t.day;
+    t.phone = { ...t.phone, studentId: 's17', screen: 'lock', morning: true };
+    expect(morningCopy(t)?.body).toMatch(/^2 sessions from your lecturer · /);
   });
   it('shows each CLO with the student’s Bloom level', () => {
     const s = ready();

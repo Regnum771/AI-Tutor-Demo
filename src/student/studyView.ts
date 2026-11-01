@@ -98,12 +98,14 @@ export function morningCopy(state: DemoState): { title: string; body: string } |
   const { budget, rows } = todayList(state, r.id);
   const cards = rows.find((x) => x.kind === 'cards');
   const practice = rows.find((x) => x.kind === 'practice');
+  const sessions = rows.filter((x) => x.kind === 'plan').length;
+  const lecturer = sessions > 0 ? `${sessions} session${sessions === 1 ? '' : 's'} from your lecturer` : null;
   const work = [
     cards?.kind === 'cards' ? `${cards.count} cards` : null,
     practice?.kind === 'practice' ? `${conceptById(practice.concepts[0]).label.toLowerCase()} practice` : null,
   ].filter(Boolean).join(', ');
   const next = nextAssessment(state.day);
-  return { title: 'Today’s calendar', body: [`${budget} min`, work, next && countdown(next, state.day)].filter(Boolean).join(' · ') };
+  return { title: 'Today’s calendar', body: [lecturer, state.day >= EXAM_DAY ? null : `${budget} min`, work, next && countdown(next, state.day)].filter(Boolean).join(' · ') };
 }
 
 export function practiseView(state: DemoState): PractiseRow[] {

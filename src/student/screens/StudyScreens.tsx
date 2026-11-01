@@ -71,13 +71,16 @@ function Minutes({ label, value, onChange }: { label: string; value: string; onC
 export function SetupScreen({ onSave }: { onSave(weekday: number, weekend: number): void }) {
   const [weekday, setWeekday] = useState('30');
   const [weekend, setWeekend] = useState('60');
+  const valid = (v: string) => v.trim() !== '' && Number(v) >= 5 && Number(v) <= 240;
+  const good = valid(weekday) && valid(weekend);
   return (
     <div className={PLAIN}>
       <div className="text-[28px] font-bold">How much time do you have?</div>
       <div className="mt-1 text-[14px] text-egg-mute">Your plan will fit this, then learn from what you really do.</div>
       <Minutes label="Minutes on a weekday" value={weekday} onChange={setWeekday} />
       <Minutes label="Minutes on a weekend day" value={weekend} onChange={setWeekend} />
-      <button type="button" onClick={() => onSave(Number(weekday), Number(weekend))} className={`${PRIMARY} mt-6`}>Build my plan</button>
+      {!good && <div className="mt-3 text-[13.5px] text-egg-mute">Enter 5 to 240 minutes.</div>}
+      <button type="button" disabled={!good} onClick={() => onSave(Number(weekday), Number(weekend))} className={`${PRIMARY} mt-6 disabled:opacity-40`}>Build my plan</button>
     </div>
   );
 }
@@ -202,8 +205,8 @@ export function SemesterScreen({ view }: { view: SemesterView }) {
       {view.changes.length > 0 && (
         <section className="mt-5">
           <Eyebrow>Why this changed</Eyebrow>
-          {view.changes.map((c) => (
-            <div key={`${c.date}:${c.why}`} className="mt-2 rounded-2xl bg-egg-tint p-3 text-[14px] leading-snug">
+          {view.changes.map((c, i) => (
+            <div key={i} className="mt-2 rounded-2xl bg-egg-tint p-3 text-[14px] leading-snug">
               <div className="font-semibold">{`${c.date} · ${c.why}`}</div>
               <div className="text-egg-mute">{c.reason}</div>
             </div>

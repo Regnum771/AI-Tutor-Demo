@@ -37,7 +37,7 @@ export function pickStudent(state: DemoState, id: string): StudyResult {
   const s = structuredClone(state);
   const rec = ensureRecord(s, id);
   const open = openPathways(s, id);
-  const plan = open.find((p) => p.date === s.day) ?? open.at(-1) ?? null;
+  const plan = open.filter((p) => p.date <= s.day).at(-1) ?? open.at(-1) ?? null;
   s.phone = { ...IDLE_PHONE, done: plan && plan.id === s.phone.planId ? s.phone.done : [], planId: plan?.id ?? null, studentId: id, screen: rec.reported ? 'today' : 'setup' };
   return done(s);
 }

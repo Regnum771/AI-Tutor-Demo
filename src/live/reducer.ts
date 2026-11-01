@@ -147,6 +147,7 @@ export function phoneAnswer(state: DemoState, option: number): Result {
   const item = currentItems(s)[s.phone.item];
   if (!item) return fail('No item to answer.');
   if (s.phone.result === 'right') return fail('Already answered.');
+  if (s.phone.result === 'wrong' && s.phone.lastOption === option) return fail('Already tried that one.');
   if (!Number.isInteger(option) || option < 0 || option >= item.options.length) return fail('No such option.');
   const student = studentById(s, s.phone.self ? s.phone.studentId! : planById(s, s.phone.planId)!.studentIds[0])!;
   const correct = option === item.correct;

@@ -45,7 +45,21 @@ export function LivePhoneView({ source }: { source: DemoSource }) {
   const progress = progressView(state);
   const morning = morningCopy(state);
   const message = morning ?? notificationCopy(state) ?? (ph.studentId ? null : IDLE_COPY);
-  const send = (path: string, body?: unknown) => void post(path, body);
+  const inFlight = useRef(false);
+  // One tap, one request: a repeat while the reply is pending is ignored.
+  const send = (path: string, body?: unknown) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    void (async () => {
+      try {
+        await post(path, body);
+      } catch {
+        // a failed post leaves the phone as it was
+      } finally {
+        inFlight.current = false;
+      }
+    })();
+  };
   const tapLock = () => {
     if (morning) send('study/tab', { tab: 'today' });
     else if (ph.planId) send('phone/plan');
@@ -59,7 +73,7 @@ export function LivePhoneView({ source }: { source: DemoSource }) {
   };
   const today = ph.screen === 'today' ? todayView(state) : null;
   const semester = ph.screen === 'semester' ? semesterView(state) : null;
-  const cards = cardsView(state);
+  const cards = ph.screen === 'cards' ? cardsView(state) : null;
   return (
     <Stage width={390} height={844} background="#F2EDE4">
       {ph.screen === 'lock' && (
@@ -76,7 +90,7 @@ export function LivePhoneView({ source }: { source: DemoSource }) {
       {ph.screen === 'setup' && <SetupScreen onSave={(weekday, weekend) => send('study/setup', { weekday, weekend })} />}
       {today && <TodayScreen view={today} onRow={openRow} onNextDay={() => send('study/check-in')} onNextWeek={() => send('study/next-week')} />}
       {ph.screen === 'choosePractice' && <PractiseScreen rows={practiseView(state)} onStart={(clo) => send('study/practice', { clo })} />}
-      {ph.screen === 'cards' && <CardsScreen key={cards.card?.id ?? 'none'} card={cards.card} left={cards.left} onRate={(rating) => send('study/rate', { cardId: cards.card!.id, rating })} />}
+      {cards && <CardsScreen key={cards.card?.id ?? 'none'} card={cards.card} left={cards.left} onRate={(rating) => send('study/rate', { cardId: cards.card!.id, rating })} />}
       {semester && <SemesterScreen view={semester} />}
       {ph.screen === 'checkIn' && <CheckInScreen onAnswer={(check) => send('study/next-day', { check })} onBack={() => tab('today')} />}
       {TAB_SCREENS.includes(ph.screen) && <TabBar active={ph.screen as StudyTab} onTab={tab} />}

@@ -77,6 +77,15 @@ describe('phone flow', () => {
     expect(ma(s).evidence.at(-1)).toMatchObject({ kind: 'practice', concept: 'implication', when: '15:30' });
     expect(phoneAnswer(s, 1).ok).toBe(false);
   });
+  it('tapping the same wrong option again is not a new attempt; a different wrong option is', () => {
+    let s = ok(phoneOpen(sent(), 0));
+    const item = currentItems(s)[0];
+    const wrongs = item.options.map((_, i) => i).filter((i) => i !== item.correct);
+    s = ok(phoneAnswer(s, wrongs[0]));
+    expect(phoneAnswer(s, wrongs[0]).ok).toBe(false);
+    const again = ok(phoneAnswer(s, wrongs[1]));
+    expect(ma(again).evidence.length).toBe(ma(s).evidence.length + 1);
+  });
   it('finishing a practice session returns to the plan; finishing the check reports it', () => {
     let s = ok(phoneOpen(sent(), 0));
     for (const item of sessionItems('implication', false)) {

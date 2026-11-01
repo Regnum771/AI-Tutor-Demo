@@ -7,6 +7,7 @@ import { seedState } from '../seed';
 import type { DemoState } from '../types';
 import { ensureRecord, noteAttempt } from './record';
 import { advance, applyPlan, openCheckIn, openPick, pickStudent, rateCard, saveSetup, showTab, simulateDrop, startSelf, type StudyResult } from './reducer';
+import { capacityFor, capacityLeft } from './capacity';
 import { todayList } from './today';
 
 const ok = (r: Result | StudyResult): DemoState => {
@@ -271,5 +272,36 @@ describe('picking a student chooses the plan for today', () => {
     s.plans.push(planFor('pathway', { id: 'pa', status: 'sent', date: s.day, studentIds: ['s17'] }));
     s.plans.push(planFor('pathway', { id: 'pb', status: 'sent', date: s.day + 1, studentIds: ['s17'] }));
     expect(ok(pickStudent(s, 's17')).phone.planId).toBe('pa');
+  });
+});
+
+describe('an overdue teacher session stays on Today', () => {
+  const overdue = () => {
+    const s = ok(approvePlan(stateWithPlan(), 'p1'));
+    ensureRecord(s, 's17').reported = { weekday: 60, weekend: 60 };
+    s.study.s17.plan = planned(ready()).study.s17.plan;
+    s.plans[0].date = 40;
+    s.day = 40;
+    return s;
+  };
+  it('shows its rows, takes its minutes off capacity and opens, once its date has passed', () => {
+    const s = { ...overdue(), day: 41 };
+    expect(todayList(s, 's17').rows.some((r) => r.kind === 'plan')).toBe(true);
+    const minutes = s.plans[0].sessions.reduce((a, x) => a + x.minutes, 0);
+    expect(minutes).toBeGreaterThan(0);
+    expect(capacityLeft(s, 's17', 41)).toBe(Math.max(0, capacityFor(s.study.s17, 41, 41) - minutes));
+    expect(ok(phoneOpen(s, 0)).phone.screen).toBe('practice');
+  });
+  it('picking prefers the newest plan dated today or earlier over a later one', () => {
+    const s = seedState();
+    s.day = 41;
+    s.plans.push(planFor('pathway', { id: 'pa', status: 'sent', date: 40, studentIds: ['s17'] }));
+    s.plans.push(planFor('pathway', { id: 'pb', status: 'sent', date: 42, studentIds: ['s17'] }));
+    expect(ok(pickStudent(s, 's17')).phone.planId).toBe('pa');
+  });
+  it('a plan dated tomorrow does not show today', () => {
+    const s = overdue();
+    s.plans[0].date = 41;
+    expect(todayList(s, 's17').rows.some((r) => r.kind === 'plan')).toBe(false);
   });
 });

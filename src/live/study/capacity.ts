@@ -23,7 +23,8 @@ export const openPathways = (state: DemoState, studentId: string) =>
 export function teacherMinutes(state: DemoState, studentId: string): Record<number, number> {
   const out: Record<number, number> = {};
   for (const p of openPathways(state, studentId)) {
-    out[p.date] = (out[p.date] ?? 0) + p.sessions.reduce((a, s) => a + s.minutes, 0);
+    const at = Math.max(p.date, state.day);
+    out[at] = (out[at] ?? 0) + p.sessions.reduce((a, s) => a + s.minutes, 0);
   }
   return out;
 }
