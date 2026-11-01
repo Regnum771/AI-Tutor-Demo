@@ -137,7 +137,7 @@ export function phoneOpen(state: DemoState, index: number): Result {
 function record(s: DemoState, student: StudentProfile, item: BankItem, outcome: string, mark: Pick<Evidence, 'result' | 'planId'>) {
   const n = student.evidence.filter((e) => e.kind === 'practice').length + 1;
   student.evidence.push({
-    id: `${student.id}-practice-${n}`, kind: 'practice', source: 'Beyond practice', when: fmt(s.clock), concept: item.concept,
+    id: `${student.id}-practice-${n}`, kind: 'practice', source: 'Beyond practice', when: fmt(s.clock), day: s.day, concept: item.concept,
     text: `${conceptById(item.concept).label}: “${item.prompt}” · ${outcome}`, ...mark,
   });
 }

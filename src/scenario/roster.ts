@@ -4,7 +4,7 @@ import { gpaOf, historyFor, letterOf } from './grades';
 import { COMPLEX, STUDENTS, groupOf, type Status } from './classroom';
 import { CONCEPTS, type ConceptId } from './knowledgeGraph';
 import { MASTERY_INITIAL, MINH_ANH } from './minhAnh';
-import { MESSAGES } from './sources';
+import { VOICE, voiceEvidence } from './voice';
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
 const clamp = (v: number) => Math.min(0.97, Math.max(0.08, v));
@@ -62,9 +62,6 @@ const QUIRKS: Record<number, Quirk> = {
   12: {
     extra: [{ slug: 'ta', kind: 'taNote', source: 'TA note · Linh', text: 'Family situation this month (shared in confidence); keep messages low-pressure', when: 'Week 5' }],
   },
-  26: {
-    extra: [{ slug: 'email', kind: 'message', source: 'Email', text: "Asks about De Morgan's laws from Quiz 2", when: 'Week 6', concept: 'deMorgan' }],
-  },
   28: {
     extra: [
       { slug: 'adaptive', kind: 'activity', source: 'Beyond practice', text: 'Adaptive pathway: 2 cycles completed, no mastery gain (0.29 → 0.30)', when: 'Week 6' },
@@ -93,8 +90,8 @@ const MINH_ANH_EVIDENCE: Evidence[] = [
   { id: 's17-quiz1', kind: 'quiz', source: 'Assessments', text: 'Quiz 1: 75%', when: 'Week 3' },
   { id: 's17-quiz2', kind: 'quiz', source: 'Assessments', text: 'Quiz 2: 42% (down from 75%)', when: 'Week 6' },
   { id: 's17-quiz2-q4', kind: 'quiz', source: 'Quiz 2 responses', text: 'Chose the converse q → p on 6 implication items across two quizzes', when: 'Week 6', concept: 'implication' },
-  { id: 's17-zalo-1', kind: 'message', source: 'Zalo', text: `“${MESSAGES[0].vi}” (${MESSAGES[0].evidence})`, when: 'Week 6', concept: 'implication' },
-  { id: 's17-zalo-2', kind: 'message', source: 'Zalo', text: `“${MESSAGES[3].vi}” (${MESSAGES[3].evidence})`, when: 'Week 6', concept: 'truthTables' },
+  voiceEvidence(VOICE.find((v) => v.slug === 'zalo-1')!),
+  voiceEvidence(VOICE.find((v) => v.slug === 'zalo-2')!),
   { id: 's17-lms', kind: 'activity', source: 'LMS activity log', text: 'Truth-table lab and implication worksheet still open · last login 6 days ago', when: 'Week 6' },
   { id: 's17-attendance', kind: 'attendance', source: 'Attendance', text: 'Attended 5 of 6 tutorials · absent from tutorial 5', when: 'Week 5' },
   { id: 's17-records', kind: 'record', source: 'Academic records', text: 'Intro to Logic: C+ (68%)', when: 'Last year' },
@@ -136,6 +133,9 @@ export function buildRoster(): StudentProfile[] {
         const text = replace[e.id.slice(s.id.length + 1)];
         return text ? { ...e, text } : e;
       });
+    }
+    if (!isMinhAnh) {
+      for (const v of VOICE.filter((x) => x.studentIndex === s.index).sort((a, b) => a.day - b.day || a.time.localeCompare(b.time))) evidence.push(voiceEvidence(v));
     }
     for (const { slug, ...e } of quirk?.extra ?? []) evidence.push({ ...e, id: `${s.id}-${slug}` });
     const history = historyFor(s.index, s.mastery).map((h) =>
