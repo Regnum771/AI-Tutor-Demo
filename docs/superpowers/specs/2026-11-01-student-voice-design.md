@@ -64,8 +64,9 @@ export const VOICE: VoiceEntry[];   // about 50, days 1–39
 
 - About 50 entries spread across the 55 students, the four channels and Lectures 1–6. More than half are in Vietnamese. Most come within 2 days after the lecture on their concept.
 - Each entry becomes `message` evidence on its student, with id `<studentId>-voice-<id>`, `source` set to the channel name ("Zalo", "Email", "WhatsApp", "LMS forum"), and `text` written as `“<vi>” (<gist>)` when there is an original, or the gist alone.
-- `Evidence` gains `day?: number` and `time?: string`. Only message evidence sets them, and the existing `when` label stays.
-- Minh Anh's two Zalo messages (`MESSAGES` m1 and m4 in `sources.ts`) move into the log. They keep their evidence ids, `s17-zalo-1` and `s17-zalo-2`, so existing citations and evals still work. The existing email and WhatsApp extras in `roster.ts` move in the same way.
+- `Evidence` gains `day?: number` and `time?: string`. Log messages set both, and the existing `when` label stays.
+- Minh Anh's two Zalo messages (`MESSAGES` m1 and m4 in `sources.ts`) move into the log. They keep their evidence ids, `s17-zalo-1` and `s17-zalo-2`, so existing citations and evals still work: an entry's evidence id is `<studentId>-<slug>`, and these two use the slugs `zalo-1` and `zalo-2`. The email extra in `roster.ts` (index 26, De Morgan) moves in the same way with slug `email`. The WhatsApp extra (index 41, "No reply to two check-in messages") is not a student question and stays where it is.
+- Practice evidence also gains `day`, so the profile's Practice tab can date it.
 
 ### 2.3 FAQ (`src/scenario/voice.ts`)
 
@@ -95,18 +96,19 @@ The forecast replaces `passEstimate` and its 0–100 score.
 
 ```ts
 export const PASS = 4.0, KHA = 7.0, GIOI = 8.5;
-export function forecast(student, rec, today): { value: number; band: PassBand };   // value 0–10, one decimal
+export function forecast(student, rec): { value: number; band: PassBand };              // where the student stands now, 0–10
+export function projection(student, rec, today): number;                                 // the exam, if the plan is kept
 ```
 
-- **Standing** = 0.6 × (10 × mastery weighted by CLO exam share) + 0.4 × (latest mark ÷ 10). The latest mark is the newest of Quiz 1, Quiz 2 and any later `rec.marks`.
-- **Gain** = 2.0 × min(1, planned minutes to the exam ÷ `minutesNeeded`) × done rate. The done rate is the minutes done ÷ minutes planned over the last 7 closed days, or 1 before any day has closed. With no plan, the gain is 0.
-- **Value** = min(10, standing + gain).
+- **Forecast (standing)** = 0.6 × (10 × mastery weighted by CLO exam share) + 0.4 × (latest mark ÷ 10), rounded to one decimal. The latest mark is the newest of `rec.marks`, or Quiz 2 when there is none. The band and every figure the app shows come from the forecast. It rises as practice raises mastery, and a Quiz 3 drop lowers it.
+- **Projection** = min(10, forecast + gain), where gain = 2.0 × min(1, planned minutes to the exam ÷ `minutesNeeded`) × done rate. The done rate is self-study minutes done ÷ minutes planned over the last 7 closed days, or 1 before any day has closed. With no plan the projection equals the forecast. It appears only as the dashed line on the profile chart and as "if the plan is kept" in agent and phone copy, never as the band.
+- Why the split: a plan that is only promised must not change the band. Minh Anh stands at 4.4 (At risk) at setup whatever time is reported; the projection shows what the plan could add.
 - **Bands:** Likely ≥ 5.0, At risk 3.5–4.9, Unlikely < 3.5. `PassBand` keeps its three names.
-- **History:** `StudyRecord.forecasts: { day: number; value: number }[]`. A point is added at setup, after each replan, and at each day's close. Every student also has two seeded points, on the days of Quiz 1 and Quiz 2, computed from those marks and the seed mastery. Students who never use the phone therefore still have a line.
+- **History:** `StudyRecord.forecasts: { day: number; value: number }[]` holds forecast points. A point is added after each plan is applied (setup and replans) and at each day's close. Every student also has two seeded points, on the days of Quiz 1 and Quiz 2, computed from those marks and the seed mastery. Students who never use the phone therefore still have a line.
 
 ## 3. Rules (pure)
 
-- `forecast` as above. Reporting more time raises the gain until the plan covers the minutes needed. Skipping planned work lowers the done rate. A Quiz 3 drop lowers the standing.
+- `forecast` and `projection` as above. A plan alone never changes the forecast. Reporting more time raises the projection until the plan covers the minutes needed. Skipping planned work lowers the done rate and so the projection. A Quiz 3 drop lowers both.
 - `lectureLabel` as in 2.1.
 - `faqStats` as in 2.3.
 - `gpaOf(history)` and `letterOf(grade)` as in 2.4.
@@ -119,7 +121,7 @@ Everything that shows or reads the 0–100 estimate moves to the 10-point foreca
 - The phone's Road to the exam and semester screens, and the student copy in `studyView.ts` and `cannedStudy.ts`.
 - The teacher's Road to the exam panel in the student panel.
 - `examRisk` and the "May not pass" attention row.
-- The study planner prompt in `study.ts`: "Forecast: 4.6 out of 10 (At risk); the pass mark is 4.0."
+- The study planner prompt in `study.ts`: "Forecast: 4.4 out of 10 (At risk); 6.4 if the current plan is kept; the pass mark is 4.0."
 - `get_exam_outlook` and `get_student` in `server/agents/tools.ts`.
 - Quiz and assessment marks stay as percentages everywhere, as the course reports them.
 
@@ -152,7 +154,7 @@ Everything that shows or reads the 0–100 estimate moves to the 10-point foreca
 
 - **Header:** avatar, name, group, band chip, GPA, and "Ask about <name>" (the existing `askStudent` action).
 - **Forecast chart:** an SVG line chart on 0–10 across the course days.
-  - Solid line: the forecast history. Dashed line: a projection from today to the exam, assuming the current plan is kept (`forecast` with a done rate of 1).
+  - Solid line: the forecast history. Dashed line: from today's forecast to `projection` on exam day.
   - Horizontal lines: Pass 4.0, Khá 7.0, Giỏi 8.5. Markers: quizzes, assessments and the exam, plus interventions (a pathway sent, a check-in booked, and a focus approved once that plan kind exists).
   - No projection without a study record.
 - **Tabs:**
@@ -180,7 +182,7 @@ Everything that shows or reads the 0–100 estimate moves to the 10-point foreca
 
 ## 8. Testing
 
-- **Rules:** `forecast` (reported time, work done, a Quiz 3 drop, no plan, the cap at 10), band cut-offs at 3.5 and 5.0, `gpaOf` and `letterOf` at each boundary, and `lectureLabel` (during, hours after, days after, before Lecture 1).
+- **Rules:** `forecast` (a plan alone changes nothing, a Quiz 3 drop lowers it) and `projection` (reported time, work done, no plan, the cap at 10), band cut-offs at 3.5 and 5.0, `gpaOf` and `letterOf` at each boundary, and `lectureLabel` (during, hours after, days after, before Lecture 1).
 - **Seed:** every log entry points at a real student, concept and FAQ, and every FAQ has entries. Minh Anh's Zalo ids are unchanged, and Minh Anh's Intro to Logic grade matches `s17-records`.
 - **UI:** quote cards render for `message` citations only, at most 2 per block. "In their words" sits above mastery and hides when empty. The FAQ sits above the heatmap and expands one row at a time. The pop-up opens from all four entry points, on the right tab and entry. The click audit covers the new buttons.
 - **Existing tests:** every test reading the 0–100 estimate moves to the 10-point forecast, including Task 4's rules tests and `examRisk`.
