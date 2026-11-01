@@ -90,6 +90,7 @@ describe('live panels', () => {
 describe('road to the exam', () => {
   const withStudy = () => {
     const s = stateWithPlan();
+    s.day = 41;
     const rec = ensureRecord(s, 's17');
     rec.reported = { weekday: 30, weekend: 60 };
     rec.plan = { createdDay: 40, reason: 'More on equivalence.', leftOut: [], source: 'agents', days: [{ day: 41, minutes: 20, clo: 'CLO2', concepts: ['equivalence'] }] };
@@ -104,7 +105,24 @@ describe('road to the exam', () => {
     expect(out).toContain('12 of 20 min');
     expect(out).toContain('More on equivalence.');
   });
+  it('shows the latest mark', () => {
+    const s = withStudy();
+    s.study.s17.marks.push({ assessment: 'quiz3', mark: 22, day: 52 });
+    expect(render(s, { kind: 'student', studentId: 's17', planId: null, highlight: null })).toContain('Quiz 3: 22');
+  });
   it('stays out of the way for a student who has not set up', () => {
     expect(render(stateWithPlan(), { kind: 'student', studentId: 's17', planId: null, highlight: null })).not.toContain('Road to the exam');
+  });
+});
+
+describe('a sent plan names its date', () => {
+  it('shows the plan’s date, not "Today", once the story moves on', () => {
+    const s = stateWithPlan();
+    s.plans[0].status = 'sent';
+    s.plans[0].day = 'Today';
+    s.plans[0].date = 43;
+    const out = render(s, student());
+    expect(out).toContain('Tue 3 Nov');
+    expect(out).not.toMatch(/within your policy · Today|agents · Today/);
   });
 });

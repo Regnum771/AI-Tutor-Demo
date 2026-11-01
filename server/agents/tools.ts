@@ -39,7 +39,7 @@ export const READ_TOOLS: Anthropic.Beta.BetaTool[] = [
   tool('compare_students', 'Mastery per concept for several students side by side.', {
     student_ids: { type: 'array', items: { type: 'string' } },
   }),
-  tool('get_exam_outlook', "A student's road to the final exam: projected score and band (estimates), mastery per learning outcome (CLO), minutes planned and done, the next assessment, and the last change to the study plan with its reason. setUp is false until the student has set up on the phone.", {
+  tool('get_exam_outlook', "A student's road to the final exam: projected score and band (estimates), mastery per learning outcome (CLO), minutes planned and done against the current plan, assessment marks so far (for example Quiz 3), the next assessment, and the last change to the study plan with its reason. setUp is false until the student has set up on the phone.", {
     student_id: { type: 'string' },
   }),
 ];

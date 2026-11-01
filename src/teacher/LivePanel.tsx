@@ -4,6 +4,7 @@ import { classKpis, topicMastery, twinConcepts } from '../live/mastery';
 import { examOutlook } from '../live/study/outlook';
 import type { DemoState, Evidence, LivePanel, Plan, StudentProfile } from '../live/types';
 import { GROUPS } from '../scenario/classroom';
+import { shortDate } from '../scenario/course';
 import { conceptById } from '../scenario/knowledgeGraph';
 import { egg } from '../ui/theme';
 import { Avatar, Button, Eyebrow, LevelChip, Mark, Meter, Section } from './parts';
@@ -18,7 +19,7 @@ function statusLabel(plan: Plan, state: DemoState): string {
     case 'sent': return `Sent to ${name}’s phone`;
     case 'autoApproved': return 'Auto-approved · sent to the phone';
     case 'done': return 'Completed';
-    case 'approved': return plan.kind === 'classActivity' ? `Scheduled · ${plan.day}` : `Invitations sent · ${plan.day}`;
+    case 'approved': return plan.kind === 'classActivity' ? `Scheduled · ${shortDate(plan.date)}` : `Invitations sent · ${shortDate(plan.date)}`;
     case 'dismissed': return 'Set aside';
     default: return '';
   }
@@ -40,7 +41,7 @@ export function LivePlanCard({ plan }: { plan: Plan }) {
       {/* Agent-written titles can name a student; Instrument Serif has no Vietnamese glyphs. */}
       <h3 className={`mt-2 text-egg-ink ${plan.kind === 'classActivity' ? 'font-serif text-[28px] leading-[1.05]' : 'text-[22px] font-semibold leading-tight'}`}>{plan.title}</h3>
       <div className="mt-1 text-[12.5px] text-egg-mute">
-        {`${plan.status === 'autoApproved' ? 'Auto-approved · within your policy' : 'Agreed by Student Analysis + Teaching Assistance agents'} · ${plan.day}`}
+        {`${plan.status === 'autoApproved' ? 'Auto-approved · within your policy' : 'Agreed by Student Analysis + Teaching Assistance agents'} · ${shortDate(plan.date)}`}
       </div>
       <ol className="mt-4 divide-y divide-egg-line border-y border-egg-line">
         {plan.sessions.map((s, i) => (
@@ -152,6 +153,7 @@ function StudentLive({ s, plan, highlight, bars, state }: { s: StudentProfile; p
 function RoadToExam({ s, state }: { s: StudentProfile; state: DemoState }) {
   const o = examOutlook(state, s);
   if (!o.setUp) return null;
+  const latest = o.marks.at(-1);
   return (
     <Section title="Road to the exam" aside="estimate">
       <div className="grid grid-cols-2 border-b border-egg-line pb-3">
@@ -164,6 +166,7 @@ function RoadToExam({ s, state }: { s: StudentProfile; state: DemoState }) {
           <div className="mt-1 text-[15px] font-semibold text-egg-ink">{`${o.minutesDone} of ${o.minutesPlanned} min`}</div>
         </div>
       </div>
+      {latest && <div className="mt-3 text-[13.5px] text-egg-ink">{`${latest.title}: ${latest.mark}`}</div>}
       {o.lastChange && <div className="mt-3 text-[13.5px] text-egg-ink">{`${o.lastChange.date}: ${o.lastChange.reason}`}</div>}
     </Section>
   );

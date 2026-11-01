@@ -60,9 +60,24 @@ describe('exam outlook', () => {
     rec.days[40] = { planned: 20, done: 12, check: null };
     rec.replans.push({ day: 40, signal: 'setup', reason: 'Implication first.' });
     expect(readTool(state, 'get_exam_outlook', { student_id: 's17' })).toMatchObject({
-      setUp: true, band: 'At risk', minutesPlanned: 20, minutesDone: 12, lastChange: { reason: 'Implication first.' },
+      setUp: true, band: 'At risk', minutesPlanned: 0, minutesDone: 12, lastChange: { reason: 'Implication first.' },
     });
     expect(readLabel(state, 'get_exam_outlook', { student_id: 's17' })).toBe('Student Analysis Agent · reading Minh Anh’s road to the exam');
+  });
+  it('measures against the current plan, and lists marks', () => {
+    const state = seedState();
+    const rec = ensureRecord(state, 's17');
+    rec.reported = { weekday: 30, weekend: 60 };
+    expect(readTool(state, 'get_exam_outlook', { student_id: 's17' })).toMatchObject({ minutesPlanned: 0, minutesDone: 0, marks: [] });
+    rec.plan = { createdDay: 40, reason: 'r', leftOut: [], source: 'agents', days: [40, 41, 42].map((day) => ({ day, minutes: 20, clo: 'CLO1' as const, concepts: ['implication' as const] })) };
+    rec.days[39] = { planned: 99, done: 50, check: null };
+    rec.days[40] = { planned: 20, done: 12, check: null };
+    state.day = 41;
+    rec.marks.push({ assessment: 'quiz3', mark: 22, day: 52 });
+    expect(readTool(state, 'get_exam_outlook', { student_id: 's17' })).toMatchObject({
+      minutesPlanned: 40, minutesDone: 12, marks: [{ title: 'Quiz 3', mark: 22, date: 'Thu 12 Nov' }],
+    });
+    expect(READ_TOOLS.find((t) => t.name === 'get_exam_outlook')!.description).toContain('marks');
   });
   it('finds students who may not pass, among those with a plan', () => {
     const state = seedState();

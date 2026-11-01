@@ -1,7 +1,7 @@
-import { CLOS, EXAM_DAY, fullDate, nextAssessment, type CloId } from '../../scenario/course';
+import { ASSESSMENTS, CLOS, EXAM_DAY, fullDate, nextAssessment, shortDate, type CloId } from '../../scenario/course';
 import type { DemoState, PassBand, ReplanSignal, StudentProfile } from '../types';
 import { cloMastery, PASS_MARK, passEstimate } from './estimate';
-import { newRecord } from './record';
+import { newRecord, selfDone } from './record';
 
 export interface ExamOutlook {
   setUp: boolean;
@@ -15,12 +15,13 @@ export interface ExamOutlook {
   nextAssessment: { title: string; date: string; daysAway: number } | null;
   exam: { date: string; daysAway: number };
   lastChange: { date: string; signal: ReplanSignal; reason: string } | null;
+  /** Assessment marks so far, oldest first. */
+  marks: { title: string; mark: number; date: string }[];
 }
 
 /** Where a student stands on the road to the exam. Used by the agents and the teacher's panel. */
 export function examOutlook(state: DemoState, student: StudentProfile): ExamOutlook {
   const rec = state.study[student.id] ?? newRecord(student);
-  const days = Object.values(rec.days);
   const next = nextAssessment(state.day);
   const last = rec.replans.at(-1) ?? null;
   const est = passEstimate(student, rec, state.day);
@@ -31,11 +32,15 @@ export function examOutlook(state: DemoState, student: StudentProfile): ExamOutl
     band: est.band,
     passMark: PASS_MARK,
     cloMastery: Object.fromEntries(CLOS.map((c) => [c.id, round2(cloMastery(student, c.id))])) as Record<CloId, number>,
-    minutesPlanned: days.reduce((a, d) => a + d.planned, 0),
-    minutesDone: Math.round(days.reduce((a, d) => a + d.done, 0)),
+    // Measured against the current plan: what it asked for up to today, and what was self-studied since it was made.
+    minutesPlanned: rec.plan ? rec.plan.days.filter((d) => d.day <= state.day).reduce((a, d) => a + d.minutes, 0) : 0,
+    minutesDone: rec.plan
+      ? Math.round(Object.entries(rec.days).filter(([d]) => Number(d) >= rec.plan!.createdDay).reduce((a, [, v]) => a + selfDone(v), 0))
+      : 0,
     nextAssessment: next && { title: next.title, date: fullDate(next.day), daysAway: next.day - state.day },
     exam: { date: fullDate(EXAM_DAY), daysAway: EXAM_DAY - state.day },
     lastChange: last && { date: fullDate(last.day), signal: last.signal, reason: last.reason },
+    marks: [...rec.marks].sort((a, b) => a.day - b.day).map((m) => ({ title: ASSESSMENTS.find((a) => a.id === m.assessment)?.title ?? m.assessment, mark: m.mark, date: shortDate(m.day) })),
   };
 }
 
