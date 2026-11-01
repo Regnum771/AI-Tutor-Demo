@@ -5,7 +5,7 @@ import { capacityLeft } from '../../src/live/study/capacity';
 import { minutesNeeded } from '../../src/live/study/estimate';
 import { ensureRecord } from '../../src/live/study/record';
 import type { DemoState, StudyPlan } from '../../src/live/types';
-import { CLOS, EXAM_DAY, studyDays } from '../../src/scenario/course';
+import { CLOS, EXAM_DAY, studyDays, taughtBy } from '../../src/scenario/course';
 import { CONCEPTS, EDGES } from '../../src/scenario/knowledgeGraph';
 import { cannedStudyPlan } from './cannedStudy';
 import { failingClient, fakeClient } from './fakeClient';
@@ -54,6 +54,15 @@ describe('study plan checks', () => {
     many[0] = { ...many[0], clo: 'CLO1', concepts: ['negation', 'conjunction', 'disjunction', 'implication'] };
     expect(check(s, studyInput(s, 's17', { days: many })).ok).toBe(false);
   });
+  it('rejects a concept before its lecture, naming the lecture and its date', () => {
+    const s = ready();
+    const early = days(s);
+    early[1] = { ...early[1], clo: 'CLO2', concepts: ['equivLaws'] };
+    expect(check(s, studyInput(s, 's17', { days: early }))).toMatchObject({ ok: false, error: expect.stringContaining('Day 41: Equivalence laws is not taught until Lecture 7 on Tue 3 Nov.') });
+    const onTheDay = days(s);
+    onTheDay[3] = { ...onTheDay[3], clo: 'CLO2', concepts: ['equivLaws'] };
+    expect(check(s, studyInput(s, 's17', { days: onTheDay })).ok).toBe(true);
+  });
   it('needs Week 9 to cover each CLO below 0.75 while enough Week 9 days are ahead', () => {
     const s = ready();
     const one = days(s).map((d) => ({ ...d, clo: 'CLO1', concepts: ['implication'] }));
@@ -75,7 +84,8 @@ describe('study plan checks', () => {
     const s = ready();
     for (const c of CONCEPTS) s.students[16].mastery[c.id] = 0.3;
     const sparse = days(s).map((d, i) => {
-      const clo = CLOS[d.day % 3];
+      // CLO3 is not lectured until day 50, so earlier CLO3 days take CLO1.
+      const clo = d.day < 50 && d.day % 3 === 2 ? CLOS[0] : CLOS[d.day % 3];
       return { ...d, clo: clo.id, concepts: [clo.concepts[0]], minutes: i === 0 ? 7 : d.day >= 56 && d.day <= 58 ? 1 : 0 };
     });
     const r = check(s, studyInput(s, 's17', { days: sparse }));
@@ -93,6 +103,15 @@ describe('study plan checks', () => {
 });
 
 describe('offline planner', () => {
+  it('never schedules a concept before its lecture, and holds CLO3 until Lecture 8', () => {
+    for (const day of [40, 43, 49, 50]) {
+      const s = ready();
+      s.day = day;
+      const plan = cannedStudyPlan(s, 's17', 'setup');
+      for (const d of plan.days) for (const c of d.concepts) expect(taughtBy(d.day), `day ${d.day} ${c}`).toContain(c);
+      expect(plan.days.filter((d) => d.day < 50).every((d) => d.clo !== 'CLO3')).toBe(true);
+    }
+  });
   const clean = (s: DemoState) => studyPlanProblems(s, 's17', cannedStudyPlan(s, 's17', 'setup'));
   const total = (p: StudyPlan) => p.days.reduce((a, d) => a + d.minutes, 0);
   const capacity = (s: DemoState) => studyDays(s.day).reduce((a, d) => a + capacityLeft(s, 's17', d), 0);
@@ -186,6 +205,13 @@ describe('offline planner', () => {
 });
 
 describe('the prompt', () => {
+  it('states the lecture rule, the lectures so far, the next lecture and the next assessment', () => {
+    expect(STUDY_SYSTEM).toContain('Use only concepts already lectured by that day');
+    const text = String(studyMessages(ready(), 's17', 'setup')[0].content);
+    expect(text).toContain('Lectures so far: 1–6 (latest: Lecture 6 · Logical equivalence and De Morgan, Tue 27 Oct). Next lecture: Lecture 7 · Equivalence laws, Tue 3 Nov.');
+    expect(text).toContain('Next assessment: Quiz 3 on Thu 12 Nov, covering CLO2, CLO3.');
+    expect(text).toContain('43 · Tue 3 Nov: 30 min available · Lecture 7 (equivLaws)');
+  });
   it('states the rules and never assumes pronouns', () => {
     expect(STUDY_SYSTEM).toContain('exactly one entry for every day');
     expect(STUDY_SYSTEM).toContain('left_out');

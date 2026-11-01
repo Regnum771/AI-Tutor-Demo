@@ -3,7 +3,7 @@ import { capacityLeft, shortOfTime, teacherMinutes } from '../../src/live/study/
 import { cardsToday } from '../../src/live/study/cards';
 import { cloMastery, forecast, minutesNeeded, PASS, projection, TARGET_MASTERY as TARGET } from '../../src/live/study/estimate';
 import type { DemoState, ReplanSignal, StudyPlan, StudyPlanDay } from '../../src/live/types';
-import { ASSESSMENTS, CLOS, EXAM_DAY, shortDate, studyDays, weekOf } from '../../src/scenario/course';
+import { ASSESSMENTS, CLOS, EXAM_DAY, LECTURES, lectureBefore, nextLecture, nextTest, shortDate, studyDays, taughtBy, weekOf } from '../../src/scenario/course';
 import { conceptById, EDGES, type ConceptId } from '../../src/scenario/knowledgeGraph';
 import { cannedStudyPlan } from './cannedStudy';
 import { AgentError, runAgent, type AgentSpec, type Check } from './loop';
@@ -33,6 +33,7 @@ Balance three things: the time the student really has, how likely they are to pa
 Rules:
 - Give exactly one entry for every day in the calendar, in order. Never go over a day's available minutes. A rest day has 0 minutes.
 - Each entry names one learning outcome (CLO) and 1 to 3 of that CLO's concepts.
+- Use only concepts already lectured by that day. A lecture's concepts can be used from the day it is given; the calendar marks each lecture.
 - Prioritise by exam share and weakness. Build on prerequisites: a concept comes after the concepts it depends on.
 - Before an assessment, favour the CLOs it tests.
 - Week 9 is revision week: give minutes to every CLO still below 0.75.
@@ -70,6 +71,11 @@ export function studyPlanProblems(state: DemoState, studentId: string, plan: Stu
     if (d.concepts.length > 3) out.push(`Day ${d.day} has more than 3 concepts.`);
     if (d.minutes > 0 && d.concepts.length === 0) out.push(`Day ${d.day} has minutes but no concepts.`);
     if (d.concepts.some((c) => !clo?.concepts.includes(c))) out.push(`Day ${d.day} has a concept outside ${d.clo}.`);
+    const taught = taughtBy(d.day);
+    for (const c of d.concepts) {
+      const lecture = LECTURES.find((l) => l.concepts.includes(c));
+      if (lecture && !taught.includes(c)) out.push(`Day ${d.day}: ${conceptById(c).label} is not taught until Lecture ${lecture.n} on ${shortDate(lecture.day)}.`);
+    }
   }
   const below = CLOS.filter((c) => cloMastery(student, c.id) < TARGET);
   const room = plan.days.filter((d) => weekOf(d.day) === 9 && capacityLeft(state, studentId, d.day) > 0).length;
@@ -114,16 +120,23 @@ export function studyMessages(state: DemoState, studentId: string, signal: Repla
   const available = studyDays(state.day).reduce((a, d) => a + capacityLeft(state, studentId, d), 0);
   const calendar = studyDays(state.day).map((d) => {
     const parts = [`${d} · ${shortDate(d)}${weekOf(d) === 9 ? ' (revision week)' : ''}: ${capacityLeft(state, studentId, d)} min available`];
+    const l = LECTURES.find((x) => x.day === d);
+    if (l) parts.push(`Lecture ${l.n} (${l.concepts.join(', ') || 'revision'})`);
     if (teacher[d]) parts.push(`teacher session takes ${teacher[d]} min`);
     const a = ASSESSMENTS.find((x) => x.day === d);
     if (a) parts.push(`${a.title} on ${a.clos.join(', ')}`);
     return parts.join(' · ');
   });
+  const held = lectureBefore(state.day, '09:00');
+  const coming = nextLecture(state.day, '09:00');
+  const test = nextTest(state.day);
   const lines = [
     `Student: ${s.name} (${s.id}; call them ${s.short}).`,
     `Why this plan is being written: ${WHY[signal]}`,
     ...(rec.plan ? [`The current plan’s reason: ${rec.plan.reason}`] : []),
     `Forecast: ${est.value.toFixed(1)} out of 10 (${est.band}); ${rec.plan ? `${projection(s, rec, state.day).toFixed(1)} if the current plan is kept; ` : ''}the pass mark is ${PASS.toFixed(1)}. The final exam is on ${shortDate(EXAM_DAY)}.`,
+    `${held ? `Lectures so far: ${held.n === 1 ? '1' : `1–${held.n}`} (latest: Lecture ${held.n} · ${held.title}, ${shortDate(held.day)}).` : 'No lectures yet.'} ${coming ? `Next lecture: Lecture ${coming.n} · ${coming.title}, ${shortDate(coming.day)}.` : 'No lectures are left.'}`,
+    ...(test ? [`Next assessment: ${test.title} on ${shortDate(test.day)}, covering ${test.clos.join(', ')}.`] : []),
     `Time the student reported: ${rec.reported?.weekday} min on weekdays, ${rec.reported?.weekend} min at weekends. Actually done on recent days: ${recent.join(', ') || 'no data yet'}.`,
     'Learning outcomes:',
     ...CLOS.map((c) => `- ${c.id} ${c.title}: mastery ${cloMastery(s, c.id).toFixed(2)}, ${Math.round(c.share * 100)}% of the exam. Concepts: ${c.concepts.join(', ')}.`),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ASSESSMENTS, CLOS, EXAM_DAY, LECTURES, REVISION_START, START_DAY, cloOf, fullDate, lectureBefore, lectureLabel, nextAssessment, relativeDay, resolveDay, shortDate, studyDays, weekOf } from './course';
+import { ASSESSMENTS, CLOS, EXAM_DAY, LECTURES, REVISION_START, START_DAY, cloOf, fullDate, lectureBefore, lectureLabel, lectureOf, nextAssessment, nextAssignment, nextLecture, nextTest, relativeDay, resolveDay, shortDate, studyDays, taughtBy, weekOf } from './course';
 import { CONCEPTS } from './knowledgeGraph';
 
 describe('course calendar', () => {
@@ -58,5 +58,29 @@ describe('lectures', () => {
     expect(lectureLabel(29, '08:00')).toBe('7 days after Lecture 4');
     expect(lectureLabel(0, '12:00')).toBe('before Lecture 1');
     expect(lectureBefore(0, '12:00')).toBeNull();
+  });
+});
+
+describe('what has been taught', () => {
+  it('counts a lecture from 09:00 on its day', () => {
+    expect(taughtBy(43, '08:59')).not.toContain('equivLaws');
+    expect(taughtBy(43, '09:00')).toContain('equivLaws');
+    expect(taughtBy(43)).toContain('equivLaws');
+    expect(taughtBy(42)).not.toContain('equivLaws');
+    expect(taughtBy(0)).toEqual([]);
+    expect(taughtBy(1)).toEqual(['propositions']);
+    expect(taughtBy(40)).toEqual(['propositions', 'negation', 'conjunction', 'disjunction', 'truthTables', 'biconditional', 'expressions', 'implication', 'equivalence', 'deMorgan']);
+    expect(taughtBy(50)).toHaveLength(12);
+  });
+  it('finds each concept’s lecture, the next lecture, the next test and the next assignment', () => {
+    expect(lectureOf('equivLaws')).toMatchObject({ n: 7, day: 43 });
+    expect(nextLecture(40, '15:00')?.n).toBe(7);
+    expect(nextLecture(43, '07:30')?.n).toBe(7);
+    expect(nextLecture(43, '09:00')?.n).toBe(8);
+    expect(nextLecture(57, '10:00')).toBeNull();
+    expect(nextTest(40)).toMatchObject({ id: 'quiz3', day: 52, clos: ['CLO2', 'CLO3'] });
+    expect(nextTest(53)?.id).toBe('exam');
+    expect(nextAssignment(40)?.id).toBe('a2');
+    expect(nextAssignment(47)).toBeNull();
   });
 });

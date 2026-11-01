@@ -1,6 +1,6 @@
 import { capacityLeft } from '../../src/live/study/capacity';
 import type { DemoState } from '../../src/live/types';
-import { CLOS, studyDays } from '../../src/scenario/course';
+import { CLOS, studyDays, taughtBy } from '../../src/scenario/course';
 
 /** Valid finish-tool inputs as the model would send them (tests only). */
 export const reportInput = (over: Record<string, unknown> = {}): Record<string, unknown> => ({
@@ -47,12 +47,12 @@ export const adaptInput = (sessions: number, over: Record<string, unknown> = {})
   ...over,
 });
 
-/** A valid propose_study_plan input for `state`: 10 minutes a day, each CLO in turn. */
+/** A valid propose_study_plan input for `state`: 10 minutes a day, each CLO in turn once it has been lectured. */
 export const studyInput = (state: DemoState, studentId = 's17', over: Record<string, unknown> = {}): Record<string, unknown> => ({
   reason: 'Minh Anh starts with implication because the rest of the course depends on it.',
   left_out: [],
   days: studyDays(state.day).map((day) => {
-    const clo = CLOS[day % 3];
+    const clo = [CLOS[day % 3], ...CLOS].find((c) => taughtBy(day).includes(c.concepts[0])) ?? CLOS[0];
     return { day, minutes: Math.min(10, capacityLeft(state, studentId, day)), clo: clo.id, concepts: [clo.concepts[0]] };
   }),
   ...over,

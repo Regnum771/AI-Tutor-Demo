@@ -119,3 +119,26 @@ export function lectureLabel(day: number, time: string): string {
   const h = Math.floor((t - LECTURE_END) / 60);
   return h < 1 ? `just after Lecture ${l.n}` : `${h} hour${h === 1 ? '' : 's'} after Lecture ${l.n}`;
 }
+
+/** Concepts of every lecture held by `time` on `day`. A lecture counts from 09:00, so a plan day counts its own lecture. */
+export function taughtBy(day: number, time = '09:00'): ConceptId[] {
+  const last = lectureBefore(day, time);
+  return last ? LECTURES.filter((l) => l.n <= last.n).flatMap((l) => l.concepts) : [];
+}
+
+/** The lecture that teaches `concept`. Every concept has one. */
+export const lectureOf = (concept: ConceptId): Lecture => LECTURES.find((l) => l.concepts.includes(concept))!;
+
+/** The next lecture that has not started by `time` on `day`, or null after the last. */
+export function nextLecture(day: number, time: string): Lecture | null {
+  const t = minutesOf(time);
+  return LECTURES.find((l) => l.day > day || (l.day === day && t < LECTURE_START)) ?? null;
+}
+
+export const isAssignment = (a: Assessment): boolean => a.title.startsWith('Assignment');
+
+/** The next quiz or the final exam, on or after `today`. Assignments are not tests. */
+export const nextTest = (today: number): Assessment | null => ASSESSMENTS.find((a) => a.day >= today && !isAssignment(a)) ?? null;
+
+/** The next assignment due on or after `today`. */
+export const nextAssignment = (today: number): Assessment | null => ASSESSMENTS.find((a) => a.day >= today && isAssignment(a)) ?? null;

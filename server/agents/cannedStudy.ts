@@ -1,7 +1,7 @@
 import { capacityLeft, shortOfTime } from '../../src/live/study/capacity';
 import { cloMastery, minutesNeeded, TARGET_MASTERY as TARGET } from '../../src/live/study/estimate';
 import type { DemoState, ReplanSignal, StudyPlan } from '../../src/live/types';
-import { CLOS, EXAM_DAY, nextAssessment, shortDate, studyDays, weekOf, type Clo, type CloId } from '../../src/scenario/course';
+import { CLOS, EXAM_DAY, nextAssessment, nextTest, shortDate, studyDays, taughtBy, weekOf, type Clo, type CloId } from '../../src/scenario/course';
 import type { ConceptId } from '../../src/scenario/knowledgeGraph';
 
 const MAINTENANCE = 10; // minutes a day that keep a strong student's practice alive
@@ -15,7 +15,7 @@ const REASON: Record<ReplanSignal, (focus: string, exam: string) => string> = {
   teacherPlan: (focus) => `Your lecturer sent you a plan, so your own study now fits around it, with the rest on ${focus}.`,
 };
 
-/** Capacity shared out by exam share × gap, with Week 9 spread across the CLOs still below target. */
+/** Capacity shared out by exam share × gap, with Week 9 spread across the CLOs still below target. Each day uses only lectured concepts. */
 export function cannedStudyPlan(state: DemoState, studentId: string, signal: ReplanSignal): StudyPlan {
   const student = state.students.find((s) => s.id === studentId)!;
   const weight = (c: Clo) => c.share * Math.max(0.05, TARGET - cloMastery(student, c.id));
@@ -25,12 +25,17 @@ export function cannedStudyPlan(state: DemoState, studentId: string, signal: Rep
   const given: Record<CloId, number> = { CLO1: 0, CLO2: 0, CLO3: 0 };
   const turns: Record<CloId, number> = { CLO1: 0, CLO2: 0, CLO3: 0 };
 
-  const pool = (c: Clo): ConceptId[] => {
-    const low = c.concepts.filter((x) => student.mastery[x] < TARGET);
-    return [...(low.length ? low : c.concepts)].sort((a, b) => student.mastery[a] - student.mastery[b]);
+  const taughtIn = (c: Clo, day: number): ConceptId[] => {
+    const taught = taughtBy(day);
+    return c.concepts.filter((x) => taught.includes(x));
   };
-  const concepts = (c: Clo): ConceptId[] => {
-    const p = pool(c);
+  const pool = (c: Clo, day: number): ConceptId[] => {
+    const taught = taughtIn(c, day);
+    const low = taught.filter((x) => student.mastery[x] < TARGET);
+    return [...(low.length ? low : taught)].sort((a, b) => student.mastery[a] - student.mastery[b]);
+  };
+  const concepts = (c: Clo, day: number): ConceptId[] => {
+    const p = pool(c, day);
     const start = turns[c.id]++;
     return [...new Set(Array.from({ length: Math.min(2, p.length) }, (_, k) => p[(start + k) % p.length]))];
   };
@@ -45,10 +50,15 @@ export function cannedStudyPlan(state: DemoState, studentId: string, signal: Rep
     const spent = Object.values(given).reduce((a, b) => a + b, 0) || 1;
     const soon = nextAssessment(day);
     const tested = soon && soon.day !== EXAM_DAY && soon.day - day <= 3 ? CLOS.filter((c) => soon.clos.includes(c.id) && cloMastery(student, c.id) < TARGET) : [];
-    const behind = [...(tested.length ? tested : CLOS)].sort((a, b) => (weight(b) / total - given[b.id] / spent) - (weight(a) / total - given[a.id] / spent))[0];
-    const clo = weekOf(day) === 9 && weak.length && minutes > 0 ? weak[week9.indexOf(day) % weak.length] : behind;
+    // A CLO waits until something in it has been lectured.
+    const ready = (list: Clo[]) => list.filter((c) => taughtIn(c, day).length > 0);
+    const open = ready(tested).length ? ready(tested) : ready(CLOS).length ? ready(CLOS) : CLOS;
+    const behind = [...open].sort((a, b) => (weight(b) / total - given[b.id] / spent) - (weight(a) / total - given[a.id] / spent))[0];
+    const chosen = weekOf(day) === 9 && weak.length && minutes > 0 ? weak[week9.indexOf(day) % weak.length] : behind;
+    // A day whose CLO has nothing lectured yet takes a CLO the next test covers.
+    const clo = taughtIn(chosen, day).length ? chosen : CLOS.find((c) => nextTest(day)?.clos.includes(c.id) && taughtIn(c, day).length > 0) ?? chosen;
     given[clo.id] += minutes;
-    return { day, minutes, clo: clo.id, concepts: concepts(clo) };
+    return { day, minutes, clo: clo.id, concepts: concepts(clo, day) };
   });
 
   // What loses out: the CLO with the lowest share of the time its concepts need (120 minutes per 1.0 of gap).
