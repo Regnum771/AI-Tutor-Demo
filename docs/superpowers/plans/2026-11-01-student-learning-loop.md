@@ -1439,11 +1439,14 @@ Create `src/live/study/reducer.test.ts`:
 ```ts
 import { describe, expect, it } from 'vitest';
 import { CARDS } from '../../scenario/cards';
+import { BANK } from '../../scenario/practiceBank';
 import { planFor, stateWithPlan } from '../fixtures';
 import { approvePlan, currentItems, deliver, phoneAnswer, phoneNext, type Result } from '../reducer';
 import { seedState } from '../seed';
 import type { DemoState } from '../types';
+import { ensureRecord, noteAttempt } from './record';
 import { advance, applyPlan, openCheckIn, openPick, pickStudent, rateCard, saveSetup, showTab, simulateDrop, startSelf, type StudyResult } from './reducer';
+import { todayList } from './today';
 
 const ok = (r: Result | StudyResult): DemoState => {
   if (!r.ok) throw new Error(r.error);
@@ -1584,6 +1587,24 @@ describe('teacher plans stay intact', () => {
   });
 });
 
+describe('a returning student', () => {
+  it('keeps a teacher session on Today after picking again', () => {
+    const s = ok(approvePlan(stateWithPlan(), 'p1'));
+    ensureRecord(s, 's17').reported = { weekday: 30, weekend: 30 };
+    s.plans[0].date = s.day;
+    const again = ok(pickStudent(s, 's17'));
+    expect(again.phone.planId).toBe('p1');
+    expect(todayList(again, 's17').rows.some((r) => r.kind === 'plan')).toBe(true);
+  });
+  it('counts teacher session answers apart from self-study', () => {
+    const s = ok(approvePlan(stateWithPlan(), 'p1'));
+    ensureRecord(s, 's17').reported = { weekday: 30, weekend: 30 };
+    noteAttempt(s.study.s17, BANK[0], s.day, true, true, true);
+    expect(s.study.s17.days[s.day]).toMatchObject({ done: 1.5, teacher: 1.5 });
+    expect(todayList(s, 's17').done).toBe(0);
+  });
+});
+
 describe('simulate a drop', () => {
   it('sets Quiz 3 20 points below the last mark and raises a mark swing', () => {
     const r = simulateDrop(ready());
@@ -1656,7 +1677,7 @@ and after `const correct = …;` add:
 
 ```ts
   const rec = s.study[student.id];
-  if (rec) noteAttempt(rec, item, s.day, correct, correct && !s.phone.hinted);
+  if (rec) noteAttempt(rec, item, s.day, correct, correct && !s.phone.hinted, !s.phone.self);
 ```
 
 In `phoneNext`, after `const s = structuredClone(state);` add:
@@ -1686,7 +1707,7 @@ import { statusFor } from '../mastery';
 import { studentById } from '../reducer';
 import { IDLE_PHONE } from '../seed';
 import type { CardRating, DemoState, ReplanSignal, StudyDay, StudyPlan } from '../types';
-import { applyCheck } from './capacity';
+import { applyCheck, openPathways } from './capacity';
 import { reviewCard } from './cards';
 import { passEstimate } from './estimate';
 import { markFor } from './marks';
@@ -1718,7 +1739,8 @@ export function pickStudent(state: DemoState, id: string): StudyResult {
   if (!studentById(state, id)) return fail('No such student.');
   const s = structuredClone(state);
   const rec = ensureRecord(s, id);
-  s.phone = { ...IDLE_PHONE, done: [], studentId: id, screen: rec.reported ? 'today' : 'setup' };
+  const open = openPathways(s, id).at(-1) ?? null;
+  s.phone = { ...IDLE_PHONE, done: open && open.id === s.phone.planId ? s.phone.done : [], planId: open?.id ?? null, studentId: id, screen: rec.reported ? 'today' : 'setup' };
   return done(s);
 }
 
