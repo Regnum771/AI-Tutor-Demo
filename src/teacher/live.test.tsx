@@ -61,6 +61,10 @@ describe('live teacher screen', () => {
     expect(render(stateWithPlan())).toContain('>Calendar</button>');
     expect(html(<TeacherScreen frame={teacherFrame([{ at: PAST, type: 'greeting' }], 10)} />)).not.toContain('>Calendar</button>');
   });
+  it('offers Lesson planning only in the live booth', () => {
+    expect(render(stateWithPlan())).toContain('>Lesson planning</button>');
+    expect(html(<TeacherScreen frame={teacherFrame([{ at: PAST, type: 'greeting' }], 10)} />)).not.toContain('>Lesson planning</button>');
+  });
   it('offers "Open context" only when another panel is showing', () => {
     const other: LivePanel = { kind: 'student', studentId: 's29', planId: null, highlight: null };
     expect(render(stateWithPlan())).not.toContain('Open context');

@@ -15,6 +15,7 @@ import { Classroom, needSupportAt } from './Classroom';
 import { ADAPT, FALLBACK, QUESTION_SHORT, studentBrief, TOPICS, type Block, type ContextId } from './conversations';
 import { ContextPanel } from './ContextPanel';
 import { GREETING, type FrameMsg, type TeacherFrame, type View } from './frame';
+import { LessonPlanning } from './LessonPlanning';
 import { Arrow, Avatar, Eyebrow, Mark } from './parts';
 
 export interface TeacherActions {
@@ -101,7 +102,7 @@ export function liveTodayRows(s: DemoState): AttentionRow[] {
 export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFrame; actions?: TeacherActions; composer?: ComposerOverride }) {
   const { view, panel } = frame;
   const empty = view === 'chat' && frame.messages.length === 0 && frame.thinking === null;
-  const title = view === 'classroom' ? 'Classroom' : view === 'calendar' ? 'Calendar' : frame.title ?? 'New conversation';
+  const title = view === 'classroom' ? 'Classroom' : view === 'calendar' ? 'Calendar' : view === 'planning' ? 'Lesson planning' : frame.title ?? 'New conversation';
   const live = useLive();
   const isAnswer = (m: FrameMsg) => m.role === 'assistant' && (m.kind === 'answer' || (m.kind === 'live' && m.live?.source !== 'system'));
   const hasAnswer = frame.messages.some((m) => m.role === 'assistant' && (m.topic || m.live?.panel));
@@ -183,6 +184,8 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
           <Classroom cls={frame.classroom} studentApproved={frame.approved.includes('student')} actions={actions} />
         ) : view === 'calendar' ? (
           <Calendar />
+        ) : view === 'planning' ? (
+          <LessonPlanning />
         ) : empty ? (
           <EmptyState frame={frame} actions={actions} composer={<Composer value={composerValue} onChange={composer?.onChange} readOnly={!composer} disabled={composer?.disabled} onSend={send} big />} />
         ) : (
@@ -249,6 +252,7 @@ function Sidebar({ badge, view, active, actions }: { badge: number; view: View; 
         {nav('chat', 'Chat')}
         {nav('classroom', 'Classroom')}
         {live && nav('calendar', 'Calendar')}
+        {live && nav('planning', 'Lesson planning')}
       </div>
 
       <div className="mt-7"><Eyebrow className="text-side-mute">Today</Eyebrow></div>

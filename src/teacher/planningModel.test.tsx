@@ -5,7 +5,7 @@ import { seedState } from '../live/seed';
 import { advance, openPick, pickStudent, saveSetup, type StudyResult } from '../live/study/reducer';
 import type { DemoState } from '../live/types';
 import { MasteryChart } from './MasteryChart';
-import { DEFAULT_CONCEPT, masterySeries, planMarkers } from './planningModel';
+import { DEFAULT_CONCEPT, masterySeries, pastLectures, planMarkers, upcomingLectures } from './planningModel';
 
 const ok = (r: StudyResult): DemoState => {
   if (!r.ok) throw new Error(r.error);
@@ -56,5 +56,22 @@ describe('the chart’s data', () => {
       { day: 46, label: 'Check-ins', row: 'intervention' },
       { day: 41, label: 'Pathway', row: 'intervention' },
     ]);
+  });
+});
+
+describe('which lectures the tab lists', () => {
+  const ns = (ls: { n: number }[]) => ls.map((l) => l.n);
+  it('takes the next lecture and the two after it, and the rest as past lectures, newest first', () => {
+    expect(ns(upcomingLectures(40, '15:00', null))).toEqual([7, 8, 9]);
+    expect(ns(pastLectures(40, '15:00', null))).toEqual([6, 5, 4, 3, 2, 1]);
+    expect(ns(upcomingLectures(43, '10:00', null))).toEqual([8, 9]);
+    expect(ns(pastLectures(43, '10:00', null))).toEqual([7, 6, 5, 4, 3, 2, 1]);
+    expect(upcomingLectures(57, '10:00', null)).toEqual([]);
+  });
+  it('with a concept, keeps the coming lectures with material on it plus the lecture that taught it', () => {
+    expect(ns(upcomingLectures(40, '15:00', 'implication'))).toEqual([5, 9]);
+    expect(ns(upcomingLectures(40, '15:00', 'equivLaws'))).toEqual([7, 9]);
+    expect(ns(upcomingLectures(40, '15:00', 'applications'))).toEqual([8, 9]);
+    expect(pastLectures(40, '15:00', 'implication')).toEqual([]);
   });
 });
