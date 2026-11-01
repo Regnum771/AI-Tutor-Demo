@@ -2,7 +2,7 @@ import { classKpis, topicMastery } from '../../src/live/mastery';
 import { planProblems } from '../../src/live/plans';
 import { planById } from '../../src/live/reducer';
 import { forecast } from '../../src/live/study/estimate';
-import type { AssistantMsg, Plan } from '../../src/live/types';
+import type { AssistantMsg, Plan, StudyPlan } from '../../src/live/types';
 import { GROUPS } from '../../src/scenario/classroom';
 import { CONCEPTS, type ConceptId } from '../../src/scenario/knowledgeGraph';
 import { TWIN_FOCUS } from '../../src/scenario/minhAnh';
@@ -396,7 +396,9 @@ export const CASES: Case[] = [
       await t.session.settled();
     }
     t.check('Oversee', 'no replan', replansOf(t).length === 0, replansOf(t).map((r) => r.signal).join());
-    t.check('Oversee', 'the plan is untouched', JSON.stringify(planOf(t)) === JSON.stringify(plan));
+    // Day 42 is a Monday: the refocus may re-pick concepts, but minutes and the reason stay.
+    const kept = (p: StudyPlan | null) => JSON.stringify(p && { reason: p.reason, createdDay: p.createdDay, minutes: p.days.map((d) => d.minutes) });
+    t.check('Oversee', 'the plan’s minutes and reason are untouched', kept(planOf(t)) === kept(plan));
   } },
   { id: 'L6.5', level: 6, title: 'A Quiz 3 drop goes through the cooldown', run: async (t) => {
     await joinPhone(t, MA, 30, 60);

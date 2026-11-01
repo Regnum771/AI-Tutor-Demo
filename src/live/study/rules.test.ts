@@ -8,6 +8,7 @@ import type { DemoState, StudentProfile, StudyPlan } from '../types';
 import { applyCheck, capacityFor, capacityLeft, shortOfTime, teacherMinutes } from './capacity';
 import { NEW_PER_DAY, cardsToday, reviewCard } from './cards';
 import { bandOf, cloMastery, forecast, forecastSeries, minutesNeeded, projection } from './estimate';
+import { forget } from './forgetting';
 import { markFor } from './marks';
 import { ensureRecord, newRecord, noteAttempt, noteForecast } from './record';
 import { refocus } from './refocus';
@@ -450,5 +451,18 @@ describe('weekly refocus', () => {
   it('leaves a day before Lecture 1 as it is', () => {
     const early: StudyPlan = { createdDay: 0, reason: 'r', leftOut: [], source: 'offline', days: [{ day: 0, minutes: 5, clo: 'CLO3', concepts: ['applications'] }] };
     expect(refocus(early, student(seedState()), 0).days).toEqual(early.days);
+  });
+});
+
+describe('forgetting', () => {
+  const item = (c: ConceptId) => BANK.find((i) => i.concept === c)!;
+  it('takes 0.02 a week off each concept not practised in the last 7 days, down to 0.25', () => {
+    const { s, rec } = setup();
+    const st = student(s);
+    Object.assign(st.mastery, { applications: 0.26, equivLaws: 0.2 });
+    rec.attempts.push({ itemId: item('implication').id, day: 38, correct: true, firstTry: true });
+    rec.attempts.push({ itemId: item('biconditional').id, day: 34, correct: true, firstTry: true });
+    forget(st, rec, 42);
+    expect(st.mastery).toMatchObject({ implication: 0.31, biconditional: 0.33, negation: 0.68, propositions: 0.83, applications: 0.25, equivLaws: 0.2 });
   });
 });

@@ -287,9 +287,10 @@ describe('the simulated Quiz 3', () => {
     const s = ready();
     s.day = 41;
     const dropped = ok(simulateDrop(s));
-    const a2 = markFor(dropped.students.find((x) => x.id === 's17')!, ASSESSMENTS.find((a) => a.id === 'a2')!);
     const q2 = dropped.students.find((x) => x.id === 's17')!.quiz.q2;
     const r = advance(dropped, 6, null);
+    // Monday 42 forgot a little, so the mark comes from the student as they are after it.
+    const a2 = markFor(r.ok ? r.state.students.find((x) => x.id === 's17')! : dropped.students[16], ASSESSMENTS.find((a) => a.id === 'a2')!);
     expect(r.ok && r.state.study.s17.marks.find((m) => m.assessment === 'a2')?.mark).toBe(a2);
     expect(Math.abs(a2 - q2) > 15).toBe(false);
     expect(r.ok && r.signal).not.toBe('markSwing');
@@ -354,5 +355,37 @@ describe('Today budget', () => {
     s.day = 40;
     const { budget } = todayList(s, 's17');
     expect(Number.isInteger(budget)).toBe(true);
+  });
+});
+
+describe('a new week', () => {
+  const item = (concept: string) => BANK.find((i) => i.concept === concept)!;
+  it('a Monday forgets once, then re-picks the week from the lectures', () => {
+    const s = structuredClone(ready());
+    Object.assign(s.students[16].mastery, { implication: 0.3, biconditional: 0.29, expressions: 0.295 });
+    s.study.s17.attempts.push({ itemId: item('biconditional').id, day: 41, correct: true, firstTry: true });
+    const after = ok(advance(s, 7, null)); // Saturday 40 → Saturday 47, through Monday 42
+    expect(after.students[16].mastery).toMatchObject({ negation: 0.68, implication: 0.28, biconditional: 0.29, expressions: 0.275 });
+    const plan = after.study.s17.plan!;
+    // Forgetting first: implication and expressions are now the two weakest; before it, biconditional was.
+    expect(plan.days.find((d) => d.day === 42)?.concepts).toEqual(['implication', 'expressions']);
+    expect(plan.days.find((d) => d.day === 49)?.concepts).toEqual(['implication']);
+    expect(plan.days.map((d) => d.minutes)).toEqual(s.study.s17.plan!.days.map((d) => d.minutes));
+    expect(plan.reason).toBe('r');
+    expect(after.study.s17.replans).toEqual(s.study.s17.replans);
+  });
+  it('a day that is not a Monday neither forgets nor re-picks', () => {
+    const s = ready();
+    const after = ok(advance(s, 1, null)); // Saturday 40 → Sunday 41
+    expect(after.students[16].mastery).toEqual(s.students[16].mastery);
+    expect(after.study.s17.plan).toEqual(s.study.s17.plan);
+  });
+  it('forgets for every student with a record and leaves the rest alone', () => {
+    const s = structuredClone(ready());
+    ensureRecord(s, 's29');
+    const after = ok(advance(s, 2, null)); // reaches Monday 42
+    const of = (st: DemoState, id: string) => st.students.find((x) => x.id === id)!.mastery;
+    expect(of(after, 's29')).toMatchObject({ propositions: 0.5, implication: 0.24 });
+    expect(of(after, 's2')).toEqual(of(s, 's2'));
   });
 });

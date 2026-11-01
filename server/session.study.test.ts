@@ -226,7 +226,9 @@ describe('when planning fails', () => {
     fail = true;
     session.nextWeek();
     await session.settled();
-    expect(session.state.study.s17.plan).toEqual(plan);
+    // Monday's refocus may re-pick the week's concepts; everything else stays.
+    const kept = (p: typeof plan) => p && { ...p, days: p.days.map((d) => ({ day: d.day, minutes: d.minutes })) };
+    expect(kept(session.state.study.s17.plan)).toEqual(kept(plan));
     expect(session.state.study.s17).toMatchObject({ pendingSignal: 'disengaged', planning: null });
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();

@@ -7,8 +7,10 @@ import type { CardRating, DemoState, ReplanSignal, StudyDay, StudyPlan } from '.
 import { applyCheck, openPathways } from './capacity';
 import { reviewCard } from './cards';
 import { forecast } from './estimate';
+import { forget } from './forgetting';
 import { markFor } from './marks';
 import { ensureRecord, logMinutes, MINUTES, noteForecast } from './record';
+import { refocus } from './refocus';
 import { nextItem } from './select';
 import { detectSignal } from './signals';
 import { todayList } from './today';
@@ -128,6 +130,7 @@ export function advance(state: DemoState, days: number, check: StudyDay['check']
       if (!swing || Math.abs(mark - previous) > Math.abs(swing.mark - swing.previous)) swing = { mark, previous };
     }
     s.day += 1;
+    if (s.day % 7 === 0) weekTurn(s, id);
     noteForecast(rec, student, s.day);
   }
   s.clock = MORNING;
@@ -135,6 +138,17 @@ export function advance(state: DemoState, days: number, check: StudyDay['check']
   const { band } = forecast(student, rec);
   rec.band ??= band;
   return done(s, detectSignal(rec, s.day, band, swing?.mark ?? null, swing?.previous ?? null));
+}
+
+/** A new week: forgetting for every student with a record, then the phone student's plan re-picked from the lectures. Mutates `s`. */
+function weekTurn(s: DemoState, phoneId: string): void {
+  for (const [id, rec] of Object.entries(s.study)) {
+    const st = studentById(s, id)!;
+    forget(st, rec, s.day);
+    st.status = statusFor(st.mastery);
+  }
+  const rec = s.study[phoneId];
+  if (rec.plan) rec.plan = refocus(rec.plan, studentById(s, phoneId)!, s.day);
 }
 
 /** Director control: a Quiz 3 result 20 points below the last mark, so the demo can show a drastic signal. */
