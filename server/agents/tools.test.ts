@@ -92,8 +92,9 @@ describe('exam outlook', () => {
     state.day = 41;
     rec.marks.push({ assessment: 'quiz3', mark: 22, day: 52 });
     expect(readTool(state, 'get_exam_outlook', { student_id: 's17' })).toMatchObject({
-      minutesPlanned: 40, minutesDone: 12, marks: [{ title: 'Quiz 3', mark: 22, date: 'Thu 12 Nov' }],
+      minutesPlanned: 40, minutesDone: 12, marks: [{ title: 'Quiz 3', mark: 22, date: 'Thu 12 Nov' }], practisedLast7Days: { done: 62, planned: 119 },
     });
+    expect(READ_TOOLS.find((t) => t.name === 'get_exam_outlook')!.description).toContain('practisedLast7Days');
     expect(READ_TOOLS.find((t) => t.name === 'get_exam_outlook')!.description).toContain('marks');
   });
   it('names the students whose own Quiz 2 Q4 answer chose the converse', () => {

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup as html } from 'react-dom/server';
+import { ctxFor } from '../live/fixtures';
+import { LiveProvider } from '../live/LiveContext';
+import { seedState } from '../live/seed';
+import { ensureRecord } from '../live/study/record';
 import { ForecastChart } from './ForecastChart';
+import { StudentProfile } from './StudentProfile';
 
 describe('forecast chart', () => {
   const points = [{ day: 17, value: 6.1 }, { day: 38, value: 4.4 }, { day: 40, value: 4.4 }];
@@ -23,5 +28,19 @@ describe('forecast chart', () => {
     const out = html(<ForecastChart points={points} projection={{ day: 64, value: 6.4 }} markers={[]} />);
     expect(out).toContain('data-series="projection"');
     expect(out).toContain('6.4 if the plan is kept');
+  });
+});
+
+describe('the profile chart', () => {
+  it('marks each disengaged replan as Stopped on the intervention row', () => {
+    const s = seedState();
+    ensureRecord(s, 's17').replans.push({ day: 43, signal: 'disengaged', reason: 'Lighter.' }, { day: 50, signal: 'markSwing', reason: 'More.' });
+    const out = html(
+      <LiveProvider value={ctxFor(s, null)}>
+        <StudentProfile studentId="s17" entryId={null} onClose={() => {}} onAsk={() => {}} onOpenChat={() => {}} />
+      </LiveProvider>,
+    );
+    expect(out).toMatch(/data-marker-row="intervention"[^>]*>Stopped</);
+    expect(out.match(/>Stopped</g)).toHaveLength(1);
   });
 });

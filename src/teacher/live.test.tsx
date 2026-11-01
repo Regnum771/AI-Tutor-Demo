@@ -8,7 +8,7 @@ import { LiveProvider } from '../live/LiveContext';
 import type { AssistantMsg, DemoState, LivePanel } from '../live/types';
 import { COMPLEX } from '../scenario/classroom';
 import { PAST, teacherFrame, type TeacherEvent } from './frame';
-import { TeacherScreen, type TeacherActions } from './TeacherScreen';
+import { liveTodayRows, TeacherScreen, type TeacherActions } from './TeacherScreen';
 
 const noop = new Proxy({}, { get: () => () => undefined }) as TeacherActions;
 
@@ -108,6 +108,16 @@ describe('live teacher screen', () => {
     const s = stateWithPlan();
     s.students[16].status = 'onTrack';
     expect(render(s)).toContain('>11</span>');
+  });
+  it('adds a row for each student who has stopped practising, only while that lasts', () => {
+    const s = seedState();
+    const rec = ensureRecord(s, 's17');
+    rec.reported = { weekday: 30, weekend: 60 };
+    for (const d of [37, 38, 39]) rec.days[d] = { planned: 30, done: 0, check: null };
+    expect(render(s, null)).toContain('Stopped practising · 0 of 90 min this week');
+    expect(liveTodayRows(s).at(-1)).toMatchObject({ what: 'Minh Anh', figure: '0/90', prompt: 'Minh Anh has stopped practising. What should I do?' });
+    rec.days[39].done = 15;
+    expect(render(s, null)).not.toContain('Stopped practising');
   });
   it('hides the five-question tracker in live mode', () => {
     expect(render(stateWithPlan())).not.toContain('Five questions');

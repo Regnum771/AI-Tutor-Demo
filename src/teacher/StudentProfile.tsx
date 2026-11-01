@@ -46,6 +46,7 @@ export function StudentProfile({ studentId, entryId, onClose, onAsk, onOpenChat 
     ...state.plans
       .filter((p) => p.studentIds.includes(s.id) && ['sent', 'autoApproved', 'done', 'approved'].includes(p.status) && p.kind !== 'classActivity')
       .map((p) => ({ day: p.date, label: p.kind === 'pathway' ? 'Pathway' : 'Check-in', row: 'intervention' as const })),
+    ...(rec?.replans ?? []).filter((r) => r.signal === 'disengaged').map((r) => ({ day: r.day, label: 'Stopped', row: 'intervention' as const })),
   ];
   const series = forecastSeries(s, rec);
   const points = rec ? [...series.filter((p) => p.day !== state.day), { day: state.day, value: now.value }] : series;

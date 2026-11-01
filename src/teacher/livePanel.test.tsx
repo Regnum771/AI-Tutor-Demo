@@ -116,6 +116,13 @@ describe('road to the exam', () => {
     expect(out).toContain('12 of 20 min');
     expect(out).toContain('More on equivalence.');
   });
+  it('says when the student has stopped practising', () => {
+    const panel: LivePanel = { kind: 'student', studentId: 's17', planId: null, highlight: null };
+    expect(render(withStudy(), panel)).not.toContain('Stopped practising');
+    const s = withStudy();
+    s.study.s17.days = { 38: { planned: 30, done: 0, check: null }, 39: { planned: 30, done: 0, check: null }, 40: { planned: 20, done: 0, check: null } };
+    expect(render(s, panel)).toContain('Stopped practising: 0 of 80 min in the last 7 days.');
+  });
   it('shows the latest mark', () => {
     const s = withStudy();
     s.study.s17.marks.push({ assessment: 'quiz3', mark: 22, day: 52 });

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLive } from '../live/LiveContext';
 import { classKpis, topicMastery, twinConcepts } from '../live/mastery';
 import { examOutlook } from '../live/study/outlook';
+import { stoppedPractising } from '../live/study/signals';
 import type { DemoState, Evidence, LivePanel, Plan, StudentProfile } from '../live/types';
 import { GROUPS } from '../scenario/classroom';
 import { shortDate } from '../scenario/course';
@@ -167,6 +168,7 @@ function RoadToExam({ s, state }: { s: StudentProfile; state: DemoState }) {
   const o = examOutlook(state, s);
   if (!o.setUp) return null;
   const latest = o.marks.at(-1);
+  const stopped = state.study[s.id] ? stoppedPractising(state.study[s.id], state.day) : null;
   return (
     <Section title="Road to the exam" aside="estimate">
       <div className="grid grid-cols-2 border-b border-egg-line pb-3">
@@ -180,6 +182,7 @@ function RoadToExam({ s, state }: { s: StudentProfile; state: DemoState }) {
           <div className="mt-1 text-[15px] font-semibold text-egg-ink">{`${o.minutesDone} of ${o.minutesPlanned} min`}</div>
         </div>
       </div>
+      {stopped && <div className="mt-3 text-[13.5px] font-semibold text-egg-accent-ink">{`Stopped practising: ${stopped.done} of ${stopped.planned} min in the last 7 days.`}</div>}
       {latest && <div className="mt-3 text-[13.5px] text-egg-ink">{`${latest.title}: ${latest.mark}`}</div>}
       {o.lastChange && <div className="mt-3 text-[13.5px] text-egg-ink">{`${o.lastChange.date}: ${o.lastChange.reason}`}</div>}
     </Section>

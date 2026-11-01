@@ -36,3 +36,26 @@ export function nextReplan(rec: StudyRecord, raised: ReplanSignal | null, today:
   if (!wanted) return { run: null, hold: null };
   return mayReplan(rec, wanted, today) ? { run: wanted, hold: null } : { run: null, hold: wanted };
 }
+
+/** Minutes done (all practice, teacher sessions too) and planned over the 7 closed days before `today`, rounded. */
+export function lastWeek(rec: StudyRecord, today: number): { done: number; planned: number } {
+  let done = 0;
+  let planned = 0;
+  for (let d = today - 7; d < today; d++) {
+    done += rec.days[d]?.done ?? 0;
+    planned += rec.days[d]?.planned ?? 0;
+  }
+  return { done: Math.round(done), planned: Math.round(planned) };
+}
+
+/** The disengagement rule as a fact for the teacher: the last 7 days' minutes while the student has stopped, else null. */
+export const stoppedPractising = (rec: StudyRecord, today: number): { done: number; planned: number } | null =>
+  disengaged(rec, today) ? lastWeek(rec, today) : null;
+
+/** The first day of the current stopped stretch, or null while the student is practising. */
+export function stoppedSince(rec: StudyRecord, today: number): number | null {
+  if (!stoppedPractising(rec, today)) return null;
+  let day = today;
+  while (day > 0 && disengaged(rec, day - 1)) day--;
+  return day;
+}

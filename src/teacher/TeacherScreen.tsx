@@ -3,6 +3,7 @@ import { fmt } from '../live/clock';
 import { useLive } from '../live/LiveContext';
 import { classKpis } from '../live/mastery';
 import { examRisk } from '../live/study/outlook';
+import { stoppedPractising } from '../live/study/signals';
 import { fullDate } from '../scenario/course';
 import type { AssistantMsg as LiveAssistant, DemoState } from '../live/types';
 import { STUDENTS, type Student } from '../scenario/classroom';
@@ -37,15 +38,17 @@ const TEACHER = 'Nguyễn Thanh Lam';
 const SOURCES = ['LMS', 'Zalo', 'WhatsApp', 'Email', 'Assessments', 'Attendance', 'Records', 'Materials'];
 const ORDER: ContextId[] = ['student', 'class', 'attention'];
 
+export interface AttentionRow { topic: ContextId; who: string; what: string; prompt?: string; figure?: string }
+
 /** Today's attention list on the empty state, styled after the reference's ruled schedule. */
-const TODAY: { topic: ContextId; who: string; what: string; prompt?: string }[] = [
+const TODAY: AttentionRow[] = [
   { topic: 'student', who: 'Nguyễn Minh Anh', what: 'Quiz 2 dropped' },
   { topic: 'class', who: 'Discrete Mathematics', what: 'Gap: logical equivalence' },
   { topic: 'attention', who: 'Escalation rule', what: 'Need you personally' },
 ];
 
 /** Live only, while at least one student's exam estimate is At risk or Unlikely. */
-const EXAM_ROW = { topic: 'attention' as ContextId, who: 'Road to the exam', what: 'May not pass', prompt: 'Which students may not pass the exam?' };
+const EXAM_ROW: AttentionRow = { topic: 'attention', who: 'Road to the exam', what: 'May not pass', prompt: 'Which students may not pass the exam?' };
 
 /** Figures count up with the row's reveal; at 1 they read as written. */
 const figureOf = (i: number, p: number): string =>
@@ -74,6 +77,24 @@ const liveFigures = (s: DemoState): string[] => {
   const k = classKpis(s.students);
   return [`${ma.quiz.q1}→${ma.quiz.q2}`, `${k.needSupport}/55`, String(k.escalated), String(examRisk(s).length)];
 };
+
+/** Live only: the three rows with live figures, Road to the exam while anyone may not pass, then one row per student who has stopped practising. */
+export function liveTodayRows(s: DemoState): AttentionRow[] {
+  const figures = liveFigures(s);
+  const rows: AttentionRow[] = TODAY.map((r, i) => ({ ...r, figure: figures[i] }));
+  if (examRisk(s).length > 0) rows.push({ ...EXAM_ROW, figure: figures[3] });
+  for (const st of s.students) {
+    const rec = s.study[st.id];
+    const p = rec ? stoppedPractising(rec, s.day) : null;
+    if (p) {
+      rows.push({
+        topic: 'attention', who: `Stopped practising · ${p.done} of ${p.planned} min this week`, what: st.short,
+        figure: `${p.done}/${p.planned}`, prompt: `${st.short} has stopped practising. What should I do?`,
+      });
+    }
+  }
+  return rows;
+}
 
 /** Stateless: everything on screen is a function of `frame`. With no `actions`, buttons render but do nothing. */
 export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFrame; actions?: TeacherActions; composer?: ComposerOverride }) {
@@ -286,7 +307,7 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
   const line2 = comma < 0 ? '' : typed.slice(comma + 1).trim();
   const rows = frame.greeting.rows;
   const live = useLive();
-  const list = live && examRisk(live.state).length > 0 ? [...TODAY, EXAM_ROW] : TODAY;
+  const list = live ? liveTodayRows(live.state) : TODAY;
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto flex max-w-[760px] flex-col px-8 pt-[97px]">
@@ -301,7 +322,7 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
           </div>
           {list.map((row, i) => (
             <button
-              key={row.what}
+              key={`${row.who}·${row.what}`}
               type="button"
               onClick={() => actions?.send(row.prompt ?? TOPICS[row.topic].prompt)}
               className="grid w-full grid-cols-[1fr_auto_auto] items-center gap-6 border-t border-egg-ink/70 py-3.5 text-left"
@@ -313,7 +334,7 @@ function EmptyState({ frame, actions, composer }: { frame: TeacherFrame; actions
                   <Mark size={13} className="text-egg-ink" />{row.what}
                 </span>
               </span>
-              <span className="font-serif text-[40px] leading-none text-egg-accent-ink">{live ? liveFigures(live.state)[i] : figureOf(i, rows[Math.min(i, 2)])}</span>
+              <span className="font-serif text-[40px] leading-none text-egg-accent-ink">{row.figure ?? figureOf(i, rows[Math.min(i, 2)])}</span>
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-egg-ink text-egg-card">
                 <Arrow size={15} dir="right" />
               </span>

@@ -13,7 +13,7 @@ import { markFor } from './marks';
 import { ensureRecord, newRecord, noteAttempt, noteForecast } from './record';
 import { refocus } from './refocus';
 import { SELF_SESSION, nextItem } from './select';
-import { detectSignal, mayReplan, nextReplan } from './signals';
+import { detectSignal, mayReplan, nextReplan, stoppedPractising, stoppedSince } from './signals';
 import { todayList } from './today';
 import { BANK } from '../../scenario/practiceBank';
 
@@ -464,5 +464,37 @@ describe('forgetting', () => {
     rec.attempts.push({ itemId: item('biconditional').id, day: 34, correct: true, firstTry: true });
     forget(st, rec, 42);
     expect(st.mastery).toMatchObject({ implication: 0.31, biconditional: 0.33, negation: 0.68, propositions: 0.83, applications: 0.25, equivLaws: 0.2 });
+  });
+});
+
+describe('stopped practising', () => {
+  const fresh = () => newRecord(student(seedState()));
+  it('is null before any day has closed and while the student practises', () => {
+    expect(stoppedPractising(fresh(), 40)).toBeNull();
+    const r = fresh();
+    for (let d = 33; d < 40; d++) r.days[d] = { planned: 20, done: 10, check: null };
+    expect(stoppedPractising(r, 40)).toBeNull();
+    expect(stoppedSince(r, 40)).toBeNull();
+  });
+  it('reports the last 7 days’ minutes and when the stretch began', () => {
+    const r = fresh();
+    for (const d of [36, 37, 38, 39, 40, 41]) r.days[d] = { planned: 30, done: d === 36 ? 12.5 : 0, check: null };
+    expect(stoppedPractising(r, 42)).toEqual({ done: 13, planned: 180 });
+    expect(stoppedSince(r, 42)).toBe(40);
+  });
+  it('matches the disengagement signal', () => {
+    const patterns: [number, number][][] = [
+      [[30, 0], [30, 0], [30, 0]],
+      Array.from({ length: 7 }, () => [20, 4] as [number, number]),
+      Array.from({ length: 7 }, () => [20, 6] as [number, number]),
+      [[30, 0], [30, 0]],
+    ];
+    const stopped = patterns.map((p) => {
+      const r = fresh();
+      p.forEach(([planned, done], i) => { r.days[39 - i] = { planned, done, check: null }; });
+      expect(stoppedPractising(r, 40) !== null).toBe(detectSignal(r, 40, 'At risk', null, null) === 'disengaged');
+      return stoppedPractising(r, 40) !== null;
+    });
+    expect(stopped).toEqual([true, true, false, false]);
   });
 });
