@@ -1,0 +1,60 @@
+import { renderToStaticMarkup as html } from 'react-dom/server';
+import { describe, expect, it } from 'vitest';
+import { planFor, stateWithPlan } from '../live/fixtures';
+import { seedState } from '../live/seed';
+import { advance, openPick, pickStudent, saveSetup, type StudyResult } from '../live/study/reducer';
+import type { DemoState } from '../live/types';
+import { MasteryChart } from './MasteryChart';
+import { DEFAULT_CONCEPT, masterySeries, planMarkers } from './planningModel';
+
+const ok = (r: StudyResult): DemoState => {
+  if (!r.ok) throw new Error(r.error);
+  return r.state;
+};
+
+describe('mastery chart', () => {
+  const points = masterySeries(seedState(), 'implication');
+  it('draws the series, the 0.50 gap line, a tick per lecture and the exam', () => {
+    const out = html(<MasteryChart concept="implication" label="Implication" points={points} markers={[]} />);
+    expect(out).toContain('data-series="mastery"');
+    expect(out).toContain('data-concept="implication"');
+    expect(out).toContain('data-gap-line');
+    expect(out).toContain('Gap 0.50');
+    expect(out.match(/data-tick="/g)).toHaveLength(9);
+    expect(out).toMatch(/data-tick="7"[^>]*>L7</);
+    expect(out).toContain('>Exam<');
+    expect(out.match(/data-point="/g)).toHaveLength(points.length);
+  });
+  it('puts intervention labels on their own row along the top', () => {
+    const out = html(<MasteryChart concept="implication" label="Implication" points={points} markers={[{ day: 40, label: 'Pathway', row: 'intervention' }, { day: 40, label: 'Check-ins', row: 'intervention' }]} />);
+    expect(out).toMatch(/data-marker-row="intervention"[^>]*>Pathway</);
+    expect(out).toMatch(/data-marker-row="intervention"[^>]*>Check-ins</);
+  });
+});
+
+describe('the chart’s data', () => {
+  it('shows the seeded points only until a live day closes, then joins the live points', () => {
+    const s = seedState();
+    expect(DEFAULT_CONCEPT).toBe('equivalence');
+    expect(masterySeries(s, 'equivalence').map((p) => p.day)).toEqual([0, 7, 14, 21, 28, 35, 40]);
+    const after = ok(advance(ok(saveSetup(ok(pickStudent(ok(openPick(s)), 's17')), 30, 60)), 2, null));
+    expect(masterySeries(after, 'equivalence').map((p) => p.day)).toEqual([0, 7, 14, 21, 28, 35, 40, 41, 42]);
+  });
+  it('keeps the seeded weeks fixed when the class changes live', () => {
+    const s = seedState();
+    const before = masterySeries(s, 'propositions');
+    for (const st of s.students) st.mastery.propositions = 0.1;
+    expect(masterySeries(s, 'propositions')).toEqual(before);
+  });
+  it('marks pathways sent, class activities approved and check-ins booked, not proposals or dismissals', () => {
+    expect(planMarkers(stateWithPlan())).toEqual([]);
+    expect(planMarkers(stateWithPlan('pathway', { status: 'sent' }))).toEqual([{ day: 40, label: 'Pathway', row: 'intervention' }]);
+    const s = stateWithPlan('classActivity', { status: 'approved' });
+    s.plans.push(planFor('checkIns', { id: 'p2', status: 'approved' }), planFor('pathway', { id: 'p3', status: 'dismissed' }), planFor('pathway', { id: 'p4', status: 'done', date: 41 }));
+    expect(planMarkers(s)).toEqual([
+      { day: 45, label: 'Class activity', row: 'intervention' },
+      { day: 46, label: 'Check-ins', row: 'intervention' },
+      { day: 41, label: 'Pathway', row: 'intervention' },
+    ]);
+  });
+});
