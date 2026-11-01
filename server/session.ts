@@ -1,7 +1,7 @@
 import * as R from '../src/live/reducer';
 import { seedState } from '../src/live/seed';
 import * as S from '../src/live/study/reducer';
-import { nextReplan } from '../src/live/study/signals';
+import { kept, nextReplan } from '../src/live/study/signals';
 import type { CardRating, DemoState, ReplanSignal, StudyDay } from '../src/live/types';
 import type { CloId } from '../src/scenario/course';
 import type { MessagesClient } from './agents/client';
@@ -180,7 +180,7 @@ export class DemoSession {
   /** Saves the student's time and writes the first plan. */
   studySetup(weekday: number, weekend: number): Done {
     const out = this.run(S.saveSetup(this.state, weekday, weekend));
-    if (out.ok) this.replan(this.state.phone.studentId!, 'setup');
+    if (out.ok) this.weigh(this.state.phone.studentId!, 'setup');
     return out;
   }
 
@@ -195,7 +195,7 @@ export class DemoSession {
     return out;
   }
 
-  /** What a signal means today: a replan now, or held until the cooldown or the plan in progress ends. */
+  /** What a signal means today: a replan now, or held until the cooldown ends (checked on the next Next day or Next week) or while a plan is being written. */
   private weigh(studentId: string, raised: ReplanSignal | null) {
     const rec = this.state.study[studentId];
     const { run, hold } = nextReplan(rec, raised, this.state.day);
@@ -212,7 +212,7 @@ export class DemoSession {
     const abort = new AbortController();
     this.planners.add(abort);
     this.update(epoch, (st) => { Object.assign(st.study[studentId], { planning: { steps: [] }, pendingSignal: null }); });
-    const giveUp = () => this.update(epoch, (st) => { Object.assign(st.study[studentId], { planning: null, pendingSignal: signal }); });
+    const giveUp = () => this.update(epoch, (st) => { Object.assign(st.study[studentId], { planning: null, pendingSignal: kept(st.study[studentId].pendingSignal) ? st.study[studentId].pendingSignal : signal }); });
     const run: Promise<void> = planStudy(structuredClone(this.state), studentId, signal, {
       client: this.client,
       signal: abort.signal,

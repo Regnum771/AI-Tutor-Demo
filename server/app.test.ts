@@ -101,3 +101,22 @@ describe('study routes', () => {
     expect((await post('study/simulate-drop')).status).toBe(400);
   });
 });
+
+describe('study routes reject bad values', () => {
+  it('a clo that is not a string is a 400', async () => {
+    const { post } = setup();
+    await post('study/open');
+    await post('study/pick', { studentId: 's17' });
+    await post('study/setup', { weekday: 30, weekend: 60 });
+    expect((await post('study/practice', { clo: 5 })).status).toBe(400);
+    expect((await post('study/practice', { clo: null })).status).toBe(200);
+  });
+  it('a check that is not a string is a 400', async () => {
+    const { post } = setup();
+    await post('study/open');
+    await post('study/pick', { studentId: 's17' });
+    await post('study/setup', { weekday: 30, weekend: 60 });
+    expect((await post('study/next-day', { check: 7 })).status).toBe(400);
+    expect((await post('study/next-day', {})).status).toBe(200);
+  });
+});

@@ -152,6 +152,70 @@ describe('Next day never waits for an agent', () => {
   });
 });
 
+/** A client whose requests wait until the test lets them settle. */
+const gated = () => {
+  const calls: { resolve: () => void; fail: () => void }[] = [];
+  const client: MessagesClient = {
+    create: (_p, o) => new Promise((resolve, reject) => {
+      calls.push({ resolve: () => resolve(undefined as never), fail: () => reject(new Error('down')) });
+      o?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+    }),
+  };
+  return { client, calls };
+};
+
+describe('signals across a run in flight', () => {
+  it('a failed replan keeps a mark swing raised while it ran', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const g = gated();
+    let hang = false;
+    const session: DemoSession = new DemoSession({ create: (p, o) => (hang ? g.client : planner(() => session.state)).create(p, o) });
+    await joined(session);
+    hang = true;
+    session.nextWeek();
+    expect(session.state.study.s17.planning).not.toBeNull();
+    session.simulateDrop();
+    expect(session.state.study.s17.pendingSignal).toBe('markSwing');
+    g.calls[0].fail();
+    await session.settled();
+    expect(session.state.study.s17).toMatchObject({ pendingSignal: 'markSwing', planning: null });
+    warn.mockRestore();
+  });
+  it('two setup calls send one planning request', () => {
+    const g = gated();
+    const session = new DemoSession(g.client);
+    session.studyOpen();
+    session.studyPick('s17');
+    session.studySetup(30, 60);
+    session.studySetup(45, 60);
+    expect(g.calls).toHaveLength(1);
+    session.reset();
+  });
+  it('a plan landing after the day moved leaves a held mark swing to replan on the next day', async () => {
+    const g = gated();
+    let hang = true;
+    const session: DemoSession = new DemoSession({ create: (p, o) => (hang ? g.client : planner(() => session.state)).create(p, o) });
+    session.studyOpen();
+    session.studyPick('s17');
+    session.studySetup(30, 60);
+    session.nextDay(null);
+    session.simulateDrop();
+    expect(session.state.study.s17.pendingSignal).toBe('markSwing');
+    hang = false;
+    // the setup run ends with its offline fallback once the request fails
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    g.calls[0].fail();
+    await session.settled();
+    expect(session.state.study.s17.plan).not.toBeNull();
+    expect(session.state.study.s17.pendingSignal).toBe('markSwing');
+    session.nextDay(null);
+    await session.settled();
+    expect(session.state.study.s17.pendingSignal).toBeNull();
+    expect(replans(session).map((r) => r.signal)).toContain('markSwing');
+    vi.restoreAllMocks();
+  });
+});
+
 describe('when planning fails', () => {
   it('a failed replan keeps the plan and leaves the signal pending', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});

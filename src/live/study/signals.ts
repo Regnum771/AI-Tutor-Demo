@@ -23,14 +23,16 @@ export function detectSignal(rec: StudyRecord, today: number, band: PassBand, ne
 export const mayReplan = (rec: StudyRecord, signal: ReplanSignal, today: number): boolean =>
   signal === 'markSwing' || signal === 'teacherPlan' || signal === 'setup' || rec.lastReplanDay === null || today - rec.lastReplanDay >= COOLDOWN_DAYS;
 
+/** A signal that stays true until a plan answers it, so a failed or later run must not lose it. */
+export const kept = (s: ReplanSignal | null): s is ReplanSignal => s === 'markSwing' || s === 'teacherPlan' || s === 'setup';
+
 /**
  * What a new day does with a signal: replan now, or hold it through the cooldown. A disengagement or band change
  * counts only if it is raised again; a mark or a teacher plan is a fact that stays true until a plan answers it.
  */
 export function nextReplan(rec: StudyRecord, raised: ReplanSignal | null, today: number): { run: ReplanSignal | null; hold: ReplanSignal | null } {
   if (today >= EXAM_DAY) return { run: null, hold: null };
-  const kept = rec.pendingSignal === 'markSwing' || rec.pendingSignal === 'teacherPlan' || rec.pendingSignal === 'setup' ? rec.pendingSignal : null;
-  const wanted = kept ?? raised;
+  const wanted = (kept(rec.pendingSignal) ? rec.pendingSignal : null) ?? raised;
   if (!wanted) return { run: null, hold: null };
   return mayReplan(rec, wanted, today) ? { run: wanted, hold: null } : { run: null, hold: wanted };
 }
