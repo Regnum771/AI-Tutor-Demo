@@ -120,6 +120,9 @@ describe('student voice', () => {
     const converse = qs.find((q) => q.id === 'f-converse')!;
     expect(converse).toMatchObject({ messages: 16, students: 13, concept: 'implication' });
     expect(converse.evidenceIds).toContain('s17-zalo-1');
+    expect(typeof converse.latestDate).toBe('string');
+    const counts = qs.map((q) => q.students as number);
+    expect(counts).toEqual([...counts].sort((a, b) => b - a));
     expect(readLabel(state, 'get_class_questions', {})).toBe('Student Analysis Agent · reading what students are asking');
   });
   it('places messages relative to a lecture, and adds the record and forecast to the twin', () => {

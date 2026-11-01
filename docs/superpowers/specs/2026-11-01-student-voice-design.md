@@ -38,10 +38,12 @@ One lecture a week, on Tuesday from 09:00 to 11:00 (day `7 × (n − 1) + 1`), L
 | 3 | 15 | Truth tables | truthTables |
 | 4 | 22 | Biconditionals and compound expressions | biconditional, expressions |
 | 5 | 29 | Implication | implication |
-| 6 | 36 | Logical equivalence | equivalence |
-| 7 | 43 | De Morgan and equivalence laws | deMorgan, equivLaws |
+| 6 | 36 | Logical equivalence and De Morgan | equivalence, deMorgan |
+| 7 | 43 | Equivalence laws | equivLaws |
 | 8 | 50 | Logic in real problems | applications |
 | 9 | 57 | Revision | (none) |
+
+De Morgan sits in Lecture 6 because Quiz 2 on day 38 tests it, and a quiz cannot test a concept taught after it.
 
 `lectureLabel(day, time)` returns the position relative to the nearest lecture before it: "during Lecture 5" for a message sent that day between 09:00 and 11:00, "2 hours after Lecture 5" on the same day, "1 day after Lecture 5", and "before Lecture 1" when no lecture came first.
 
@@ -101,7 +103,7 @@ export function projection(student, rec, today): number;                        
 ```
 
 - **Forecast (standing)** = 0.6 × (10 × mastery weighted by CLO exam share) + 0.4 × (latest mark ÷ 10), rounded to one decimal. The latest mark is the newest of `rec.marks`, or Quiz 2 when there is none. The band and every figure the app shows come from the forecast. It rises as practice raises mastery, and a Quiz 3 drop lowers it.
-- **Projection** = min(10, forecast + gain), where gain = 2.0 × min(1, planned minutes to the exam ÷ `minutesNeeded`) × done rate. The done rate is self-study minutes done ÷ minutes planned over the last 7 closed days, or 1 before any day has closed. With no plan the projection equals the forecast. It appears only as the dashed line on the profile chart and as "if the plan is kept" in agent and phone copy, never as the band.
+- **Projection** = min(10, forecast + gain), where gain = 2.0 × min(1, planned minutes to the exam ÷ `minutesNeeded`) × done rate. The done rate is self-study minutes done ÷ minutes planned over the last 7 closed days, or 1 before any day has closed. With no plan the projection equals the forecast. It appears as the dashed line on the profile chart, in the teacher's Road to the exam and as "if the plan is kept" in agent copy, never as the band. The phone does not show it.
 - Why the split: a plan that is only promised must not change the band. Minh Anh stands at 4.4 (At risk) at setup whatever time is reported; the projection shows what the plan could add.
 - **Bands:** Likely ≥ 5.0, At risk 3.5–4.9, Unlikely < 3.5. `PassBand` keeps its three names.
 - **History:** `StudyRecord.forecasts: { day: number; value: number }[]` holds forecast points. A point is added after each plan is applied (setup and replans) and at each day's close. Every student also has two seeded points, on the days of Quiz 1 and Quiz 2, computed from those marks and the seed mastery. Students who never use the phone therefore still have a line.
@@ -159,7 +161,7 @@ Everything that shows or reads the 0–100 estimate moves to the 10-point foreca
   - No projection without a study record.
 - **Tabs:**
   - **Messages:** every `message` entry, newest first, with channel, original and gist, date and time, and the lecture label. Empty state: "No messages yet".
-  - **AI chats:** the teacher's conversations whose panel or plans name this student, each showing the title, the date, and the first question. Clicking one closes the pop-up and opens that conversation.
+  - **AI chats:** the teacher's conversations whose panel or plans name this student, each showing the title and the first question (conversations carry no date). Clicking one closes the pop-up and opens that conversation.
   - **Practice:** phone sessions as a timeline: date, session title, concept, questions right, and tries per question once the quiz attempts spec is built (until then: right first try or not). Empty state: "No practice on the phone yet".
   - **Interventions:** pathways and check-ins naming this student (and focus plans, once the quiz attempts spec adds them), with status, date and outcome. Pathways also show the mastery change against their baseline.
   - **Record:** previous subjects, with term, grade and letter, and the GPA.

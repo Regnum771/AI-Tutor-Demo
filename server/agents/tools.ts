@@ -4,7 +4,7 @@ import { classKpis, topicMastery } from '../../src/live/mastery';
 import type { DemoState, EvidenceKind, StudentProfile } from '../../src/live/types';
 import { examOutlook, examRisk } from '../../src/live/study/outlook';
 import { forecast } from '../../src/live/study/estimate';
-import { fullDate, lectureLabel } from '../../src/scenario/course';
+import { fullDate, lectureLabel, shortDate } from '../../src/scenario/course';
 import { GROUPS } from '../../src/scenario/classroom';
 import { CONCEPTS, conceptById, type ConceptId } from '../../src/scenario/knowledgeGraph';
 import { TWIN_FOCUS } from '../../src/scenario/minhAnh';
@@ -33,7 +33,7 @@ export const READ_TOOLS: Anthropic.Beta.BetaTool[] = [
     name: { type: 'string', description: 'Part of a name (accents optional), or "".' },
     mistake: { type: 'string', enum: ['', 'converse'], description: 'converse: only students whose Quiz 2 Q4 answer chose the converse q → p.' },
   }),
-  tool('get_student', "One student's learning twin: mastery per concept, status, quiz scores, practice per week, gaps (focus concepts below 0.50) and plans.", {
+  tool('get_student', "One student's learning twin: mastery per concept, status, quiz scores (percent), practice per week, gaps (focus concepts below 0.50) and plans. Also gpa (4-point scale), history (previous subjects, 10-point grades with letters) and forecast (out of 10 now, with its band; an estimate). Mastery is 0 to 1.", {
     student_id: { type: 'string' },
   }),
   tool('get_evidence', "A student's evidence entries (quiz items, LMS activity, attendance, messages, TA notes, records, practice). Cite entries by id.", {
@@ -127,7 +127,10 @@ export function readTool(state: DemoState, name: string, input: Record<string, u
         return { id: s.id, name: s.name, mastery: s.mastery };
       });
     case 'get_class_questions':
-      return FAQ.map((f) => ({ ...f, ...faqStats(f.id), evidenceIds: faqLog(f.id).map(voiceEvidenceId) }));
+      return FAQ.map((f) => {
+        const stats = faqStats(f.id);
+        return { ...f, ...stats, latestDate: shortDate(stats.latestDay), evidenceIds: faqLog(f.id).map(voiceEvidenceId) };
+      }).sort((a, b) => b.students - a.students || b.messages - a.messages);
     default: throw new Error(`Unknown tool ${name}.`);
   }
 }

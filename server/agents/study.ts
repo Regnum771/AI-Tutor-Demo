@@ -123,7 +123,7 @@ export function studyMessages(state: DemoState, studentId: string, signal: Repla
     `Student: ${s.name} (${s.id}; call them ${s.short}).`,
     `Why this plan is being written: ${WHY[signal]}`,
     ...(rec.plan ? [`The current plan’s reason: ${rec.plan.reason}`] : []),
-    `Forecast: ${est.value.toFixed(1)} out of 10 (${est.band}); ${projection(s, rec, state.day).toFixed(1)} if the current plan is kept; the pass mark is ${PASS.toFixed(1)}. The final exam is on ${shortDate(EXAM_DAY)}.`,
+    `Forecast: ${est.value.toFixed(1)} out of 10 (${est.band}); ${rec.plan ? `${projection(s, rec, state.day).toFixed(1)} if the current plan is kept; ` : ''}the pass mark is ${PASS.toFixed(1)}. The final exam is on ${shortDate(EXAM_DAY)}.`,
     `Time the student reported: ${rec.reported?.weekday} min on weekdays, ${rec.reported?.weekend} min at weekends. Actually done on recent days: ${recent.join(', ') || 'no data yet'}.`,
     'Learning outcomes:',
     ...CLOS.map((c) => `- ${c.id} ${c.title}: mastery ${cloMastery(s, c.id).toFixed(2)}, ${Math.round(c.share * 100)}% of the exam. Concepts: ${c.concepts.join(', ')}.`),

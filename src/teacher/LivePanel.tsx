@@ -112,7 +112,7 @@ function TheirWords({ s }: { s: StudentProfile }) {
   const words = [...s.evidence].reverse().filter((e) => e.kind === 'message' || e.kind === 'taNote').slice(0, 3);
   if (words.length === 0) return null;
   return (
-    <Section title="In their words" aside={<button type="button" onClick={() => live?.openProfile(s.id)} className="hover:text-egg-ink hover:underline">See all</button>}>
+    <Section title="In their words" aside={<button type="button" onClick={() => live?.openProfile(s.id, words.some((e) => e.kind === 'message') ? undefined : words[0].id)} className="hover:text-egg-ink hover:underline">See all</button>}>
       <ul className="divide-y divide-egg-line">{words.map((e) => <MessageRow key={e.id} e={e} lit={false} />)}</ul>
     </Section>
   );
