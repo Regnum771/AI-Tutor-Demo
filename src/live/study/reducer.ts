@@ -122,7 +122,7 @@ export function advance(state: DemoState, days: number, check: StudyDay['check']
     if (i === 0 && check) rec.feel = applyCheck(rec.feel, check);
     for (const a of ASSESSMENTS) {
       if (a.day < START_DAY || a.day > s.day || rec.marks.some((m) => m.assessment === a.id)) continue;
-      const previous = rec.marks.at(-1)?.mark ?? student.quiz.q2;
+      const previous = rec.marks.filter((m) => m.day < a.day).at(-1)?.mark ?? student.quiz.q2;
       const mark = markFor(student, a);
       rec.marks.push({ assessment: a.id, mark, day: a.day });
       if (!swing || Math.abs(mark - previous) > Math.abs(swing.mark - swing.previous)) swing = { mark, previous };
@@ -142,9 +142,10 @@ export function simulateDrop(state: DemoState): StudyResult {
   if (!id || !state.study[id]?.reported) return fail('Choose a student on the phone and set up first.');
   const s = structuredClone(state);
   const rec = s.study[id];
-  const previous = rec.marks.at(-1)?.mark ?? studentById(s, id)!.quiz.q2;
   rec.marks = rec.marks.filter((m) => m.assessment !== 'quiz3');
-  rec.marks.push({ assessment: 'quiz3', mark: Math.max(0, previous - 20), day: s.day });
+  const previous = rec.marks.at(-1)?.mark ?? studentById(s, id)!.quiz.q2;
+  const quiz3 = ASSESSMENTS.find((a) => a.id === 'quiz3')!;
+  rec.marks.push({ assessment: 'quiz3', mark: Math.max(0, previous - 20), day: quiz3.day });
   return done(s, 'markSwing');
 }
 

@@ -8,6 +8,8 @@ import type { DemoState } from '../types';
 import { ensureRecord, noteAttempt } from './record';
 import { advance, applyPlan, openCheckIn, openPick, pickStudent, rateCard, saveSetup, showTab, simulateDrop, startSelf, type StudyResult } from './reducer';
 import { capacityFor, capacityLeft } from './capacity';
+import { ASSESSMENTS } from '../../scenario/course';
+import { markFor } from './marks';
 import { todayList } from './today';
 
 const ok = (r: Result | StudyResult): DemoState => {
@@ -263,6 +265,26 @@ describe('review follow-ups', () => {
   it('simulate drop twice leaves one Quiz 3 mark', () => {
     const s = ok(simulateDrop(ok(simulateDrop(ready()))));
     expect(s.study.s17.marks.filter((m) => m.assessment === 'quiz3')).toHaveLength(1);
+  });
+});
+
+describe('the simulated Quiz 3', () => {
+  it('two clicks give the same mark, dated on Quiz 3 day', () => {
+    const once = ok(simulateDrop(ready())).study.s17.marks.find((m) => m.assessment === 'quiz3')!;
+    const twice = ok(simulateDrop(ok(simulateDrop(ready())))).study.s17.marks.find((m) => m.assessment === 'quiz3')!;
+    expect(twice.mark).toBe(once.mark);
+    expect(once.day).toBe(52);
+  });
+  it('a drop on day 41 then advancing past day 46 raises no second markSwing from Assignment 2', () => {
+    const s = ready();
+    s.day = 41;
+    const dropped = ok(simulateDrop(s));
+    const a2 = markFor(dropped.students.find((x) => x.id === 's17')!, ASSESSMENTS.find((a) => a.id === 'a2')!);
+    const q2 = dropped.students.find((x) => x.id === 's17')!.quiz.q2;
+    const r = advance(dropped, 6, null);
+    expect(r.ok && r.state.study.s17.marks.find((m) => m.assessment === 'a2')?.mark).toBe(a2);
+    expect(Math.abs(a2 - q2) > 15).toBe(false);
+    expect(r.ok && r.signal).not.toBe('markSwing');
   });
 });
 
