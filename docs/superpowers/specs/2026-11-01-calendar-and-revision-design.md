@@ -74,7 +74,7 @@ export function stoppedPractising(rec: StudyRecord, today: number): { done: numb
 
 Uses the existing disengagement rule (three planned days with nothing done, or under 25% of planned minutes over 7 days) and returns the minutes for the last 7 closed days, or null when the student is practising.
 
-- **Teacher Today list** (`TeacherScreen.tsx`, live only): one row per affected student, "Minh Anh · Stopped practising · 0 of 210 min in the last 7 days" (the student's name in `who`, "Stopped practising" in `what`, figure `done/planned`). Clicking it asks "Minh Anh has stopped practising. What should I do?".
+- **Teacher Today list** (`TeacherScreen.tsx`, live only): one row per affected student, as it appears on screen: who "Nguyễn Minh Anh", what "Stopped practising", figure "0/210 min". Clicking it asks "Minh Anh has stopped practising. What should I do?".
 - **Road to the exam** (student panel): the line "Stopped practising: 0 of 210 min in the last 7 days."
 - **Forecast chart** (profile pop-up): a single "Stopped" marker on the intervention row, on the day the current stretch began (`stoppedSince`), while the student is stopped. It agrees with the Today row and the calendar.
 - **`get_exam_outlook`** gains `practisedLast7Days: { done: number; planned: number }`.

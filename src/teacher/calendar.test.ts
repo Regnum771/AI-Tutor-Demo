@@ -67,4 +67,10 @@ describe('session label', () => {
   it('does not repeat a name the title already carries', () => {
     expect(sessionLabel('Check-in · Trần Kim', [kim])).toBe('Check-in · Trần Kim');
   });
+  it('leaves a title that already carries a count alone', () => {
+    expect(sessionLabel('Adaptive practice set · 12 students', [kim, an, kim])).toBe('Adaptive practice set · 12 students');
+  });
+  it('matches a name in the title as a whole word, so "An" is not found inside "Anh"', () => {
+    expect(sessionLabel('Check-in · Minh Anh', [an])).toBe('Check-in · Minh Anh · An');
+  });
 });

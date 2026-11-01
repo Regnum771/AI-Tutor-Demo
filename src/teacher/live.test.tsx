@@ -119,7 +119,7 @@ describe('live teacher screen', () => {
     rec.reported = { weekday: 30, weekend: 60 };
     for (const d of [37, 38, 39]) rec.days[d] = { planned: 30, done: 0, check: null };
     expect(render(s, null)).toContain('Stopped practising');
-    expect(liveTodayRows(s).at(-1)).toMatchObject({ who: 'Minh Anh', what: 'Stopped practising', figure: '0/90', prompt: 'Minh Anh has stopped practising. What should I do?' });
+    expect(liveTodayRows(s).at(-1)).toMatchObject({ who: 'Nguyễn Minh Anh', what: 'Stopped practising', figure: '0/90 min', prompt: 'Minh Anh has stopped practising. What should I do?' });
     rec.days[39].done = 15;
     expect(render(s, null)).not.toContain('Stopped practising');
   });
