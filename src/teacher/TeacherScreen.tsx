@@ -93,7 +93,9 @@ export function TeacherScreen({ frame, actions, composer }: { frame: TeacherFram
   const send = () => composer && actions?.send(composer.value);
   const threadRef = useRef<HTMLDivElement>(null);
   const last = frame.messages[frame.messages.length - 1];
-  const scrollKey = `${frame.messages.length}:${last?.shown}:${frame.thinking?.shown}`;
+  // `shown` keeps counting after the last block appears, so cap it: the key changes only while content grows.
+  const lastShown = last && last.role === 'assistant' ? Math.min(last.shown, blocksOf(last).length) : last?.shown;
+  const scrollKey = `${frame.messages.length}:${lastShown}:${frame.thinking?.shown}`;
   const contentRef = useRef<HTMLDivElement>(null);
   const scripted = !actions;
   const pin = () => {
