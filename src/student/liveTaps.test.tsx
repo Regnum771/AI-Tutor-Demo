@@ -132,3 +132,17 @@ describe('setup input', () => {
     expect(button(m.el, 'Build my plan').disabled).toBe(false);
   });
 });
+
+describe('boot order', () => {
+  it('shows the phone when the first snapshot arrives after a null state', async () => {
+    const post = async () => ({ ok: true });
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+    await act(async () => root!.render(<LivePhoneView source={{ state: null, post }} />));
+    expect(host.textContent).toContain('Connecting');
+    await act(async () => root!.render(<LivePhoneView source={{ state: study('today'), post }} />));
+    expect(host.textContent).not.toContain('Connecting');
+    expect(button(host, 'Next week')).toBeTruthy();
+  });
+});

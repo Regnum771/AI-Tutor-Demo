@@ -135,3 +135,16 @@ describe('live teacher click audit (spec §2.6)', () => {
     }, 60_000);
   }
 });
+
+describe('live teacher boot order', () => {
+  it('renders once the first snapshot arrives after a null state', async () => {
+    const post = async () => ({ ok: true });
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+    await act(async () => root!.render(<LiveTeacherView source={{ state: null, post }} />));
+    expect(host.textContent).toContain('Connecting');
+    await act(async () => root!.render(<LiveTeacherView source={{ state: stateWithPlan(), post }} />));
+    expect(host.textContent).not.toContain('Connecting');
+  });
+});

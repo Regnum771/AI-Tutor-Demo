@@ -27,6 +27,7 @@ export function LivePhoneView({ source }: { source: DemoSource }) {
   const [t0] = useState(() => Date.now());
   const now = useNow() - t0;
   const firstSeen = useRef(new Map<string, number>());
+  const inFlight = useRef(false);
   const { state, post } = source;
   if (!state) {
     return (
@@ -45,7 +46,6 @@ export function LivePhoneView({ source }: { source: DemoSource }) {
   const progress = progressView(state);
   const morning = morningCopy(state);
   const message = morning ?? notificationCopy(state) ?? (ph.studentId ? null : IDLE_COPY);
-  const inFlight = useRef(false);
   // One tap, one request: a repeat while the reply is pending is ignored.
   const send = (path: string, body?: unknown) => {
     if (inFlight.current) return;
