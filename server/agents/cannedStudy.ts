@@ -1,10 +1,11 @@
 import { capacityLeft, shortOfTime } from '../../src/live/study/capacity';
-import { cloMastery } from '../../src/live/study/estimate';
+import { cloMastery, minutesNeeded, TARGET_MASTERY as TARGET } from '../../src/live/study/estimate';
 import type { DemoState, ReplanSignal, StudyPlan } from '../../src/live/types';
-import { CLOS, EXAM_DAY, REVISION_START, shortDate, studyDays, weekOf, type Clo, type CloId } from '../../src/scenario/course';
+import { CLOS, EXAM_DAY, nextAssessment, shortDate, studyDays, weekOf, type Clo, type CloId } from '../../src/scenario/course';
 import type { ConceptId } from '../../src/scenario/knowledgeGraph';
 
-const TARGET = 0.75;
+const MAINTENANCE = 10; // minutes a day that keep a strong student's practice alive
+const NEED_MARGIN = 1.2;
 
 const REASON: Record<ReplanSignal, (focus: string, exam: string) => string> = {
   setup: (focus, exam) => `This plan works back from the exam on ${exam}, with the most time on ${focus}.`,
@@ -34,19 +35,30 @@ export function cannedStudyPlan(state: DemoState, studentId: string, signal: Rep
     return [...new Set(Array.from({ length: Math.min(2, p.length) }, (_, k) => p[(start + k) % p.length]))];
   };
 
+  const available = studyDays(state.day).reduce((a, d) => a + capacityLeft(state, studentId, d), 0);
+  const scale = available ? Math.min(1, (minutesNeeded(student) * NEED_MARGIN) / available) : 0;
+  const week9 = studyDays(state.day).filter((d) => weekOf(d) === 9 && capacityLeft(state, studentId, d) > 0);
+
   const days = studyDays(state.day).map((day) => {
-    const minutes = capacityLeft(state, studentId, day);
+    const left = capacityLeft(state, studentId, day);
+    const minutes = Math.min(left, Math.max(MAINTENANCE, Math.round(left * scale)));
     const spent = Object.values(given).reduce((a, b) => a + b, 0) || 1;
-    const behind = [...CLOS].sort((a, b) => (weight(b) / total - given[b.id] / spent) - (weight(a) / total - given[a.id] / spent))[0];
-    const clo = weekOf(day) === 9 && weak.length ? weak[(day - REVISION_START) % weak.length] : behind;
+    const soon = nextAssessment(day);
+    const tested = soon && soon.day !== EXAM_DAY && soon.day - day <= 3 ? CLOS.filter((c) => soon.clos.includes(c.id) && cloMastery(student, c.id) < TARGET) : [];
+    const behind = [...(tested.length ? tested : CLOS)].sort((a, b) => (weight(b) / total - given[b.id] / spent) - (weight(a) / total - given[a.id] / spent))[0];
+    const clo = weekOf(day) === 9 && weak.length && minutes > 0 ? weak[week9.indexOf(day) % weak.length] : behind;
     given[clo.id] += minutes;
     return { day, minutes, clo: clo.id, concepts: concepts(clo) };
   });
 
+  // What loses out: the CLO with the lowest share of the time its concepts need (120 minutes per 1.0 of gap).
+  const need = (c: Clo) => c.concepts.reduce((a, x) => a + Math.max(0, TARGET - student.mastery[x]), 0) * 120;
+  const lossy = CLOS.filter((c) => need(c) > 0).sort((a, b) => given[a.id] / need(a) - given[b.id] / need(b))[0];
+
   return {
     createdDay: state.day,
-    reason: REASON[signal](byWeight[0].title.toLowerCase(), shortDate(EXAM_DAY)),
-    leftOut: shortOfTime(state, studentId) ? [`Full coverage of “${byWeight[byWeight.length - 1].title}”: the time goes where the exam weighs most.`] : [],
+    reason: REASON[signal](`“${byWeight[0].title}”`, shortDate(EXAM_DAY)),
+    leftOut: shortOfTime(state, studentId) && lossy ? [`Full coverage of “${lossy.title}”: there is not enough time for all of it, so it gets less for now.`] : [],
     source: 'offline',
     days,
   };

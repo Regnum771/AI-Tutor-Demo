@@ -2,6 +2,8 @@ import { CLOS, type CloId } from '../../scenario/course';
 import type { PassBand, StudentProfile, StudyRecord } from '../types';
 
 export const PASS_MARK = 50;
+/** The mastery a concept is worked up to. */
+export const TARGET_MASTERY = 0.75;
 
 export const cloMastery = (student: StudentProfile, cloId: CloId): number => {
   const concepts = CLOS.find((c) => c.id === cloId)!.concepts;
@@ -12,7 +14,7 @@ export const bandOf = (score: number): PassBand => (score >= 60 ? 'Likely' : sco
 
 /** Minutes to bring every concept to 0.75: 12 per 0.1 of gap. */
 export const minutesNeeded = (student: StudentProfile): number =>
-  Math.round(Object.values(student.mastery).reduce((a, m) => a + Math.max(0, 0.75 - m), 0) * 120);
+  Math.round(Object.values(student.mastery).reduce((a, m) => a + Math.max(0, TARGET_MASTERY - m), 0) * 120);
 
 /** Projected exam score: CLO mastery by exam share, plus a capped gain for the study still planned. An estimate. */
 export function passEstimate(student: StudentProfile, rec: StudyRecord, today: number): { score: number; band: PassBand } {

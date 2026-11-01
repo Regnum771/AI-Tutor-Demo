@@ -1,16 +1,15 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { capacityLeft, shortOfTime, teacherMinutes } from '../../src/live/study/capacity';
 import { cardsToday } from '../../src/live/study/cards';
-import { cloMastery, minutesNeeded, PASS_MARK, passEstimate } from '../../src/live/study/estimate';
+import { cloMastery, minutesNeeded, PASS_MARK, passEstimate, TARGET_MASTERY as TARGET } from '../../src/live/study/estimate';
 import type { DemoState, ReplanSignal, StudyPlan, StudyPlanDay } from '../../src/live/types';
-import { ASSESSMENTS, CLOS, EXAM_DAY, REVISION_START, shortDate, studyDays, weekOf } from '../../src/scenario/course';
-import { conceptById, type ConceptId } from '../../src/scenario/knowledgeGraph';
+import { ASSESSMENTS, CLOS, EXAM_DAY, shortDate, studyDays, weekOf } from '../../src/scenario/course';
+import { conceptById, EDGES, type ConceptId } from '../../src/scenario/knowledgeGraph';
 import { cannedStudyPlan } from './cannedStudy';
 import { AgentError, runAgent, type AgentSpec, type Check } from './loop';
 import type { Deps } from './orchestrate';
 import { CONCEPT_IDS, obj, tool } from './tools';
 
-const TARGET = 0.75;
 const STEP = 'Study Planning Agent ·';
 
 const STUDY_TOOL = tool('propose_study_plan', 'Hand in the study plan. Call this once, last.', {
@@ -72,13 +71,17 @@ export function studyPlanProblems(state: DemoState, studentId: string, plan: Stu
     if (d.minutes > 0 && d.concepts.length === 0) out.push(`Day ${d.day} has minutes but no concepts.`);
     if (d.concepts.some((c) => !clo?.concepts.includes(c))) out.push(`Day ${d.day} has a concept outside ${d.clo}.`);
   }
-  if (state.day <= REVISION_START) {
-    for (const c of CLOS) {
-      const covered = plan.days.some((d) => weekOf(d.day) === 9 && d.clo === c.id && d.minutes > 0);
-      if (cloMastery(student, c.id) < TARGET && !covered) out.push(`Week 9 needs minutes for ${c.id}, which is still below ${TARGET}.`);
+  const below = CLOS.filter((c) => cloMastery(student, c.id) < TARGET);
+  const room = plan.days.filter((d) => weekOf(d.day) === 9 && capacityLeft(state, studentId, d.day) > 0).length;
+  if (room >= below.length) {
+    for (const c of below) {
+      if (!plan.days.some((d) => weekOf(d.day) === 9 && d.clo === c.id && d.minutes > 0)) out.push(`Week 9 needs minutes for ${c.id}, which is still below ${TARGET}.`);
     }
   }
-  if (plan.leftOut.length === 0 && shortOfTime(state, studentId)) out.push('The time left cannot cover everything: say what you are dropping in left_out.');
+  const planned = plan.days.reduce((a, d) => a + d.minutes, 0);
+  if (plan.leftOut.length === 0 && (shortOfTime(state, studentId) || planned < 0.6 * minutesNeeded(student))) {
+    out.push('The plan does not cover what the student needs: plan more minutes where time is available, or say what you are dropping in left_out.');
+  }
   return out;
 }
 
@@ -106,7 +109,7 @@ export function studyMessages(state: DemoState, studentId: string, signal: Repla
   const teacher = teacherMinutes(state, studentId);
   const label = (c: ConceptId) => conceptById(c).label;
   const weakest = [...CONCEPT_IDS].sort((a, b) => s.mastery[a] - s.mastery[b]).slice(0, 5);
-  const recent = Object.entries(rec.days).filter(([d]) => Number(d) >= state.day - 7).map(([, v]) => v.done);
+  const recent = Object.entries(rec.days).filter(([d]) => Number(d) >= state.day - 7 && Number(d) < state.day).map(([, v]) => v.done);
   const { due } = cardsToday(rec, state.day, []);
   const available = studyDays(state.day).reduce((a, d) => a + capacityLeft(state, studentId, d), 0);
   const calendar = studyDays(state.day).map((d) => {
@@ -124,9 +127,10 @@ export function studyMessages(state: DemoState, studentId: string, signal: Repla
     `Time the student reported: ${rec.reported?.weekday} min on weekdays, ${rec.reported?.weekend} min at weekends. Actually done on recent days: ${recent.join(', ') || 'no data yet'}.`,
     'Learning outcomes:',
     ...CLOS.map((c) => `- ${c.id} ${c.title}: mastery ${cloMastery(s, c.id).toFixed(2)}, ${Math.round(c.share * 100)}% of the exam. Concepts: ${c.concepts.join(', ')}.`),
-    `Weakest concepts: ${weakest.map((c) => `${label(c)} ${s.mastery[c].toFixed(2)}`).join(', ')}.`,
+    `Weakest concepts: ${weakest.map((c) => `${label(c)} (${c}) ${s.mastery[c].toFixed(2)}`).join(', ')}.`,
     `Marks this term: ${rec.marks.map((m) => `${m.assessment} ${m.mark}`).join(', ') || 'none since Quiz 2'}. Cards due today: ${due.length}.`,
     `Reaching 0.75 on every concept would take about ${minutesNeeded(s)} minutes; ${available} are available.${shortOfTime(state, studentId) ? ' That is not enough: left_out must say what you are dropping.' : ''}`,
+    `Prerequisites (first, then what it unlocks): ${EDGES.map(([a, b]) => `${a} → ${b}`).join(', ')}.`,
     'Calendar (day number · date: minutes available):',
     ...calendar,
   ];
