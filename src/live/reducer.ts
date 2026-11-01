@@ -1,8 +1,10 @@
 import { conceptById } from '../scenario/knowledgeGraph';
-import { sessionItems, type BankItem } from '../scenario/practiceBank';
+import { itemById, sessionItems, type BankItem } from '../scenario/practiceBank';
 import { fmt, parseTime, TONIGHT } from './clock';
 import { afterAnswer, statusFor } from './mastery';
 import { IDLE_PHONE } from './seed';
+import { noteAttempt } from './study/record';
+import { nextItem, SELF_SESSION } from './study/select';
 import type { AssistantMsg, DemoState, Plan, StudentProfile } from './types';
 
 export type Result = { ok: true; state: DemoState; finishedCheck?: boolean } | { ok: false; error: string };
@@ -28,6 +30,11 @@ function say(s: DemoState, conversationId: string, text: string) {
 export function deliver(s: DemoState, plan: Plan, updated: boolean): void {
   const student = studentById(s, plan.studentIds[0]);
   plan.baseline = student ? { ...student.mastery } : null;
+  // A follow-up can land while the student is in a self-started session.
+  if (updated && s.phone.self) {
+    s.phone = { ...s.phone, planId: plan.id, done: [], updated };
+    return;
+  }
   s.phone = {
     ...IDLE_PHONE,
     done: [],
@@ -86,8 +93,9 @@ export function dismissPlan(state: DemoState, planId: string): Result {
   return done(s);
 }
 
-/** The bank items of the session open on the phone. */
+/** The items of the session open on the phone: a teacher plan session, or the questions served so far in a self session. */
 export function currentItems(s: DemoState): BankItem[] {
+  if (s.phone.self) return s.phone.self.served.flatMap((id) => itemById(id) ?? []);
   const plan = planById(s, s.phone.planId);
   const session = plan && s.phone.session !== null ? plan.sessions[s.phone.session] : null;
   return session?.concept ? sessionItems(session.concept, session.isMasteryCheck) : [];
@@ -138,8 +146,10 @@ export function phoneAnswer(state: DemoState, option: number): Result {
   if (!item) return fail('No item to answer.');
   if (s.phone.result === 'right') return fail('Already answered.');
   if (!Number.isInteger(option) || option < 0 || option >= item.options.length) return fail('No such option.');
-  const student = studentById(s, planById(s, s.phone.planId)!.studentIds[0])!;
+  const student = studentById(s, s.phone.self ? s.phone.studentId! : planById(s, s.phone.planId)!.studentIds[0])!;
   const correct = option === item.correct;
+  const rec = s.study[student.id];
+  if (rec) noteAttempt(rec, item, s.day, correct, correct && !s.phone.hinted, !s.phone.self);
   student.mastery[item.concept] = afterAnswer(student.mastery[item.concept], correct, s.phone.hinted);
   student.status = statusFor(student.mastery);
   record(s, student, item, correct ? (s.phone.hinted ? 'correct after a hint' : 'correct first try') : `chose ${item.options[option]}`);
@@ -150,6 +160,17 @@ export function phoneAnswer(state: DemoState, option: number): Result {
 export function phoneNext(state: DemoState): Result {
   if (state.phone.result !== 'right') return fail('Answer the item first.');
   const s = structuredClone(state);
+  if (s.phone.self) {
+    const self = s.phone.self;
+    if (self.served.length < SELF_SESSION) {
+      const student = studentById(s, s.phone.studentId!)!;
+      self.served.push(nextItem(s.study[student.id], student, s.day, self.concepts, self.served).id);
+      s.phone = { ...s.phone, ...clearItem, item: self.served.length - 1 };
+    } else {
+      s.phone = { ...s.phone, ...clearItem, self: null, item: 0, screen: 'today' };
+    }
+    return done(s);
+  }
   const next = s.phone.item + 1;
   if (next < currentItems(s).length) {
     s.phone = { ...s.phone, ...clearItem, item: next };
