@@ -1,7 +1,9 @@
 import { Hono, type Context } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { clearInterval, setInterval } from 'node:timers';
-import type { DemoState } from '../src/live/types';
+import type { StudyTab } from '../src/live/study/reducer';
+import type { CardRating, DemoState, StudyDay } from '../src/live/types';
+import type { CloId } from '../src/scenario/course';
 import type { DemoSession } from './session';
 
 export interface BoothInfo { lanUrl: string | null; offline: boolean }
@@ -49,6 +51,28 @@ export function createApp(session: DemoSession, info: () => BoothInfo) {
   app.post('/api/phone/answer', async (c) => reply(c, session.phoneAnswer(Number((await body(c)).option))));
   app.post('/api/phone/next', (c) => reply(c, session.phoneNext()));
   app.post('/api/phone/skip', (c) => reply(c, session.phoneSkip()));
+  app.post('/api/study/open', (c) => reply(c, session.studyOpen()));
+  app.post('/api/study/pick', async (c) => reply(c, session.studyPick(String((await body(c)).studentId))));
+  app.post('/api/study/setup', async (c) => {
+    const b = await body(c);
+    return reply(c, session.studySetup(Number(b.weekday), Number(b.weekend)));
+  });
+  app.post('/api/study/tab', async (c) => reply(c, session.studyTab(String((await body(c)).tab) as StudyTab)));
+  app.post('/api/study/practice', async (c) => {
+    const b = await body(c);
+    return reply(c, session.studyPractice(typeof b.clo === 'string' ? (b.clo as CloId) : null));
+  });
+  app.post('/api/study/rate', async (c) => {
+    const b = await body(c);
+    return reply(c, session.studyRate(String(b.cardId), String(b.rating) as CardRating));
+  });
+  app.post('/api/study/check-in', (c) => reply(c, session.studyCheckIn()));
+  app.post('/api/study/next-day', async (c) => {
+    const b = await body(c);
+    return reply(c, session.nextDay(typeof b.check === 'string' ? (b.check as StudyDay['check']) : null));
+  });
+  app.post('/api/study/next-week', (c) => reply(c, session.nextWeek()));
+  app.post('/api/study/simulate-drop', (c) => reply(c, session.simulateDrop()));
   app.post('/api/reset', (c) => {
     session.reset();
     return c.json({ ok: true });

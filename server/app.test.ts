@@ -72,3 +72,32 @@ describe('booth HTTP API', () => {
     await vi.waitFor(() => expect(listeners.size).toBe(0));
   });
 });
+
+describe('study routes', () => {
+  it('runs the student’s day over HTTP', async () => {
+    const { session, post } = setup();
+    expect((await post('study/open')).status).toBe(200);
+    expect(session.state.phone.screen).toBe('pick');
+    expect((await post('study/pick', { studentId: 's17' })).status).toBe(200);
+    expect((await post('study/setup', { weekday: 30, weekend: 60 })).status).toBe(200);
+    await session.settled();
+    expect((await post('study/tab', { tab: 'cards' })).status).toBe(200);
+    expect((await post('study/practice', { clo: 'CLO1' })).status).toBe(200);
+    expect(session.state.phone.screen).toBe('practice');
+    expect((await post('study/tab', { tab: 'today' })).status).toBe(200);
+    expect((await post('study/rate', { cardId: 'card-implication-1', rating: 'good' })).status).toBe(200);
+    expect((await post('study/check-in')).status).toBe(200);
+    expect((await post('study/next-day', { check: 'right' })).status).toBe(200);
+    expect(session.state.day).toBe(41);
+    expect((await post('study/next-week')).status).toBe(200);
+    expect(session.state.day).toBe(48);
+    expect((await post('study/simulate-drop')).status).toBe(200);
+    await session.settled();
+  });
+  it('rejects bad input', async () => {
+    const { post } = setup();
+    expect((await post('study/pick', { studentId: 's99' })).status).toBe(400);
+    expect((await post('study/setup', { weekday: 30, weekend: 60 })).status).toBe(400);
+    expect((await post('study/simulate-drop')).status).toBe(400);
+  });
+});

@@ -1,8 +1,12 @@
 import * as R from '../src/live/reducer';
 import { seedState } from '../src/live/seed';
-import type { DemoState } from '../src/live/types';
+import * as S from '../src/live/study/reducer';
+import { nextReplan } from '../src/live/study/signals';
+import type { CardRating, DemoState, ReplanSignal, StudyDay } from '../src/live/types';
+import type { CloId } from '../src/scenario/course';
 import type { MessagesClient } from './agents/client';
 import { adaptAfterCheck, answer, type Deps } from './agents/orchestrate';
+import { planStudy } from './agents/study';
 
 type Done = { ok: true } | { ok: false; error: string };
 type AskResult = { ok: true; conversationId: string; done: Promise<void> } | { ok: false; status: 400 | 409; error: string };
@@ -13,6 +17,9 @@ export class DemoSession {
   private listeners = new Set<(s: DemoState) => void>();
   /** Agent runs in flight (an adapt can start while an ask is still running). */
   private runs = new Set<AbortController>();
+  /** Study plans being written. They never set `busy`: the phone and the teacher keep working. */
+  private planners = new Set<AbortController>();
+  private planning = new Set<Promise<void>>();
   private counters = { c: 0, p: 0 };
 
   constructor(private client: MessagesClient | null) {}
@@ -119,7 +126,12 @@ export class DemoSession {
   }
 
   edit(planId: string, index: number, change: { time?: string; remove?: boolean }): Done { return this.run(R.editPlan(this.state, planId, index, change)); }
-  approve(planId: string): Done { return this.run(R.approvePlan(this.state, planId)); }
+  approve(planId: string): Done {
+    const out = this.run(R.approvePlan(this.state, planId));
+    const plan = R.planById(this.state, planId);
+    if (out.ok && plan?.kind === 'pathway' && this.state.study[plan.studentIds[0]]?.reported) this.weigh(plan.studentIds[0], 'teacherPlan');
+    return out;
+  }
   dismiss(planId: string): Done { return this.run(R.dismissPlan(this.state, planId)); }
   phonePlan(): Done { return this.run(R.phoneShowPlan(this.state)); }
   phoneOpen(index: number): Done { return this.run(R.phoneOpen(this.state, index)); }
@@ -155,10 +167,79 @@ export class DemoSession {
     });
   }
 
+  studyOpen(): Done { return this.run(S.openPick(this.state)); }
+  studyPick(id: string): Done { return this.run(S.pickStudent(this.state, id)); }
+  studyTab(tab: S.StudyTab): Done { return this.run(S.showTab(this.state, tab)); }
+  studyPractice(clo: CloId | null): Done { return this.run(S.startSelf(this.state, clo)); }
+  studyRate(cardId: string, rating: CardRating): Done { return this.run(S.rateCard(this.state, cardId, rating)); }
+  studyCheckIn(): Done { return this.run(S.openCheckIn(this.state)); }
+  nextDay(check: StudyDay['check']): Done { return this.moved(S.advance(this.state, 1, check)); }
+  nextWeek(): Done { return this.moved(S.advance(this.state, 7, null)); }
+  simulateDrop(): Done { return this.moved(S.simulateDrop(this.state)); }
+
+  /** Saves the student's time and writes the first plan. */
+  studySetup(weekday: number, weekend: number): Done {
+    const out = this.run(S.saveSetup(this.state, weekday, weekend));
+    if (out.ok) this.replan(this.state.phone.studentId!, 'setup');
+    return out;
+  }
+
+  /** Settles when no study plan is being written. */
+  async settled(): Promise<void> {
+    await Promise.all(this.planning);
+  }
+
+  private moved(r: S.StudyResult): Done {
+    const out = this.run(r);
+    if (r.ok) this.weigh(r.state.phone.studentId!, r.signal);
+    return out;
+  }
+
+  /** What a signal means today: a replan now, or held until the cooldown or the plan in progress ends. */
+  private weigh(studentId: string, raised: ReplanSignal | null) {
+    const rec = this.state.study[studentId];
+    const { run, hold } = nextReplan(rec, raised, this.state.day);
+    if (run && !rec.planning) {
+      this.replan(studentId, run);
+      return;
+    }
+    this.update(this.state.epoch, (st) => { st.study[studentId].pendingSignal = run ?? hold; });
+  }
+
+  /** Writes a plan in the background. A failed replan keeps the current plan and leaves the signal pending. */
+  private replan(studentId: string, signal: ReplanSignal) {
+    const epoch = this.state.epoch;
+    const abort = new AbortController();
+    this.planners.add(abort);
+    this.update(epoch, (st) => { Object.assign(st.study[studentId], { planning: { steps: [] }, pendingSignal: null }); });
+    const giveUp = () => this.update(epoch, (st) => { Object.assign(st.study[studentId], { planning: null, pendingSignal: signal }); });
+    const run: Promise<void> = planStudy(structuredClone(this.state), studentId, signal, {
+      client: this.client,
+      signal: abort.signal,
+      onStep: (line) => this.update(epoch, (st) => { st.study[studentId].planning?.steps.push(line); }),
+    })
+      .then((plan) => {
+        if (plan) this.update(epoch, (st) => S.applyPlan(st, studentId, plan, signal));
+        else giveUp();
+      })
+      .catch((e) => {
+        if (abort.signal.aborted) return; // reset: its result is dropped on purpose
+        console.warn('[beyond] study planning failed:', e instanceof Error ? e.message : e);
+        giveUp();
+      })
+      .finally(() => {
+        this.planners.delete(abort);
+        this.planning.delete(run);
+      });
+    this.planning.add(run);
+  }
+
   /** Back to the seed for the next visitor; a run in flight is aborted and its result dropped. */
   reset(): void {
     for (const run of this.runs) run.abort();
     this.runs.clear();
+    for (const run of this.planners) run.abort();
+    this.planners.clear();
     this.set(seedState(this.state.epoch + 1));
   }
 }
