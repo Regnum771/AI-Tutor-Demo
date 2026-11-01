@@ -58,7 +58,7 @@ export const EXTRA_ITEMS: BankItem[] = [
   // implication
   q('implication', 1, 'Understand', 'How does the converse q → p differ from p → q?',
     ['It negates both parts instead of swapping them', 'It is true exactly in the rows where p → q is false', 'It swaps the parts, so the claim runs the other way', 'It replaces the arrow with a conjunction of the parts'], 2,
-    ['That describes the inverse ¬p → ¬q, not the converse.', 'Check p = F, q = F: both p → q and q → p are true.', '', 'The converse still uses →; only the sides are exchanged.']),
+    ['That describes the inverse ¬p → ¬q, not the converse.', 'Check p = F, q = F: both p → q and q → p are true.', '', 'The converse q → p in the stem still has an arrow: compare it with the option.']),
   q('implication', 2, 'Understand', '“If you submit on time, you get a bonus.” You did not submit on time and still got a bonus. Was the promise broken?',
     ['No: the promise says nothing when the condition fails', 'Yes: the bonus was meant to depend only on submitting', 'Yes: an implication is false whenever its condition is false', 'It cannot be decided from the information given'], 0,
     ['', 'The promise never said the bonus is given only for submitting.', 'Test the row where p is false in the truth table of p → q.', 'Every row of p → q has a definite value: look at the row p = F, q = T.']),
@@ -94,7 +94,7 @@ export const EXTRA_ITEMS: BankItem[] = [
     ['Two connectives in a row, ∧ and →, with nothing between them.', 'Count the opening and closing parentheses: they do not match.', 'The ¬ has nothing to negate before the ∧, and the ∧ has nothing on its left.', '']),
   q('expressions', 2, 'Remember', 'In a translation key such as “p: it is raining”, what is p?',
     ['A propositional variable standing for a statement', 'A connective, a symbol such as ∧ that joins formulas', 'A truth value, which is T or F and nothing else', 'A tautology, a formula that is true in every row'], 0,
-    ['', 'Connectives are symbols such as ∧ and ∨; p stands for a statement.', 'A truth value is T or F; p stands for a statement that has one.', 'A tautology is a formula that is always true; p can be false.']),
+    ['', 'Connectives are symbols such as ∧ and ∨: is p one of those?', 'A truth value is T or F: is p one of those?', 'A tautology is a formula that is always true; p can be false.']),
   q('expressions', 3, 'Apply', 'p = F, q = T, r = F. What is (p → q) ∧ (q → r)?',
     ['T', 'F'], 1,
     ['Evaluate each bracket at the given row first, then combine them with ∧.', '']),
@@ -127,7 +127,7 @@ export const EXTRA_ITEMS: BankItem[] = [
     ['Both formulas are true at p = T, q = T, r = T, so it cannot separate them.', 'Both formulas are true at p = F, q = T, r = T, so it cannot separate them.', '', 'Both formulas are false at p = F, q = T, r = F, so it cannot separate them.']),
   q('equivLaws', 3, 'Analyze', 'A student simplifies (p ∧ q) ∨ (p ∧ ¬q) to q. Which row shows that this is wrong?',
     ['p = T, q = T', 'p = F, q = F', 'None: the simplification is correct', 'p = T, q = F'], 3,
-    ['The expression and q are both true at p = T, q = T.', 'The expression and q are both false at p = F, q = F.', 'Test the remaining rows of the table before concluding that nothing is wrong.', '']),
+    ['The expression and q are both true at p = T, q = T.', 'The expression and q are both false at p = F, q = F.', 'Test each row of the table before concluding that nothing is wrong.', '']),
 
   // applications
   q('applications', 1, 'Analyze', 'Rule: “If the sensor reads high, the pump stops.” The pump stopped, and a technician concludes the sensor read high. What is wrong with this reasoning?',
@@ -135,8 +135,8 @@ export const EXTRA_ITEMS: BankItem[] = [
     ['', 'The conclusion does not follow: the rule is a one-way implication.', 'Denying the antecedent would start from “the sensor did not read high”.', 'The rule says “if”, not “if and only if”.']),
   q('applications', 2, 'Evaluate', 'Rule: “Posts with links are removed.” Spam without links is also removed. Which formulation (l: has a link, r: removed) is sound?',
     ['l ↔ r: every removal must involve a link', 'Both are equally sound', 'l → r: a post can be removed without a link', 'Neither can model removals'], 2,
-    ['l ↔ r would forbid removing a post with no link, which the spam case shows happens.', 'They differ at l = F, r = T, which occurs here, so they are not equally sound.', '', 'An implication models a one-way rule well.']),
+    ['l ↔ r would forbid removing a post with no link, which the spam case shows happens.', 'They differ at l = F, r = T, which occurs here, so they are not equally sound.', '', 'Test whether either formula matches the spam case.']),
   q('applications', 3, 'Evaluate', 'Requirement: “sound the alarm if smoke or heat is detected”. Which specification is sound?',
     ['(smoke ∧ heat) → alarm: it needs both', 'Both: they agree on every case', 'Neither: an implication cannot state a requirement', '(smoke ∨ heat) → alarm: either one triggers it'], 3,
-    ['With smoke only, that specification demands no alarm, but the requirement does.', 'Check smoke = T, heat = F: the first requires the alarm, the second does not.', '“If … then” is the usual form of a requirement.', '']),
+    ['With smoke only, that specification demands no alarm, but the requirement does.', 'Check smoke = T, heat = F: does (smoke ∧ heat) → alarm require the alarm there? Does (smoke ∨ heat) → alarm?', '“If … then” is the usual form of a requirement.', '']),
 ];
