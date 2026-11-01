@@ -1,16 +1,18 @@
 import { classKpis, topicMastery } from '../../src/live/mastery';
 import { planProblems } from '../../src/live/plans';
 import { planById } from '../../src/live/reducer';
+import { passEstimate } from '../../src/live/study/estimate';
 import type { AssistantMsg, Plan } from '../../src/live/types';
 import { GROUPS } from '../../src/scenario/classroom';
-import type { ConceptId } from '../../src/scenario/knowledgeGraph';
+import { CONCEPTS, type ConceptId } from '../../src/scenario/knowledgeGraph';
 import { TWIN_FOCUS } from '../../src/scenario/minhAnh';
 import { evidenceIds } from '../agents/sas';
-import { playPlan, textOf, type AnswerMode, type T, type Turn } from './harness';
+import { studyPlanProblems } from '../agents/study';
+import { joinPhone, playPlan, practiseToday, textOf, type AnswerMode, type T, type Turn } from './harness';
 
 export interface Case {
   id: string;
-  level: 1 | 2 | 3 | 4 | 5;
+  level: 1 | 2 | 3 | 4 | 5 | 6;
   title: string;
   run(t: T): Promise<void>;
 }
@@ -72,6 +74,16 @@ async function runLoop(t: T, question: string, studentId: string, mode: AnswerMo
 
 function askFact(id: string, title: string, question: (t: T) => string, grade: (t: T, turn: Turn) => void): Case {
   return { id, level: 1, title, run: async (t) => grade(t, await t.ask(question(t))) };
+}
+
+const planOf = (t: T, id = MA) => t.state.study[id].plan;
+const replansOf = (t: T, id = MA) => t.state.study[id].replans.filter((r) => r.signal !== 'setup');
+/** The first plan must come from the agent, not the offline planner. */
+function firstPlanIsGood(t: T, id = MA) {
+  const plan = planOf(t, id);
+  t.check('Intervene', 'the agent wrote the plan', plan?.source === 'agents', `source: ${plan?.source}`);
+  if (plan) t.check('Oversee', 'the plan passes every check', studyPlanProblems(t.state, id, plan).length === 0, studyPlanProblems(t.state, id, plan).join(' '));
+  t.noPronouns('Intervene', plan?.reason ?? '');
 }
 
 export const CASES: Case[] = [
@@ -344,5 +356,71 @@ export const CASES: Case[] = [
     t.check('Oversee', 'the reset wins', t.state.epoch === 1 && t.state.conversations.length === 0 && t.plans().length === 0 && !t.state.busy, `epoch ${t.state.epoch}, ${t.state.conversations.length} conversations`);
     const a = await t.ask('What did Minh Anh score on Quiz 2?', null, 'Sense');
     t.check('Sense', 'the booth works for the next visitor', a.answer.includes('42'), a.answer);
+  } },
+  { id: 'L6.1', level: 6, title: 'The plan fits the time the student has', run: async (t) => {
+    await joinPhone(t, MA, 20, 40);
+    firstPlanIsGood(t);
+    const over = planOf(t)!.days.filter((d) => d.minutes > (d.day % 7 >= 5 ? 40 : 20));
+    t.check('Intervene', 'no day goes over the stated time', over.length === 0, JSON.stringify(over.slice(0, 3)));
+  } },
+  { id: 'L6.2', level: 6, title: 'Honest about what time cannot cover', run: async (t) => {
+    for (const c of CONCEPTS) t.student('s29').mastery[c.id] = 0.15;
+    await joinPhone(t, 's29', 5, 5);
+    firstPlanIsGood(t, 's29');
+    t.check('Intervene', 'left_out says what is dropped', (planOf(t, 's29')?.leftOut.length ?? 0) > 0, JSON.stringify(planOf(t, 's29')));
+  } },
+  { id: 'L6.3', level: 6, title: 'A skipped week replans exactly once', run: async (t) => {
+    await joinPhone(t, MA, 30, 60);
+    t.session.nextWeek();
+    await t.session.settled();
+    t.check('Adapt', 'one replan, for disengagement', replansOf(t).map((r) => r.signal).join() === 'disengaged', replansOf(t).map((r) => r.signal).join());
+    t.check('Adapt', 'the new plan is the agent’s', planOf(t)?.source === 'agents', `source: ${planOf(t)?.source}`);
+    t.check('Adapt', 'the new plan respects what really happened', planOf(t)!.days.every((d) => d.minutes <= 10), JSON.stringify(planOf(t)!.days.slice(0, 3)));
+  } },
+  { id: 'L6.4', level: 6, title: 'Small misses change nothing', run: async (t) => {
+    await joinPhone(t, MA, 30, 60);
+    const plan = planOf(t);
+    for (let i = 0; i < 3; i++) {
+      await practiseToday(t);
+      t.session.nextDay('right');
+      await t.session.settled();
+    }
+    t.check('Oversee', 'no replan', replansOf(t).length === 0, replansOf(t).map((r) => r.signal).join());
+    t.check('Oversee', 'the plan is untouched', planOf(t) === plan || JSON.stringify(planOf(t)) === JSON.stringify(plan));
+  } },
+  { id: 'L6.5', level: 6, title: 'A Quiz 3 drop goes through the cooldown', run: async (t) => {
+    await joinPhone(t, MA, 30, 60);
+    t.session.nextDay('right');
+    await t.session.settled();
+    t.session.simulateDrop();
+    await t.session.settled();
+    t.check('Adapt', 'one replan, for the mark', replansOf(t).map((r) => r.signal).join() === 'markSwing', replansOf(t).map((r) => r.signal).join());
+    t.check('Adapt', 'the replan says what changed', (replansOf(t)[0]?.reason.length ?? 0) > 10 && /mark|quiz|result|score/i.test(replansOf(t)[0]?.reason ?? ''), replansOf(t)[0]?.reason);
+    t.noPronouns('Adapt', replansOf(t)[0]?.reason ?? '');
+  } },
+  { id: 'L6.6', level: 6, title: 'Week 6 to the exam', run: async (t) => {
+    await joinPhone(t, MA, 30, 60);
+    const estimate = () => passEstimate(t.student(MA), t.state.study[MA], t.state.day);
+    const start = estimate().score;
+    t.point('setup', MA, 'equivalence');
+    while (t.state.day < 64) {
+      await practiseToday(t);
+      t.session.nextDay('right');
+      await t.session.settled();
+      if (t.state.day % 7 === 1) t.point(`day ${t.state.day}: ${estimate().band} ${estimate().score}`, MA, 'equivalence');
+    }
+    const rec = t.state.study[MA];
+    t.check('Adapt', 'mastery rose', estimate().score > start, `${start} -> ${estimate().score}`);
+    t.check('Sense', 'both remaining assessments have marks', rec.marks.map((m) => m.assessment).join() === 'a2,quiz3', rec.marks.map((m) => m.assessment).join());
+    t.check('Oversee', 'replans stayed rare', replansOf(t).length <= 4, replansOf(t).map((r) => `${r.day}:${r.signal}`).join(' '));
+  } },
+  { id: 'L6.7', level: 6, title: 'Readiness answers match the data', run: async (t) => {
+    await joinPhone(t, MA, 30, 60);
+    const est = passEstimate(t.student(MA), t.state.study[MA], t.state.day);
+    const a = await t.ask('Is Minh Anh likely to pass the exam?', null, 'Diagnose');
+    t.check('Diagnose', 'used the exam outlook', a.steps.some((s) => s.includes('road to the exam')), a.steps.join(' | '));
+    t.check('Diagnose', 'quotes the projected score', a.answer.includes(String(est.score)), `expected ${est.score} in: ${a.answer}`);
+    t.check('Diagnose', 'says it is an estimate', /estimate|projected|projection/i.test(a.answer), a.answer);
+    t.noPronouns('Diagnose', a.answer);
   } },
 ];

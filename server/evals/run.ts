@@ -98,7 +98,7 @@ const total = results.reduce((u, r) => ({
 const turns = results.flatMap((r) => r.turns).map((t) => t.ms).sort((a, b) => a - b);
 const quantile = (q: number) => (turns.length ? `${(turns[Math.min(turns.length - 1, Math.floor(q * turns.length))] / 1000).toFixed(1)} s` : 'n/a');
 
-const LEVEL_NAME = ['', 'Sense: one lookup, one fact', 'Diagnose: reasoning over evidence', 'Intervene and Oversee: plans with the teacher in charge', 'Adapt: the closed loop', 'Hard: pressure, traps and failure'];
+const LEVEL_NAME = ['', 'Sense: one lookup, one fact', 'Diagnose: reasoning over evidence', 'Intervene and Oversee: plans with the teacher in charge', 'Adapt: the closed loop', 'Hard: pressure, traps and failure', 'The student’s semester: plans, replans and the road to the exam'];
 const lines: string[] = [];
 const out = (s = '') => lines.push(s);
 out(`# Beyond agent eval, ${stamp.replace('T', ' ')}`);
@@ -129,7 +129,7 @@ out('## By level');
 out();
 out('| Level | Cases passed | Checks passed |');
 out('|---|---|---|');
-for (let level = 1; level <= 5; level++) {
+for (let level = 1; level <= 6; level++) {
   const rs = results.filter((r) => r.level === level);
   if (rs.length === 0) continue;
   const cs = rs.flatMap((r) => r.checks);

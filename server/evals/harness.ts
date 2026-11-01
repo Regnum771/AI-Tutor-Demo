@@ -167,3 +167,24 @@ export async function playPlan(t: T, mode: AnswerMode): Promise<Plan> {
   }
   return plan;
 }
+
+/** The phone joins as a student and waits for the first plan. */
+export async function joinPhone(t: T, studentId: string, weekday: number, weekend: number): Promise<void> {
+  t.session.studyOpen();
+  t.session.studyPick(studentId);
+  const set = t.session.studySetup(weekday, weekend);
+  if (!set.ok) throw new Error(`studySetup: ${set.error}`);
+  await t.session.settled();
+}
+
+/** One self-started session, answering everything correctly first try. */
+export async function practiseToday(t: T): Promise<void> {
+  const started = t.session.studyPractice(null);
+  if (!started.ok) throw new Error(`studyPractice: ${started.error}`);
+  while (t.state.phone.self) {
+    t.session.phoneAnswer(currentItems(t.state)[t.state.phone.item].correct);
+    const next = t.session.phoneNext();
+    if (!next.ok) throw new Error(`phoneNext: ${next.error}`);
+    await next.done;
+  }
+}
