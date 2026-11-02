@@ -1,9 +1,10 @@
 import type { MessagesClient } from '../agents/client';
 import { classKpis } from '../../src/live/mastery';
-import { currentItems, planById, studentById } from '../../src/live/reducer';
+import { planById, studentById } from '../../src/live/reducer';
 import { fmt } from '../../src/live/clock';
 import type { AssistantMsg, DemoState, Plan, StudentProfile } from '../../src/live/types';
 import type { ConceptId } from '../../src/scenario/knowledgeGraph';
+import { playOpenSession } from '../playSession';
 import { DemoSession } from '../session';
 
 /** The feedback loop the demo sells; every check belongs to one stage. */
@@ -143,18 +144,7 @@ export type AnswerMode = 'first-try' | 'wrong-first';
 export async function playSession(t: T, index: number, mode: AnswerMode): Promise<void> {
   const opened = t.session.phoneOpen(index);
   if (!opened.ok) throw new Error(`phoneOpen: ${opened.error}`);
-  while (t.state.phone.session === index) {
-    const item = currentItems(t.state)[t.state.phone.item];
-    if (mode === 'wrong-first') {
-      const wrong = item.options.findIndex((_, i) => i !== item.correct);
-      t.session.phoneAnswer(wrong);
-    }
-    const right = t.session.phoneAnswer(item.correct);
-    if (!right.ok) throw new Error(`phoneAnswer: ${right.error}`);
-    const next = t.session.phoneNext();
-    if (!next.ok) throw new Error(`phoneNext: ${next.error}`);
-    await next.done;
-  }
+  await playOpenSession(t.session, mode === 'wrong-first');
 }
 
 /** Plays every remaining session of the plan on the phone, in order, ending with its mastery check. */
@@ -183,10 +173,5 @@ export async function joinPhone(t: T, studentId: string, weekday: number, weeken
 export async function practiseToday(t: T): Promise<void> {
   const started = t.session.studyPractice(null);
   if (!started.ok) throw new Error(`studyPractice: ${started.error}`);
-  while (t.state.phone.self) {
-    t.session.phoneAnswer(currentItems(t.state)[t.state.phone.item].correct);
-    const next = t.session.phoneNext();
-    if (!next.ok) throw new Error(`phoneNext: ${next.error}`);
-    await next.done;
-  }
+  await playOpenSession(t.session);
 }

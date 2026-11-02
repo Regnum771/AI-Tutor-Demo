@@ -1,8 +1,8 @@
 import './env';
 import { planProblems } from '../src/live/plans';
-import { sessionItems } from '../src/scenario/practiceBank';
 import { anthropicClient } from './agents/client';
 import { citableIds } from './agents/sas';
+import { playOpenSession } from './playSession';
 import { DemoSession } from './session';
 
 /**
@@ -48,12 +48,7 @@ must(session.approve(plan.id));
 must(session.phonePlan());
 must(session.phoneSkip());
 must(session.phoneOpen(check));
-for (const item of sessionItems(concept, true)) {
-  must(session.phoneAnswer(item.correct));
-  const next = session.phoneNext();
-  if (!next.ok) fail(next.error);
-  await next.done;
-}
+await playOpenSession(session);
 
 const update = session.state.conversations[0].msgs.at(-1);
 if (update?.role !== 'assistant') fail('no update after the mastery check');

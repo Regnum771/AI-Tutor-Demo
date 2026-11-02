@@ -61,7 +61,7 @@ Run the booth on a private hotspot if you can: venue Wi-Fi often blocks devices 
 
 ### The student's own loop
 
-On the phone, tap the lock-screen notification and choose a student. Enter the minutes you have, and the Study Planning Agent writes a plan from today to the exam (24 November). Today shows the day's cards and practice; Practise picks 5 questions at the right Bloom level; Cards are self-rated flip cards; Semester shows the weeks to the exam and why the plan changed. **Next day** asks how the day felt and lands on the next morning's notification; **Next week** skips ahead without asking. Both are the booth's clock: they move the story date for both screens, not just the phone.
+On the phone, tap the lock-screen notification and choose a student. Enter the minutes you have, and the Study Planning Agent writes a plan from today to the exam (24 November). Today shows the day's cards and practice; Practise picks 5 questions at the right Bloom level; every session lets you move freely between questions, keeps every try, and ends on a review; Cards are self-rated flip cards; Semester shows the weeks to the exam and why the plan changed. **Next day** asks how the day felt and lands on the next morning's notification; **Next week** skips ahead without asking. Both are the booth's clock: they move the story date for both screens, not just the phone.
 
 Plans change only on a drastic signal (a 15-point mark swing, three days with no practice, a change of pass band, or a teacher's plan) and at most once every 5 story days, except for marks and teacher plans. Replans run in the background, so the phone never waits. The Director's **Simulate a Quiz 3 drop** shows one on demand.
 
@@ -71,7 +71,7 @@ Plans change only on a drastic signal (a 15-point mark swing, three days with no
 - [ ] Phone joins from the QR code and shows the lock screen with the story clock.
 - [ ] Ask "Why did Minh Anh's quiz score drop?": thinking lines name both agents, the answer cites evidence (chips open the evidence), the panel shows a plan.
 - [ ] Edit a session time, **Approve & send**: the notification lands on the phone.
-- [ ] Phone: a wrong answer shows its hint; the teacher's meters move as answers arrive; **Skip to tonight**, finish the mastery check; the teacher gets the 20:40 update and the phone shows tomorrow's plan.
+- [ ] Phone: a wrong answer shows its hint; the question dots, **Back**, **Next** and **Answer again** move around the session; the teacher's meters move as answers arrive; **Skip to tonight**, finish the mastery check; the review lists every try; the teacher gets the 20:40 update; **Continue** shows progress and the phone then shows tomorrow's plan.
 - [ ] Ask about the class and about who needs you personally: approve the class activity and the check-ins (nothing reaches the phone).
 - [ ] **Export** shows "Not part of this demo".
 - [ ] Stop the server, set `BEYOND_OFFLINE=1`, restart: the Minh Anh story still works with "Offline answer" tags.

@@ -1,7 +1,7 @@
 import { ASSESSMENTS, CLOS, EXAM_DAY, fullDate, nextAssessment, shortDate, type CloId } from '../../scenario/course';
 import type { DemoState, PassBand, ReplanSignal, StudentProfile } from '../types';
 import { cloMastery, forecast, PASS, projection } from './estimate';
-import { newRecord, selfDone } from './record';
+import { averageTries, newRecord, selfDone } from './record';
 import { lastWeek } from './signals';
 
 export interface ExamOutlook {
@@ -17,6 +17,8 @@ export interface ExamOutlook {
   minutesDone: number;
   /** Minutes done and planned over the last 7 closed days; little or nothing done means the student has stopped practising. */
   practisedLast7Days: { done: number; planned: number };
+  /** Mean tries per question answered in the last 7 days, or null with none. */
+  averageTries: number | null;
   nextAssessment: { title: string; date: string; daysAway: number } | null;
   exam: { date: string; daysAway: number };
   lastChange: { date: string; signal: ReplanSignal; reason: string } | null;
@@ -44,6 +46,7 @@ export function examOutlook(state: DemoState, student: StudentProfile): ExamOutl
       ? Math.round(Object.entries(rec.days).filter(([d]) => Number(d) >= rec.plan!.createdDay).reduce((a, [, v]) => a + selfDone(v), 0))
       : 0,
     practisedLast7Days: lastWeek(rec, state.day),
+    averageTries: averageTries(rec, state.day),
     nextAssessment: next && { title: next.title, date: fullDate(next.day), daysAway: next.day - state.day },
     exam: { date: fullDate(EXAM_DAY), daysAway: EXAM_DAY - state.day },
     lastChange: last && { date: fullDate(last.day), signal: last.signal, reason: last.reason },

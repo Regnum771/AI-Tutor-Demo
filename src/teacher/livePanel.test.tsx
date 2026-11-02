@@ -123,6 +123,14 @@ describe('road to the exam', () => {
     s.study.s17.days = { 38: { planned: 30, done: 0, check: null }, 39: { planned: 30, done: 0, check: null }, 40: { planned: 20, done: 0, check: null } };
     expect(render(s, panel)).toContain('Stopped practising: 0 of 80 min in the last 7 days.');
   });
+  it('shows tries per question once there are answers this week', () => {
+    const panel: LivePanel = { kind: 'student', studentId: 's17', planId: null, highlight: null };
+    expect(render(withStudy(), panel)).not.toContain('tries per question');
+    const s = withStudy();
+    const base = { itemId: 'implication-1', day: 40, correct: true, firstTry: false };
+    s.study.s17.attempts.push({ ...base, tries: 1 }, { ...base, tries: 1 }, { ...base, tries: 3 });
+    expect(render(s, panel)).toContain('1.7 tries per question this week');
+  });
   it('shows the latest mark', () => {
     const s = withStudy();
     s.study.s17.marks.push({ assessment: 'quiz3', mark: 22, day: 52 });

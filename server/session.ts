@@ -136,11 +136,15 @@ export class DemoSession {
   phonePlan(): Done { return this.run(R.phoneShowPlan(this.state)); }
   phoneOpen(index: number): Done { return this.run(R.phoneOpen(this.state, index)); }
   phoneAnswer(option: number): Done { return this.run(R.phoneAnswer(this.state, option)); }
+  phoneNext(): Done { return this.run(R.phoneNext(this.state)); }
+  phoneGoto(item: number): Done { return this.run(R.phoneGoto(this.state, item)); }
+  phoneAgain(): Done { return this.run(R.phoneAgain(this.state)); }
+  phoneContinue(): Done { return this.run(R.phoneContinue(this.state)); }
   phoneSkip(): Done { return this.run(R.phoneSkip(this.state)); }
 
-  /** Moves on after a correct answer; finishing a mastery check starts the adapt run. */
-  phoneNext(): { ok: true; done: Promise<void> } | { ok: false; error: string } {
-    const r = R.phoneNext(this.state);
+  /** Finish: finishing a mastery check starts the adapt run, which lands while the review is open. */
+  phoneFinish(): { ok: true; done: Promise<void> } | { ok: false; error: string } {
+    const r = R.phoneFinish(this.state);
     if (!r.ok) return { ok: false, error: r.error };
     this.set(r.state);
     return { ok: true, done: r.finishedCheck ? this.adapt(r.state.phone.lastDone!) : Promise.resolve() };

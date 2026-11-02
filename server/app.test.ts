@@ -29,7 +29,14 @@ describe('booth HTTP API', () => {
     expect((await post('phone/plan')).status).toBe(200);
     expect((await post('phone/open', { sessionIndex: 0 })).status).toBe(200);
     expect((await post('phone/answer', { option: 0 })).status).toBe(200);
-    expect(session.state.phone.result).toBe('wrong');
+    expect(session.state.phone.sheet[0].tries).toEqual([0]);
+    expect((await post('phone/goto', { item: 1 })).status).toBe(200);
+    expect(session.state.phone.item).toBe(1);
+    expect((await post('phone/goto', { item: 9 })).status).toBe(400);
+    expect((await post('phone/again')).status).toBe(400);
+    expect((await post('phone/continue')).status).toBe(400);
+    expect((await post('phone/finish')).status).toBe(200);
+    expect(session.state.phone.item).toBe(0);
   });
   it('reports bad commands as 400', async () => {
     const { post } = setup();

@@ -3,7 +3,7 @@ import { STUDENTS, groupOf } from '../scenario/classroom';
 import { MASTERY_INITIAL } from '../scenario/minhAnh';
 import { fmt, parseTime, STORY_START, TONIGHT } from './clock';
 import { stateWithPlan } from './fixtures';
-import { afterAnswer, statusFor, topicMastery, twinConcepts } from './mastery';
+import { afterAnswer, gainFor, statusFor, topicMastery, twinConcepts } from './mastery';
 
 describe('story clock', () => {
   it('formats and parses HH:MM', () => {
@@ -18,13 +18,17 @@ describe('story clock', () => {
 });
 
 describe('mastery rule', () => {
-  it('moves a correct answer toward 0.9, less after a hint, not at all when wrong', () => {
-    expect(afterAnswer(0.3, true, false)).toBe(0.48);
-    expect(afterAnswer(0.3, true, true)).toBe(0.39);
-    expect(afterAnswer(0.3, false, false)).toBe(0.3);
-    expect(afterAnswer(0.3, false, true)).toBe(0.3);
-    expect(afterAnswer(0.97, true, false)).toBe(0.97);
-    expect(afterAnswer(0.97, true, true)).toBe(0.97);
+  it('earns less on each try: 30%, 15%, 5%, then nothing', () => {
+    expect([1, 2, 3, 4, 9].map(gainFor)).toEqual([0.3, 0.15, 0.05, 0, 0]);
+  });
+  it('moves a correct answer toward 0.9 by its try, not at all when wrong', () => {
+    expect(afterAnswer(0.3, true, 1)).toBe(0.48);
+    expect(afterAnswer(0.3, true, 2)).toBe(0.39);
+    expect(afterAnswer(0.3, true, 3)).toBe(0.33);
+    expect(afterAnswer(0.3, true, 4)).toBe(0.3);
+    expect(afterAnswer(0.3, false, 1)).toBe(0.3);
+    expect(afterAnswer(0.97, true, 1)).toBe(0.97);
+    expect(afterAnswer(0.97, true, 2)).toBe(0.97);
   });
   it('bands status on logical equivalence', () => {
     const m = (equivalence: number) => ({ ...MASTERY_INITIAL, equivalence });

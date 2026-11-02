@@ -1,4 +1,5 @@
 import { resolveDay, START_DAY } from '../scenario/course';
+import { currentItems, phoneAnswer, phoneFinish, phoneNext, slotCount, type Result } from './reducer';
 import { seedState } from './seed';
 import type { DemoState, LivePanel, Plan, PlanKind } from './types';
 import type { LiveCtx } from './LiveContext';
@@ -67,3 +68,20 @@ export function stateWithPlan(kind: PlanKind = 'pathway', over: Partial<Plan> = 
 export const ctxFor = (state: DemoState, activeId: string | null = 'c1'): LiveCtx => ({
   state, activeId, post: async () => ({ ok: true }), openConversation: () => {}, showPanel: () => {}, openProfile: () => {}, openPlanning: () => {}, toast: () => {},
 });
+
+const must = (r: Result): DemoState => {
+  if (!r.ok) throw new Error(r.error);
+  return r.state;
+};
+
+/** Answers the open session right (a wrong tap first when asked), then taps Finish. The result is on the review. */
+export function playOut(state: DemoState, wrongFirst = false): Result {
+  let s = state;
+  for (;;) {
+    const item = currentItems(s)[s.phone.item];
+    if (wrongFirst) s = must(phoneAnswer(s, item.correct === 0 ? 1 : 0));
+    s = must(phoneAnswer(s, item.correct));
+    if (s.phone.item + 1 >= slotCount(s)) return phoneFinish(s);
+    s = must(phoneNext(s));
+  }
+}

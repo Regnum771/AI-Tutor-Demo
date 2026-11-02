@@ -6,12 +6,13 @@ import { useServerSource, type DemoSource } from '../live/source';
 import { fullDate } from '../scenario/course';
 import type { StudyTab } from '../live/study/reducer';
 import type { TodayRow } from '../live/study/today';
-import { notificationCopy, planView, progressView } from './liveView';
+import { notificationCopy, planView, progressView, reviewView } from './liveView';
 import { StatusBar } from './screens/Chrome';
 import { LivePractice } from './screens/LivePractice';
 import { LockScreen } from './screens/LockScreen';
 import { PlanScreen } from './screens/PlanScreen';
 import { ProgressScreen } from './screens/ProgressScreen';
+import { ReviewScreen } from './screens/ReviewScreen';
 import { CardsScreen, CheckInScreen, PickScreen, PractiseScreen, SemesterScreen, SetupScreen, TabBar, TodayScreen } from './screens/StudyScreens';
 import { cardsView, morningCopy, pickList, practiseView, semesterView, todayView } from './studyView';
 
@@ -83,8 +84,17 @@ export function LivePhoneView({ source }: { source: DemoSource }) {
         <PlanScreen local={local} variant={ph.updated ? 'updated' : 'initial'} clock={clock} live={plan} onOpen={(i) => send('phone/open', { sessionIndex: i })} onSkip={() => send('phone/skip')} />
       )}
       {ph.screen === 'practice' && (
-        <LivePractice key={`${ph.session}:${ph.item}`} state={state} onAnswer={(o) => send('phone/answer', { option: o })} onNext={() => send('phone/next')} />
+        <LivePractice
+          key={`${ph.session}:${ph.item}`}
+          state={state}
+          onAnswer={(o) => send('phone/answer', { option: o })}
+          onNext={() => send('phone/next')}
+          onGoto={(item) => send('phone/goto', { item })}
+          onAgain={() => send('phone/again')}
+          onFinish={() => send('phone/finish')}
+        />
       )}
+      {ph.screen === 'review' && <ReviewScreen view={reviewView(state)} onContinue={() => send('phone/continue')} />}
       {ph.screen === 'progress' && progress && <ProgressScreen local={local} live={progress} onBack={() => send('phone/plan')} />}
       {ph.screen === 'pick' && <PickScreen students={pickList(state)} onPick={(id) => send('study/pick', { studentId: id })} />}
       {ph.screen === 'setup' && <SetupScreen onSave={(weekday, weekend) => send('study/setup', { weekday, weekend })} />}

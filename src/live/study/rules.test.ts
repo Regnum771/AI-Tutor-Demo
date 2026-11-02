@@ -10,7 +10,7 @@ import { NEW_PER_DAY, cardsToday, reviewCard } from './cards';
 import { bandOf, cloMastery, forecast, forecastSeries, minutesNeeded, projection } from './estimate';
 import { forget } from './forgetting';
 import { markFor } from './marks';
-import { ensureRecord, newRecord, noteAttempt, noteForecast } from './record';
+import { averageTries, ensureRecord, newRecord, noteAttempt, noteForecast } from './record';
 import { refocus } from './refocus';
 import { SELF_SESSION, nextItem } from './select';
 import { detectSignal, mayReplan, nextReplan, stoppedPractising, stoppedSince } from './signals';
@@ -96,24 +96,51 @@ describe('next question', () => {
     const { s, rec } = setup();
     const st = student(s);
     const first = nextItem(rec, st, 40, ['conjunction'], []);
-    rec.attempts.push({ itemId: first.id, day: 39, correct: true, firstTry: true });
+    rec.attempts.push({ itemId: first.id, day: 39, correct: true, firstTry: true, tries: 1 });
     expect(nextItem(rec, st, 40, ['conjunction'], []).id).not.toBe(first.id);
     rec.attempts.length = 0;
     const ids = BANK.filter((i) => i.concept === 'conjunction').map((i) => i.id);
     const oldest = ids[2];
-    ids.forEach((id) => rec.attempts.push({ itemId: id, day: id === oldest ? 38 : 39, correct: true, firstTry: true }));
+    ids.forEach((id) => rec.attempts.push({ itemId: id, day: id === oldest ? 38 : 39, correct: true, firstTry: true, tries: 1 }));
     expect(nextItem(rec, st, 40, ['conjunction'], []).id).toBe(oldest);
   });
   it('moves up after two first-try answers and down after a wrong one', () => {
     const rec = newRecord(student(seedState()));
     rec.bloom.CLO1 = 0;
     const item = BANK.find((i) => i.clo === 'CLO1')!;
-    noteAttempt(rec, item, 40, true, true);
+    noteAttempt(rec, item, 40, true, 1);
     expect(rec.bloom.CLO1).toBe(0);
-    noteAttempt(rec, item, 40, true, true);
+    noteAttempt(rec, item, 40, true, 1);
     expect(rec.bloom.CLO1).toBe(1);
-    noteAttempt(rec, item, 40, false, false);
+    noteAttempt(rec, item, 40, false, 1);
     expect(rec.bloom.CLO1).toBe(0);
+  });
+  it('a right answer after a wrong one leaves the streak alone', () => {
+    const rec = newRecord(student(seedState()));
+    rec.bloom.CLO1 = 0;
+    const item = BANK.find((i) => i.clo === 'CLO1')!;
+    noteAttempt(rec, item, 40, true, 1);
+    noteAttempt(rec, item, 40, true, 2);
+    expect(rec.streak.CLO1).toBe(1);
+    expect(rec.bloom.CLO1).toBe(0);
+  });
+  it('writes one attempt per question, at the right try, and logs minutes for every try', () => {
+    const rec = newRecord(student(seedState()));
+    const item = BANK[0];
+    noteAttempt(rec, item, 40, false, 1);
+    noteAttempt(rec, item, 40, false, 2);
+    expect(rec.attempts).toEqual([]);
+    noteAttempt(rec, item, 40, true, 3);
+    expect(rec.attempts).toEqual([{ itemId: item.id, day: 40, correct: true, firstTry: false, tries: 3 }]);
+    expect(rec.days[40].done).toBe(4.5);
+  });
+  it('averages tries over the last 7 days, today included', () => {
+    const rec = newRecord(student(seedState()));
+    expect(averageTries(rec, 40)).toBeNull();
+    expect(averageTries(undefined, 40)).toBeNull();
+    const base = { itemId: BANK[0].id, correct: true, firstTry: false };
+    rec.attempts.push({ ...base, day: 33, tries: 9 }, { ...base, day: 34, tries: 1 }, { ...base, day: 40, tries: 2 });
+    expect(averageTries(rec, 40)).toBe(1.5);
   });
 });
 
@@ -267,7 +294,7 @@ describe('today', () => {
     const before = todayList(s, 's17').rows.find((r) => r.kind === 'practice')!;
     const item = BANK.find((i) => i.clo === 'CLO1')!;
     rec.days[40] = { planned: 20, done: 0, check: null };
-    for (let i = 0; i < 5; i++) noteAttempt(rec, item, 40, true, true, true);
+    for (let i = 0; i < 5; i++) noteAttempt(rec, item, 40, true, 1, true);
     expect(rec.days[40].done).toBe(7.5);
     const after = todayList(s, 's17');
     expect(after.done).toBe(0);
@@ -460,8 +487,8 @@ describe('forgetting', () => {
     const { s, rec } = setup();
     const st = student(s);
     Object.assign(st.mastery, { expressions: 0.26, equivLaws: 0.2 });
-    rec.attempts.push({ itemId: item('implication').id, day: 38, correct: true, firstTry: true });
-    rec.attempts.push({ itemId: item('biconditional').id, day: 34, correct: true, firstTry: true });
+    rec.attempts.push({ itemId: item('implication').id, day: 38, correct: true, firstTry: true, tries: 1 });
+    rec.attempts.push({ itemId: item('biconditional').id, day: 34, correct: true, firstTry: true, tries: 1 });
     forget(st, rec, 42);
     expect(st.mastery).toMatchObject({ implication: 0.31, biconditional: 0.33, negation: 0.68, propositions: 0.83, expressions: 0.25, equivLaws: 0.2 });
   });

@@ -1,7 +1,8 @@
-import { planById, studentById } from '../live/reducer';
-import type { DemoState, Plan } from '../live/types';
+import { planById, slotCount, studentById } from '../live/reducer';
+import type { DemoState, Plan, QuestionSheet } from '../live/types';
 import { relativeDay } from '../scenario/course';
 import { conceptById, type ConceptId } from '../scenario/knowledgeGraph';
+import { itemById, type BankItem } from '../scenario/practiceBank';
 
 export interface PlanView {
   name: string;
@@ -23,6 +24,23 @@ export interface ProgressView {
   done: number;
   remaining: string | null;
   backLabel: string;
+}
+
+export type DotState = 'empty' | 'tried' | 'right';
+
+export interface ReviewRow {
+  prompt: string;
+  /** Every option tapped, in order. */
+  tries: { option: string; right: boolean }[];
+  answer: string;
+  /** The hint for each wrong option the student chose. */
+  hints: { option: string; hint: string }[];
+  guided: BankItem['guided'] | null;
+}
+
+export interface ReviewView {
+  summary: string;
+  rows: ReviewRow[];
 }
 
 const conceptsOf = (plan: Plan): ConceptId[] => [...new Set(plan.sessions.flatMap((s) => (s.concept ? [s.concept] : [])))];
@@ -65,16 +83,43 @@ export function progressView(state: DemoState): ProgressView | null {
   if (!plan) return null;
   const student = studentById(state, plan.studentIds[0])!;
   const target = targetOf(plan);
-  const practice = student.evidence.filter((e) => e.kind === 'practice' && e.planId === plan.id && e.result !== 'skipped');
-  const correct = practice.filter((e) => e.result === 'correct').length;
+  // One 'correct' row per question, carrying the try it came on.
+  const questions = student.evidence.filter((e) => e.kind === 'practice' && e.planId === plan.id && e.result === 'correct');
+  const firstTry = questions.filter((e) => e.tries === 1).length;
   return {
     concept: conceptById(target).label,
     from: Math.round((plan.baseline?.[target] ?? student.mastery[target]) * 100),
     to: Math.round(student.mastery[target] * 100),
-    accuracy: practice.length ? Math.round((correct / practice.length) * 100) : 0,
+    accuracy: questions.length ? Math.round((firstTry / questions.length) * 100) : 0,
     items: plan.sessions.map((s) => ({ title: s.title, when: s.time })),
     done: plan.sessions.length,
     remaining: state.phone.updated ? 'Next steps are ready for tomorrow' : null,
     backLabel: state.phone.updated ? 'See tomorrow’s plan' : 'Back to plan',
   };
 }
+
+/** The review after a session: a summary line and one row per question, from the answer sheet. */
+export function reviewView(state: DemoState): ReviewView {
+  const rows = state.phone.sheet.flatMap((q): ReviewRow[] => {
+    const item = itemById(q.itemId);
+    if (!item) return [];
+    const wrong = [...new Set(q.tries)].filter((o) => o !== item.correct);
+    return [{
+      prompt: item.prompt,
+      tries: q.tries.map((o) => ({ option: item.options[o], right: o === item.correct })),
+      answer: item.options[item.correct],
+      hints: wrong.map((o) => ({ option: item.options[o], hint: item.hints[o] })),
+      guided: item.guided ?? null,
+    }];
+  });
+  const firstTry = state.phone.sheet.filter((q) => q.rightOn === 1).length;
+  const tries = state.phone.sheet.reduce((a, q) => a + q.tries.length, 0);
+  const questions = `${rows.length} question${rows.length === 1 ? '' : 's'}`;
+  return { summary: `${questions} · ${firstTry} right first try · ${tries} ${tries === 1 ? 'try' : 'tries'} in all`, rows };
+}
+
+/** A question dot: grey before any try, outlined after one, green once right. */
+export const dotState = (q: QuestionSheet | undefined): DotState => (!q || q.tries.length === 0 ? 'empty' : q.rightOn === null ? 'tried' : 'right');
+
+/** Questions in the open session without a right answer yet, including slots not opened. */
+export const questionsLeft = (state: DemoState): number => slotCount(state) - state.phone.sheet.filter((q) => q.rightOn !== null).length;

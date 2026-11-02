@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { currentItems } from '../src/live/reducer';
 import type { DemoState } from '../src/live/types';
 import type { MessagesClient } from './agents/client';
 import { failingClient, fakeClient } from './agents/fakeClient';
 import { studyInput } from './agents/samples';
+import { playOpenSession } from './playSession';
 import { DemoSession } from './session';
 
 /** Answers every planning request with a valid plan for the state at that moment. */
@@ -26,12 +26,7 @@ const offline = () => joined(new DemoSession(null));
 const replans = (s: DemoSession) => s.state.study.s17.replans.filter((r) => r.signal !== 'setup');
 const practise = async (session: DemoSession) => {
   session.studyPractice(null);
-  while (session.state.phone.self) {
-    session.phoneAnswer(currentItems(session.state)[session.state.phone.item].correct);
-    const next = session.phoneNext();
-    if (!next.ok) throw new Error(next.error);
-    await next.done;
-  }
+  await playOpenSession(session);
 };
 
 describe('setup', () => {

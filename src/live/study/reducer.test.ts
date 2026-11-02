@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CARDS } from '../../scenario/cards';
 import { BANK } from '../../scenario/practiceBank';
-import { planFor, stateWithPlan } from '../fixtures';
-import { approvePlan, currentItems, deliver, phoneAnswer, phoneNext, phoneOpen, phoneShowPlan, type Result } from '../reducer';
+import { planFor, playOut, stateWithPlan } from '../fixtures';
+import { approvePlan, currentItems, deliver, phoneAgain, phoneAnswer, phoneContinue, phoneFinish, phoneGoto, phoneNext, phoneOpen, phoneShowPlan, type Result } from '../reducer';
 import { seedState } from '../seed';
 import type { DemoState } from '../types';
 import { ensureRecord, noteAttempt } from './record';
@@ -47,16 +47,14 @@ describe('joining', () => {
 });
 
 describe('self practice', () => {
-  it('serves 5 adaptive questions and returns to Today', () => {
+  it('serves 5 adaptive questions, opens the review and returns to Today', () => {
     let s = ok(startSelf(ready(), 'CLO1'));
     expect(s.phone).toMatchObject({ screen: 'practice', session: null, item: 0 });
-    for (let n = 0; n < 5; n++) {
-      const item = currentItems(s)[s.phone.item];
-      expect(item).toBeDefined();
-      s = ok(phoneAnswer(s, item.correct));
-      s = ok(phoneNext(s));
-    }
-    expect(s.phone).toMatchObject({ screen: 'today', self: null });
+    s = ok(playOut(s));
+    expect(s.phone).toMatchObject({ screen: 'review', self: null, reviewNext: 'today' });
+    expect(s.phone.sheet).toHaveLength(5);
+    s = ok(phoneContinue(s));
+    expect(s.phone).toMatchObject({ screen: 'today', self: null, sheet: [] });
     expect(new Set(s.study.s17.attempts.map((a) => a.itemId)).size).toBe(5);
     expect(s.study.s17.days[40].done).toBe(7.5);
     expect(s.students[16].evidence.filter((e) => e.kind === 'practice')).toHaveLength(5);
@@ -171,7 +169,7 @@ describe('a returning student', () => {
   it('counts teacher session answers apart from self-study', () => {
     const s = ok(approvePlan(stateWithPlan(), 'p1'));
     ensureRecord(s, 's17').reported = { weekday: 30, weekend: 30 };
-    noteAttempt(s.study.s17, BANK[0], s.day, true, true, true);
+    noteAttempt(s.study.s17, BANK[0], s.day, true, 1, true);
     expect(s.study.s17.days[s.day]).toMatchObject({ done: 1.5, teacher: 1.5 });
     expect(todayList(s, 's17').done).toBe(0);
   });
@@ -250,10 +248,52 @@ describe('review follow-ups', () => {
     expect(ok(phoneOpen(s, 0)).phone.self).toBeNull();
     expect(ok(phoneShowPlan(s)).phone.self).toBeNull();
   });
+  it('Finish before every slot is opened goes to the first open slot', () => {
+    let s = ok(startSelf(ready(), 'CLO1'));
+    s = ok(phoneAnswer(s, currentItems(s)[0].correct));
+    s = ok(phoneFinish(s));
+    expect(s.phone).toMatchObject({ screen: 'practice', item: 1 });
+    expect(s.phone.sheet).toHaveLength(2);
+  });
+  it('a skipped slot picks one question and keeps it', () => {
+    let s = ok(startSelf(ready(), 'CLO1'));
+    expect(s.phone.sheet).toHaveLength(1);
+    s = ok(phoneNext(s));
+    const picked = s.phone.sheet[1].itemId;
+    expect(s.phone.self?.served).toEqual(s.phone.sheet.map((q) => q.itemId));
+    s = ok(phoneNext(ok(phoneGoto(s, 0))));
+    expect(s.phone.sheet[1].itemId).toBe(picked);
+    expect(s.phone.sheet).toHaveLength(2);
+  });
+  it('a jump by dot picks the slots it passes, in order', () => {
+    const s = ok(phoneGoto(ok(startSelf(ready(), 'CLO1')), 3));
+    expect(s.phone.item).toBe(3);
+    expect(s.phone.sheet).toHaveLength(4);
+    expect(new Set(s.phone.self?.served).size).toBe(4);
+    expect(phoneGoto(s, 5)).toEqual({ ok: false, error: 'No such question.' });
+  });
+  it('a repeat tap counts once and logs no minutes; a re-answer logs its minutes and moves no Bloom level', () => {
+    let s = ok(startSelf(ready(), 'CLO1'));
+    const item = currentItems(s)[0];
+    const wrong = item.correct === 0 ? 1 : 0;
+    const level = s.study.s17.bloom.CLO1;
+    s = ok(phoneAnswer(s, wrong));
+    expect(s.study.s17.days[40].done).toBe(1.5);
+    expect(phoneAnswer(s, wrong).ok).toBe(false);
+    s = ok(phoneAnswer(s, item.correct));
+    expect(s.study.s17.days[40].done).toBe(3);
+    expect(s.study.s17.attempts).toEqual([{ itemId: item.id, day: 40, correct: true, firstTry: false, tries: 2 }]);
+    const after = s.study.s17.bloom.CLO1;
+    expect(after).toBe(Math.max(0, level - 1));
+    s = ok(phoneAnswer(ok(phoneAgain(s)), wrong));
+    expect(s.study.s17.days[40].done).toBe(4.5);
+    expect(s.study.s17.attempts).toHaveLength(1);
+    expect(s.study.s17.bloom.CLO1).toBe(after);
+  });
   it('opening Pick or the check-in clears a self session', () => {
     const s = ok(startSelf(ready(), 'CLO1'));
-    expect(ok(openPick(s)).phone.self).toBeNull();
-    expect(ok(openCheckIn(s)).phone.self).toBeNull();
+    expect(ok(openPick(s)).phone).toMatchObject({ self: null, sheet: [] });
+    expect(ok(openCheckIn(s)).phone).toMatchObject({ self: null, sheet: [] });
   });
   it('a fresh teacher approval during a self session goes to the lock screen and keeps the answers', () => {
     let s = ok(startSelf(ready(), 'CLO1'));
@@ -262,12 +302,15 @@ describe('review follow-ups', () => {
     expect(logged).toBe(1);
     s.plans.push(planFor('pathway', { id: 'p2', studentIds: ['s17'] }));
     const sent = ok(approvePlan(s, 'p2'));
-    expect(sent.phone).toMatchObject({ screen: 'lock', self: null });
+    expect(sent.phone).toMatchObject({ screen: 'lock', self: null, sheet: [] });
     expect(sent.study.s17.attempts).toHaveLength(logged);
   });
   it('advancing during a self session ends it', () => {
-    const s = ok(advance(ok(startSelf(ready(), 'CLO1')), 1, null));
-    expect(s.phone).toMatchObject({ self: null, session: null, screen: 'lock' });
+    const started = ok(startSelf(ready(), 'CLO1'));
+    const answered = ok(phoneAnswer(started, currentItems(started)[0].correct));
+    const s = ok(advance(answered, 1, null));
+    expect(s.phone).toMatchObject({ self: null, session: null, screen: 'lock', sheet: [] });
+    expect(s.study.s17.attempts).toHaveLength(1);
   });
 
   it('simulate drop twice leaves one Quiz 3 mark', () => {
@@ -363,7 +406,7 @@ describe('a new week', () => {
   it('a Monday forgets once, then re-picks the week from the lectures', () => {
     const s = structuredClone(ready());
     Object.assign(s.students[16].mastery, { implication: 0.3, biconditional: 0.29, expressions: 0.295 });
-    s.study.s17.attempts.push({ itemId: item('biconditional').id, day: 41, correct: true, firstTry: true });
+    s.study.s17.attempts.push({ itemId: item('biconditional').id, day: 41, correct: true, firstTry: true, tries: 1 });
     const after = ok(advance(s, 7, null)); // Saturday 40 → Saturday 47, through Monday 42
     expect(after.students[16].mastery).toMatchObject({ negation: 0.68, implication: 0.28, biconditional: 0.29, expressions: 0.275 });
     const plan = after.study.s17.plan!;

@@ -31,21 +31,30 @@ export function logMinutes(rec: StudyRecord, day: number, minutes: number, teach
   if (teacher) rec.days[day].teacher = (rec.days[day].teacher ?? 0) + minutes;
 }
 
-/** Logs a graded answer and moves the Bloom level: two first-try answers up, a wrong answer down. Mutates `rec`. */
-export function noteAttempt(rec: StudyRecord, item: BankItem, day: number, correct: boolean, firstTry: boolean, inSession = false): void {
-  rec.attempts.push({ itemId: item.id, day, correct, firstTry });
+/** Logs one try before a question's first right answer and moves the Bloom level: two first-try answers up, a wrong answer down. The right try writes the question's one `Attempt`. Mutates `rec`. */
+export function noteAttempt(rec: StudyRecord, item: BankItem, day: number, correct: boolean, tryNumber: number, inSession = false): void {
   logMinutes(rec, day, MINUTES.question, inSession);
   const clo = cloOf(item.concept).id;
   if (!correct) {
     rec.bloom[clo] = Math.max(0, rec.bloom[clo] - 1);
     rec.streak[clo] = 0;
-  } else if (firstTry) {
+    return;
+  }
+  rec.attempts.push({ itemId: item.id, day, correct, firstTry: tryNumber === 1, tries: tryNumber });
+  if (tryNumber === 1) {
     rec.streak[clo] += 1;
     if (rec.streak[clo] >= 2) {
       rec.bloom[clo] = Math.min(2, rec.bloom[clo] + 1);
       rec.streak[clo] = 0;
     }
   }
+}
+
+/** Mean tries per question answered in the last 7 days, today included, to one decimal; null with none. */
+export function averageTries(rec: StudyRecord | undefined, today: number): number | null {
+  const recent = rec?.attempts.filter((a) => a.day > today - 7) ?? [];
+  if (recent.length === 0) return null;
+  return Math.round((recent.reduce((a, b) => a + b.tries, 0) / recent.length) * 10) / 10;
 }
 
 /** Adds the day's forecast point, replacing one already there for that day. Mutates `rec`. */

@@ -47,12 +47,13 @@ describe('read tools', () => {
     expect(readTool(state, 'get_evidence', { student_id: 's17', kind: '' })).toHaveLength(8);
     expect(readTool(state, 'compare_students', { student_ids: ['s17', 's29'] })).toHaveLength(2);
   });
-  it('evidence for agents leaves out the phone-only result and planId', () => {
-    const s = ok(phoneAnswer(ok(phoneOpen(ok(approvePlan(stateWithPlan(), 'p1')), 0)), 0));
+  it('evidence for agents leaves out the phone-only result, tries and planId', () => {
+    const s = ok(phoneAnswer(ok(phoneOpen(ok(approvePlan(stateWithPlan(), 'p1')), 0)), 1));
     const practice = readTool(s, 'get_evidence', { student_id: 's17', kind: 'practice' }) as Record<string, unknown>[];
     expect(practice.length).toBeGreaterThan(0);
     for (const e of practice) {
       expect(e).not.toHaveProperty('result');
+      expect(e).not.toHaveProperty('tries');
       expect(e).not.toHaveProperty('planId');
     }
   });
@@ -96,6 +97,18 @@ describe('exam outlook', () => {
     });
     expect(READ_TOOLS.find((t) => t.name === 'get_exam_outlook')!.description).toContain('practisedLast7Days');
     expect(READ_TOOLS.find((t) => t.name === 'get_exam_outlook')!.description).toContain('marks');
+  });
+  it('reports average tries per question in the last 7 days', () => {
+    const state = seedState();
+    expect(readTool(state, 'get_exam_outlook', { student_id: 's17' })).toMatchObject({ averageTries: null });
+    expect(readTool(state, 'get_student', { student_id: 's17' })).toMatchObject({ averageTries: null });
+    const rec = ensureRecord(state, 's17');
+    const base = { itemId: 'implication-1', day: 40, correct: true, firstTry: false };
+    rec.attempts.push({ ...base, tries: 1 }, { ...base, tries: 2 });
+    expect(readTool(state, 'get_exam_outlook', { student_id: 's17' })).toMatchObject({ averageTries: 1.5 });
+    expect(readTool(state, 'get_student', { student_id: 's17' })).toMatchObject({ averageTries: 1.5 });
+    expect(READ_TOOLS.find((t) => t.name === 'get_exam_outlook')!.description).toContain('averageTries');
+    expect(READ_TOOLS.find((t) => t.name === 'get_student')!.description).toContain('averageTries');
   });
   it('names the students whose own Quiz 2 Q4 answer chose the converse', () => {
     const named = find({ mistake: 'converse' });
