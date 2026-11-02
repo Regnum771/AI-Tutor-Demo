@@ -5,6 +5,9 @@ type Info = { lanUrl: string | null; offline: boolean };
 
 const btn = 'rounded-lg border border-line bg-surface px-4 py-2 text-[15px] font-semibold text-ink hover:border-dim';
 
+/** The hosted server sends a relative link; the origin the Director is open on is the public address. */
+export const resolvePhoneUrl = (link: string, origin: string): string => new URL(link, origin).href;
+
 /** Booth controls in the Director: open the live teacher, reset between visitors, and the phone's QR code. */
 export function BoothPanel() {
   const [info, setInfo] = useState<Info | null | 'down'>(null);
@@ -12,9 +15,10 @@ export function BoothPanel() {
   useEffect(() => {
     fetch('/api/info').then((r) => { if (!r.ok) throw new Error(); return r.json() as Promise<Info>; }).then(setInfo).catch(() => setInfo('down'));
   }, []);
+  const phoneUrl = info && info !== 'down' && info.lanUrl ? resolvePhoneUrl(info.lanUrl, window.location.origin) : null;
   useEffect(() => {
-    if (info && info !== 'down' && info.lanUrl) void QRCode.toDataURL(info.lanUrl, { margin: 1, width: 220 }).then(setQr);
-  }, [info]);
+    if (phoneUrl) void QRCode.toDataURL(phoneUrl, { margin: 1, width: 220 }).then(setQr);
+  }, [phoneUrl]);
   const [note, setNote] = useState<string | null>(null);
   const reset = (e: MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.blur(); // the Director's Space handler plays and pauses; a focused button would also fire
@@ -41,7 +45,7 @@ export function BoothPanel() {
           <button className={btn} onClick={drop}>Simulate a Quiz 3 drop</button>
         </div>
         {note && <div className="mt-2 text-[13px] text-dim">{note}</div>}
-        {info && info !== 'down' && info.lanUrl && <div className="mt-3 font-mono text-[13px] text-dim">{info.lanUrl}</div>}
+        {phoneUrl && <div className="mt-3 font-mono text-[13px] text-dim">{phoneUrl}</div>}
       </div>
       {qr && <img src={qr} alt="QR code for the live phone" width={220} height={220} className="rounded-lg bg-[#FFFDF8] p-2" />}
     </section>

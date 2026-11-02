@@ -51,13 +51,25 @@ Settings: `BEYOND_MODEL` (default `claude-sonnet-5-5`), `BEYOND_EFFORT` (`low` Â
 
 Check the API path end to end with `npm run test:live` (needs the key; costs one real question and one mastery-check update).
 
-`/api` exists only under `npm run booth`, not under `vite preview` or a static build.
+`/api` exists only under `npm run booth` or the hosted server below, not under `vite preview` or a static build.
 
 The Classroom tile shows logical equivalence, so a plan that never practises it moves the student's meters but not the tile.
 
 ### Network
 
 Run the booth on a private hotspot if you can: venue Wi-Fi often blocks devices from seeing each other (client isolation). Windows Firewall may prompt for Node on first run; allow it on Private networks. Anyone on that network can reach the booth, including **Reset demo** and questions that spend the API key, so set a spend limit in the Anthropic Console.
+
+### Public URL
+
+For a presenter who opens a link instead of running the project. The `Dockerfile` builds one service that serves every page and `/api`, so the scripted demo and the live booth share the URL, which opens on the Director. The phone QR code points at the same URL, so the phone can be on any network.
+
+Deploy the repo to a host that runs a Dockerfile as one always-on service:
+
+- **One instance, and no sleeping tier.** The demo state lives in memory, so a sleeping or restarted service starts again from the beginning, and a second instance would hold a different demo.
+- **Set `ANTHROPIC_API_KEY`** in the host's variables; `.env.local` is not in the image. Without it the service runs on canned answers.
+- `PORT` comes from the host. The image sets `BEYOND_HOSTED=1`, which is what opens the server to the internet; the local booth stays on loopback.
+
+There is no login: anyone who has the URL can use the demo, press **Reset demo** and spend the API key, and everyone shares one demo. Keep the link with the presenter, set a spend limit in the Anthropic Console, and press **Reset demo** before presenting.
 
 ### The student's own loop
 
